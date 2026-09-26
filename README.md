@@ -1,0 +1,181 @@
+# Task List Stats
+
+**Task List Stats v0.1** is a separate, read-only statistics app for the self-hosted **Task List** database.
+
+It intentionally stays separate from Task List so charts, heatmaps, historical analysis, and reporting do not add bloat to the main task app.
+
+## Stack
+
+- C# / ASP.NET Core Minimal API
+- Kestrel
+- Microsoft.Data.Sqlite
+- Plain HTML/CSS/JavaScript
+- SQLite opened in **read-only** mode
+- No ORM
+- No frontend framework
+- No chart library
+
+The interface follows the same Windows 95-style visual language as Task List.
+
+## v0.1 statistics
+
+### Overview
+
+- Current total / Open / Done / Cancelled counts
+- Root tasks vs subtasks
+- Highest Universal ID / lifetime-entry count
+- Approximate deleted-entry count
+- Unknown/imported creation-date count
+- Busiest month, week, and day
+- Longest quiet streak
+- Longest active streak
+- First and latest dated task
+- Completion percentage and cancellation percentage
+- Average / median / fastest / slowest observed completion time
+- Completion-time buckets
+- Average / median open-task age
+- Open for 7 / 30 / 90+ days
+- Oldest currently open tasks
+
+### Trends
+
+- Created / completed / cancelled trends grouped by day, week, or month
+- Approximate historical backlog curve
+- Top 10 busiest months
+- Fastest and slowest completion months
+- Year-over-year monthly creation comparison
+
+### Calendar & heatmaps
+
+- Year activity heatmap for created, completed, cancelled, or all activity
+- Month calendar with daily creation/completion/cancellation counts
+- Month × year heatmap for seasonality
+- Average creation volume by month of year
+
+### Lists
+
+- Per-list total / Open / Done / Cancelled
+- Completion percentage
+- Average completion time
+- Share of all current entries
+- Most active list by month
+
+### Time patterns
+
+- Day-of-week creation and completion patterns
+- Hour-of-day creation and completion patterns
+- Weekday × hour heatmap
+- Average tasks per active week / month
+- Exam/test workload comparison using titles containing `exam`, `test`, `midterm`, or `final`
+
+### Trees & titles
+
+- Deepest nesting level
+- Percentage of root tasks with subtasks
+- Average subtasks per root
+- Average direct children per parent
+- Largest task trees
+- Deepest individual tasks
+- Nesting-depth distribution
+- Common title words
+- Simple task-type inference (quiz, exam/test, reading, discussion, assignment, project, paper/essay, lab)
+- Known reopened-task count and recently reopened tasks
+
+## Historical-data limitation
+
+Task List stores useful current timestamps:
+
+- `created_at`
+- `updated_at`
+- `completed_at`
+- `cancelled_at`
+- `reopened_at`
+
+It does **not** store a complete event log of every status transition. If a task is completed, reopened, completed again, reopened again, etc., older transitions cannot all be reconstructed.
+
+Therefore:
+
+- Current counts are exact.
+- Creation statistics are exact for records with valid creation dates.
+- Current stored completion/cancellation/reopen timestamps are exact.
+- The historical backlog graph is explicitly **approximate** when repeated reopen cycles occurred.
+- Imported records whose creation date is `Unknown` are counted separately and excluded from date-based statistics.
+
+## Database configuration
+
+Task List Stats never creates or modifies Task List tables. SQLite is opened with `Mode=ReadOnly` and `PRAGMA query_only=ON`.
+
+Edit `appsettings.json`:
+
+```json
+{
+  "TaskListStats": {
+    "DatabasePath": "../task-list/data/task-list.db",
+    "ListenUrl": "http://0.0.0.0:8172"
+  }
+}
+```
+
+The default path assumes the two Git repositories are sibling directories:
+
+```text
+projects/
+├── task-list/
+│   └── data/task-list.db
+└── task-list-stats/
+```
+
+You can also override it without editing the file:
+
+### Linux / macOS
+
+```bash
+TASKLIST_DB_PATH=/path/to/task-list.db dotnet run
+```
+
+### Windows PowerShell
+
+```powershell
+$env:TASKLIST_DB_PATH = 'C:\path\to\task-list.db'
+dotnet run
+```
+
+The listening URL can likewise be overridden with `TASKLIST_STATS_URL`.
+
+## Run
+
+Requires .NET 10.
+
+```bash
+dotnet restore
+dotnet run
+```
+
+Then open:
+
+```text
+http://NAS-IP:8172
+```
+
+The server and client are cross-platform. They can run on Windows, Linux, or macOS; the browser/PWA works on normal desktop and mobile browsers.
+
+## Security
+
+v0.1 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
+
+The database connection itself is read-only, so the stats app cannot intentionally edit Task List data.
+
+## Development philosophy
+
+The same philosophy as Task List:
+
+- boring technology
+- small source tree
+- no frameworks where plain browser APIs work
+- no chart dependency for simple graphs
+- database remains authoritative
+- statistics app cannot mutate the task database
+
+## Version
+
+Task List Stats v0.1
