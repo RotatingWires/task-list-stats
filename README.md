@@ -1,6 +1,6 @@
 # TaskList Stats
 
-**TaskList Stats v0.17** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.18** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
 
@@ -12,6 +12,12 @@ It intentionally stays separate from TaskList so charts, heatmaps, historical an
 - Resized the Help dropdown to fit `About TaskList Stats` without an oversized button or a truncated label.
 - Restored **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** during normal initial page load.
 - Bumped server, snapshot, assembly, UI, About dialog, and PWA cache metadata to v0.12.
+
+## v0.18
+
+- Preserve date-only imported values such as `2026-05-12` as that exact local calendar date instead of letting JavaScript interpret them as UTC midnight and potentially shift them to the previous day.
+- Keep date-only history available for calendar/day/month statistics while time-of-day tools continue to require confirmed timestamps.
+- Automatically shrink long vertical Y-axis labels on compact desktop charts so labels such as `Average tasks created` are not clipped.
 
 ## v0.17
 

@@ -58,7 +58,13 @@ function axes(ctx, width, height, maxValue, yLabel = 'Tasks', left = 78, bottom 
     ctx.rotate(-Math.PI / 2);
     ctx.fillStyle = '#222';
     ctx.textAlign = 'center';
-    ctx.font = 'bold 16px Tahoma, Arial, sans-serif';
+    let yFontSize = 16;
+    const maxLabelSpan = Math.max(60, height - 16);
+    do {
+      ctx.font = `bold ${yFontSize}px Tahoma, Arial, sans-serif`;
+      if (ctx.measureText(yLabel).width <= maxLabelSpan || yFontSize <= 10) break;
+      yFontSize--;
+    } while (true);
     ctx.fillText(yLabel, 0, 0);
     ctx.restore();
   }

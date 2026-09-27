@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.17';
+const VERSION = '0.18';
 const state = {
   snapshot: null,
   selectedListId: 'all',
@@ -22,6 +22,12 @@ const STOPWORDS = new Set([
 
 function parseDate(value) {
   if (!value || typeof value !== 'string' || value.toLowerCase() === 'unknown') return null;
+  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnly) {
+    const [, year, month, day] = dateOnly;
+    const d = new Date(Number(year), Number(month) - 1, Number(day));
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;
 }
