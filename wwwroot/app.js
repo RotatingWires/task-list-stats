@@ -1,10 +1,12 @@
 'use strict';
 
-const VERSION = '0.4';
+const VERSION = '0.5';
 const state = {
   snapshot: null,
   selectedListId: 'all',
-  activeTab: 'overview'
+  activeTab: 'overview',
+  activeFunTab: 'roulette',
+  rouletteUniversalId: null
 };
 
 const $ = selector => document.querySelector(selector);
@@ -82,6 +84,18 @@ function formatDuration(ms) {
   if (ms < hour) return `${Math.max(1, Math.round(ms / minute))} min`;
   if (ms < day) return `${oneDecimal.format(ms / hour)} hr`;
   return `${oneDecimal.format(ms / day)} days`;
+}
+
+function terminalDurationMs(item) {
+  if (!item.createdDate) return null;
+  const terminal = item.status === 'Done'
+    ? item.completedDate
+    : item.status === 'Cancelled'
+      ? item.cancelledDate
+      : null;
+  if (!terminal) return null;
+  const ms = terminal - item.createdDate;
+  return ms >= 0 ? ms : null;
 }
 
 function median(values) {
@@ -809,6 +823,89 @@ function renderCommonWords(items) {
   $('#commonWords').replaceChildren(...nodes);
 }
 
+function findTaskByUniversalId(id) {
+  return state.snapshot?.items.find(item => item.universalId === id) || null;
+}
+
+function taskHierarchyStats(item) {
+  const sameList = state.snapshot.items.filter(x => x.listId === item.listId);
+  const prefix = `${item.displayId}.`;
+  const descendants = sameList.filter(x => String(x.displayId).startsWith(prefix));
+  const directChildren = sameList.filter(x => x.parentDisplayId === item.displayId);
+  const parent = item.parentDisplayId
+    ? sameList.find(x => x.displayId === item.parentDisplayId) || null
+    : null;
+  const rootId = String(item.displayId).split('.')[0];
+  const rootPrefix = `${rootId}.`;
+  const rootTree = sameList.filter(x => x.displayId === rootId || String(x.displayId).startsWith(rootPrefix));
+  const siblings = sameList.filter(x => x.parentDisplayId === item.parentDisplayId && x.displayId !== item.displayId);
+  return { parent, descendants, directChildren, rootTree, siblings };
+}
+
+function renderRoulette() {
+  const result = $('#rouletteResult');
+  const empty = $('#rouletteEmpty');
+  const item = state.rouletteUniversalId == null ? null : findTaskByUniversalId(state.rouletteUniversalId);
+  if (!item || !scopedItems().some(x => x.universalId === item.universalId)) {
+    state.rouletteUniversalId = null;
+    result.hidden = true;
+    empty.hidden = false;
+    empty.textContent = scopedItems().length ? 'No task selected yet.' : 'No current tasks are available in this list scope.';
+    return;
+  }
+
+  const hierarchy = taskHierarchyStats(item);
+  const now = new Date();
+  const terminalMs = terminalDurationMs(item);
+  const currentAge = item.createdDate ? Math.max(0, now - item.createdDate) : null;
+  const lifetimePosition = state.snapshot.highestUniversalId
+    ? `${numberFmt.format(item.universalId)} of ${numberFmt.format(state.snapshot.highestUniversalId)} lifetime IDs`
+    : numberFmt.format(item.universalId);
+
+  $('#rouletteTaskHeading').textContent = `${listName(item.listId)} — #${item.displayId}`;
+  $('#rouletteTaskTitle').textContent = item.title || '(Untitled task)';
+  const rows = [
+    ['Universal ID', lifetimePosition],
+    ['Type', item.parentDisplayId ? 'Subtask' : 'Root task'],
+    ['Status', item.status],
+    ['Nesting depth', numberFmt.format(item.depth)],
+    ['Parent task', hierarchy.parent ? `#${hierarchy.parent.displayId} — ${hierarchy.parent.title}` : '—'],
+    ['Direct children', numberFmt.format(hierarchy.directChildren.length)],
+    ['All descendants', numberFmt.format(hierarchy.descendants.length)],
+    ['Sibling tasks', numberFmt.format(hierarchy.siblings.length)],
+    ['Root tree size', numberFmt.format(hierarchy.rootTree.length)],
+    ['Created', formatDateTime(item.createdDate)],
+    ['Current age', item.status === 'Open' ? formatDuration(currentAge) : '—'],
+    ['Time to terminal status', terminalMs == null ? '—' : formatDuration(terminalMs)],
+    ['Last updated', formatDateTime(item.updatedDate)],
+    ['Completed', formatDateTime(item.completedDate)],
+    ['Cancelled', formatDateTime(item.cancelledDate)],
+    ['Reopened', formatDateTime(item.reopenedDate)],
+    ['Description', item.description || '—']
+  ];
+  setTable($('#rouletteTable'), ['Statistic', 'Value'], rows);
+  empty.hidden = true;
+  result.hidden = false;
+}
+
+function pickRouletteTask() {
+  const items = scopedItems();
+  if (!items.length) {
+    state.rouletteUniversalId = null;
+    renderRoulette();
+    return;
+  }
+  const pick = items[Math.floor(Math.random() * items.length)];
+  state.rouletteUniversalId = pick.universalId;
+  renderRoulette();
+}
+
+function switchFunTab(name) {
+  state.activeFunTab = name;
+  $$('.subtabs [role="tab"]').forEach(btn => btn.setAttribute('aria-selected', btn.dataset.funTab === name ? 'true' : 'false'));
+  $$('.fun-panel').forEach(panel => panel.hidden = panel.dataset.funPanel !== name);
+}
+
 function renderAll() {
   if (!state.snapshot) return;
   $('#titleScope').textContent = scopeLabel();
@@ -819,6 +916,7 @@ function renderAll() {
   renderLists();
   renderPatterns();
   renderTrees();
+  renderRoulette();
   $('#statusLeft').textContent = `${numberFmt.format(scopedItems().length)} current items • ${scopeLabel()}`;
   $('#statusRight').textContent = `DB updated ${formatDateTime(parseDate(state.snapshot.databaseLastWriteUtc))} • Read-only`;
 }
@@ -844,6 +942,7 @@ function populateListFilter() {
     button.append(check,text);
     button.addEventListener('click',()=>{
       state.selectedListId=value;
+      state.rouletteUniversalId=null;
       populateListFilter();
       $('#listFilterLabel').textContent=scopeLabel();
       $('#listFilterMenu').hidden=true; $('#listFilterButton').setAttribute('aria-expanded','false');
@@ -854,7 +953,7 @@ function populateListFilter() {
 }
 
 function populateViewMenu() {
-  const labels = [['overview','Overview'],['trends','Trends'],['calendar','Calendar'],['lists','Lists'],['patterns','Patterns'],['trees','Trees & Titles']];
+  const labels = [['overview','Overview'],['trends','Trends'],['calendar','Calendar'],['lists','Lists'],['patterns','Patterns'],['trees','Trees & Titles'],['fun','Fun']];
   const menu=$('#viewMenu'); menu.replaceChildren();
   for(const [value,label] of labels){
     const button=document.createElement('button'); button.type='button'; button.setAttribute('role','menuitemradio'); button.setAttribute('aria-checked',value===state.activeTab?'true':'false');
@@ -907,15 +1006,19 @@ function downloadSnapshot() {
 
 // ---------- lightweight canvas charts (no chart library) ----------
 function prepareCanvas(canvas, minHeight=220) {
-  const rect=canvas.parentElement.getBoundingClientRect();
-  const cssWidth=Math.max(280,Math.floor(rect.width-8));
   const cssHeight=Math.max(minHeight,Number(canvas.getAttribute('height'))||minHeight);
   const ratio=window.devicePixelRatio||1;
-  canvas.style.width=`${cssWidth}px`; canvas.style.height=`${cssHeight}px`;
-  canvas.width=Math.floor(cssWidth*ratio); canvas.height=Math.floor(cssHeight*ratio);
+  // Keep canvas layout width tied to its container. The old pixel width was fed back
+  // into layout on repeated renders, which could make charts grow after filter changes.
+  canvas.style.width='100%';
+  canvas.style.height=`${cssHeight}px`;
+  const measured=Math.floor(canvas.getBoundingClientRect().width || canvas.parentElement.clientWidth || 280);
+  const cssWidth=Math.max(260,measured);
+  canvas.width=Math.floor(cssWidth*ratio);
+  canvas.height=Math.floor(cssHeight*ratio);
   const ctx=canvas.getContext('2d'); ctx.setTransform(ratio,0,0,ratio,0,0);
   ctx.clearRect(0,0,cssWidth,cssHeight); ctx.fillStyle='#fff'; ctx.fillRect(0,0,cssWidth,cssHeight);
-  ctx.font='bold 14px Tahoma, Arial, sans-serif'; ctx.textBaseline='middle';
+  ctx.font='bold 15px Tahoma, Arial, sans-serif'; ctx.textBaseline='middle';
   return {ctx,width:cssWidth,height:cssHeight};
 }
 
@@ -930,13 +1033,13 @@ function axes(ctx,width,height,maxValue,yLabel='Tasks',left=78,bottom=54,top=32,
     if(i>0){ctx.strokeStyle='#e0e0e0';ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(width-right,y);ctx.stroke();}
   }
   if(yLabel){
-    ctx.save();ctx.translate(13,top+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#222';ctx.textAlign='center';ctx.font='bold 14px Tahoma, Arial, sans-serif';ctx.fillText(yLabel,0,0);ctx.restore();
+    ctx.save();ctx.translate(13,top+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#222';ctx.textAlign='center';ctx.font='bold 16px Tahoma, Arial, sans-serif';ctx.fillText(yLabel,0,0);ctx.restore();
   }
   return {left,bottom,top,right,plotW,plotH,max};
 }
 
 function drawBarValue(ctx,text,x,y){
-  ctx.save();ctx.font='bold 13px Tahoma, Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#111';ctx.fillText(text,x,Math.max(13,y-4));ctx.restore();
+  ctx.save();ctx.font='bold 14px Tahoma, Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#111';ctx.fillText(text,x,Math.max(13,y-4));ctx.restore();
 }
 
 function drawBarChart(canvas,labels,values,color='#000080',decimal=false,yLabel='Tasks'){
@@ -1014,6 +1117,8 @@ $('#refreshButton').addEventListener('click',()=>{closeMenus();loadSnapshot();})
 $('#exportButton').addEventListener('click',()=>{closeMenus();downloadSnapshot();});
 $('#aboutButton').addEventListener('click',()=>{closeMenus();$('#aboutDialog').showModal();});
 $$('.tabs [role="tab"]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+$$('.subtabs [role="tab"]').forEach(btn=>btn.addEventListener('click',()=>switchFunTab(btn.dataset.funTab)));
+$('#rouletteButton').addEventListener('click',pickRouletteTask);
 $('#trendGroup').addEventListener('change',renderTrends);
 $('#heatmapYear').addEventListener('change',()=>{renderYearHeatmap(scopedItems());const y=$('#heatmapYear').value;const m=$('#calendarMonth').value?.split('-')[1]||'01';$('#calendarMonth').value=`${y}-${m}`;renderMonthCalendar(scopedItems());});
 $('#heatmapMode').addEventListener('change',()=>renderYearHeatmap(scopedItems()));

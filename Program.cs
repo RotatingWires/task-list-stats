@@ -18,7 +18,7 @@ app.MapGet("/api/health", () =>
     return Results.Ok(new
     {
         ok = File.Exists(path),
-        version = "0.4",
+        version = "0.5",
         databaseFound = File.Exists(path),
         databaseFile = Path.GetFileName(path)
     });
@@ -73,7 +73,7 @@ app.MapGet("/api/snapshot", async () =>
         await using (var command = connection.CreateCommand())
         {
             command.CommandText = """
-                SELECT universal_id, list_id, display_id, parent_display_id, title, status,
+                SELECT universal_id, list_id, display_id, parent_display_id, title, description, status,
                        created_at, updated_at, completed_at, cancelled_at, reopened_at
                 FROM items
                 ORDER BY universal_id;
@@ -87,12 +87,13 @@ app.MapGet("/api/snapshot", async () =>
                     reader.GetString(2),
                     reader.IsDBNull(3) ? null : reader.GetString(3),
                     reader.GetString(4),
-                    reader.GetString(5),
+                    reader.IsDBNull(5) ? "" : reader.GetString(5),
                     reader.GetString(6),
-                    reader.IsDBNull(7) ? null : reader.GetString(7),
+                    reader.GetString(7),
                     reader.IsDBNull(8) ? null : reader.GetString(8),
                     reader.IsDBNull(9) ? null : reader.GetString(9),
-                    reader.IsDBNull(10) ? null : reader.GetString(10)));
+                    reader.IsDBNull(10) ? null : reader.GetString(10),
+                    reader.IsDBNull(11) ? null : reader.GetString(11)));
             }
         }
 
@@ -106,7 +107,7 @@ app.MapGet("/api/snapshot", async () =>
 
         var fileInfo = new FileInfo(dbPath);
         return Results.Ok(new StatsSnapshot(
-            "0.4",
+            "0.5",
             DateTimeOffset.UtcNow.ToString("O"),
             fileInfo.LastWriteTimeUtc.ToString("O"),
             highestUniversalId,
@@ -162,6 +163,7 @@ record ItemSnapshot(
     string DisplayId,
     string? ParentDisplayId,
     string Title,
+    string Description,
     string Status,
     string CreatedAt,
     string? UpdatedAt,

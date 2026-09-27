@@ -1,6 +1,6 @@
 # Task List Stats
 
-**Task List Stats v0.4** is a separate, read-only statistics app for the self-hosted **Task List** database.
+**Task List Stats v0.5** is a separate, read-only statistics app for the self-hosted **Task List** database.
 
 It intentionally stays separate from Task List so charts, heatmaps, historical analysis, and reporting do not add bloat to the main task app.
 
@@ -81,6 +81,12 @@ The interface follows the same Windows 95-style visual language as Task List.
 - Simple task-type inference (quiz, exam/test, reading, discussion, assignment, project, paper/essay, lab)
 - Known reopened-task count and recently reopened tasks
 
+### Fun
+
+- Task Roulette chooses a random current task from the active list filter
+- Shows Task List-style identifiers plus hierarchy size, parent/child relationships, nesting depth, age, terminal-status duration, timestamps, and description
+- Designed as the first subtab in an expandable Fun section for future experiments
+
 ## v0.2 interface refinements
 
 - Hidden tab-strip scrollbar while retaining horizontal scrolling on narrow screens
@@ -120,6 +126,16 @@ The interface follows the same Windows 95-style visual language as Task List.
 - Enlarged the weekday × hour heatmap cells and labels
 - Explicitly use the Stats bar-chart icon as the browser favicon
 - Removed the redundant `Depth N` subtitle from the Deepest nesting level card
+
+## v0.5 interface and Fun-tab additions
+
+- Added a tooltip to the Weekday × Hour Heatmap explaining its event timestamps, scope, and full-history behavior
+- Renamed the month/year panel to `Month × Year Heatmap (Created Tasks)` and standardized section headings to title case
+- Fixed canvas sizing so repeatedly changing the list filter no longer causes graphs to grow
+- Enlarged the Weekday × Hour Heatmap cells and labels
+- Added a new Fun tab with a Task Roulette subtab
+- Task Roulette picks a random current task from the active list scope and shows hierarchy, age, terminal-duration, timestamp, and identifier statistics
+- Included task descriptions in the read-only stats snapshot for Task Roulette
 
 ## Historical-data limitation
 
@@ -201,7 +217,7 @@ The server and client are cross-platform. They can run on Windows, Linux, or mac
 
 ## Security
 
-v0.4 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
+v0.5 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
 
 The database connection itself is read-only, so the stats app cannot intentionally edit Task List data.
 
@@ -218,4 +234,4 @@ The same philosophy as Task List:
 
 ## Version
 
-Task List Stats v0.4
+Task List Stats v0.5
