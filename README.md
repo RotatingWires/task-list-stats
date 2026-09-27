@@ -1,8 +1,16 @@
 # TaskList Stats
 
-**TaskList Stats v0.20** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.21** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
+
+## v0.21
+
+- Simplified Night Owl, Early Bird, and Cleanup Day wording so the UI talks about times directly instead of repeatedly saying “confirmed times.”
+- Matched TaskList's current mobile bottom spacing: 5px minimum plus the iOS safe-area inset, with the same left/right safe-area treatment.
+- Added `--ios-top-offset` and `--ios-bottom-offset` CSS variables so the top and bottom mobile offsets can be tuned in one place.
+- Set the current top offset to 0px and bottom offset to 5px to match TaskList's present values.
+- Removed an older overridden mobile window min-height rule that no longer affected the current fullscreen layout.
 
 ## v0.20
 
