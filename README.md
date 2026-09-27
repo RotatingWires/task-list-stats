@@ -1,17 +1,18 @@
 # TaskList Stats
 
-**TaskList Stats v0.19** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.20** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
 
-## v0.12
+## v0.20
 
-- Fixed the cleanup regression that left fresh page loads stuck on `Loading database...` until **File → Refresh** was clicked.
-- Fixed the strict-mode line-chart tooltip binding that caused `v09.js` to stop before automatic startup finished.
-- Kept line-chart hover/tap tooltips while bar charts remain tooltip-free.
-- Resized the Help dropdown to fit `About TaskList Stats` without an oversized button or a truncated label.
-- Restored **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** during normal initial page load.
-- Bumped server, snapshot, assembly, UI, About dialog, and PWA cache metadata to v0.12.
+- Require confirmed creation and completion clock times for all elapsed completion-duration statistics; date-only imported history remains available to date-based views without becoming fake midnight precision.
+- Require confirmed clock times for Task Roulette terminal duration and Task Graveyard age-when-closed calculations.
+- Fixed Calendar scope changes so the month picker follows the selected year instead of retaining a stale month from a different list/year.
+- Clear stale line-chart tooltip data whenever a filtered chart has no data.
+- Removed the unused `eventMaps` helper and duplicate confirmed-time/increment helpers from `fun.js`.
+- Changed the server fallback listen port from the stale 8172 value to the current Stats port, 8712.
+- Removed the obsolete teal root-page background and corrected README release ordering.
 
 ## v0.19
 
@@ -63,6 +64,15 @@ It intentionally stays separate from TaskList so charts, heatmaps, historical an
 - Moved all active Fun behavior into one current Fun module, including Night Owl, Early Bird, Same-Day Speedrun, and Cleanup Day.
 - Folded dynamically injected Fun/mobile/menu styles into `style.css`; no current module injects release-specific CSS.
 - Deleted the three historical-version JavaScript files from the repository and PWA cache.
+
+## v0.12
+
+- Fixed the cleanup regression that left fresh page loads stuck on `Loading database...` until **File → Refresh** was clicked.
+- Fixed the strict-mode line-chart tooltip binding that caused `v09.js` to stop before automatic startup finished.
+- Kept line-chart hover/tap tooltips while bar charts remain tooltip-free.
+- Resized the Help dropdown to fit `About TaskList Stats` without an oversized button or a truncated label.
+- Restored **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** during normal initial page load.
+- Bumped server, snapshot, assembly, UI, About dialog, and PWA cache metadata to v0.12.
 
 ## v0.11
 
@@ -147,7 +157,7 @@ The interface follows the same Windows 95-style visual language as TaskList.
 - Longest active streak
 - First and latest dated task
 - Completion percentage and cancellation percentage
-- Average / median / fastest / slowest observed completion time
+- Average / median / fastest / slowest observed completion time from confirmed timestamp pairs
 - Completion-time buckets
 - Average / median open-task age
 - Open for 7 / 30 / 90+ days
@@ -173,7 +183,7 @@ The interface follows the same Windows 95-style visual language as TaskList.
 
 - Per-list total / Open / Done / Cancelled
 - Completion percentage
-- Average completion time
+- Average completion time from confirmed timestamp pairs
 - Share of all current entries
 - Most active list by month
 

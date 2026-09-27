@@ -196,7 +196,7 @@ function drawMultiLineChart(canvas, labels, series, yLabel = 'Tasks') {
   const rawMax = Math.max(1, ...series.flatMap(s => s.values));
   const a = axes(ctx, width, height, rawMax * 1.08, yLabel);
   const n = labels.length;
-  if (!n) { ctx.fillStyle = '#333'; ctx.textAlign = 'center'; ctx.fillText('No data', width / 2, height / 2); return; }
+  if (!n) { delete canvas._tooltipConfig; hideTooltip(); ctx.fillStyle = '#333'; ctx.textAlign = 'center'; ctx.fillText('No data', width / 2, height / 2); return; }
   const xAt = i => a.left + (n === 1 ? a.plotW / 2 : a.plotW * i / (n - 1));
   for (const item of series) {
     ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.beginPath();

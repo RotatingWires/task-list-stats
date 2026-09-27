@@ -5,7 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 var configuredUrl = Environment.GetEnvironmentVariable("TASKLIST_STATS_URL")
     ?? builder.Configuration["TaskListStats:ListenUrl"]
-    ?? "http://0.0.0.0:8172";
+    ?? "http://0.0.0.0:8712";
 builder.WebHost.UseUrls(configuredUrl);
 
 var app = builder.Build();
@@ -18,7 +18,7 @@ app.MapGet("/api/health", () =>
     return Results.Ok(new
     {
         ok = File.Exists(path),
-        version = "0.19",
+        version = "0.20",
         databaseFound = File.Exists(path),
         databaseFile = Path.GetFileName(path)
     });
@@ -107,7 +107,7 @@ app.MapGet("/api/snapshot", async () =>
 
         var fileInfo = new FileInfo(dbPath);
         return Results.Ok(new StatsSnapshot(
-            "0.19",
+            "0.20",
             DateTimeOffset.UtcNow.ToString("O"),
             fileInfo.LastWriteTimeUtc.ToString("O"),
             highestUniversalId,

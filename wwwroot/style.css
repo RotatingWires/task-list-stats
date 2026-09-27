@@ -2,7 +2,6 @@
   font-family: Tahoma, "MS Sans Serif", Arial, sans-serif;
   font-size: 14px;
   color: #000;
-  background: #008080;
   --face: #c0c0c0;
   --light: #fff;
   --mid: #dfdfdf;
@@ -264,7 +263,7 @@ button:active,
 .metric-list { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: baseline; }
 .metric-list .metric-label { overflow-wrap: anywhere; position: relative; }
 .has-tooltip { cursor: help; text-decoration: underline dotted; text-underline-offset: 2px; }
-/* Explanations use the browser's native title tooltip only. */
+/* Explanations use native hover text plus the mobile tap-help bubble. */
 .metric-list .metric-value { font-weight: 700; text-align: right; }
 .note, .small-note { font-size: 11px; color: #333; line-height: 1.35; }
 

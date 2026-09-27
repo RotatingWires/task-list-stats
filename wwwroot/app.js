@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.19';
+const VERSION = '0.20';
 const state = {
   snapshot: null,
   selectedListId: 'all',
@@ -79,7 +79,7 @@ function formatHour(hour) {
 function durationMs(item) {
   const created = item.createdDate;
   const completed = item.completedDate;
-  if (!created || !completed) return null;
+  if (!created || !completed || !hasConfirmedClockTime(item.createdAt) || !hasConfirmedClockTime(item.completedAt)) return null;
   const ms = completed - created;
   return ms >= 0 ? ms : null;
 }
@@ -95,13 +95,18 @@ function formatDuration(ms) {
 }
 
 function terminalDurationMs(item) {
-  if (!item.createdDate) return null;
+  if (!item.createdDate || !hasConfirmedClockTime(item.createdAt)) return null;
   const terminal = item.status === 'Done'
     ? item.completedDate
     : item.status === 'Cancelled'
       ? item.cancelledDate
       : null;
-  if (!terminal) return null;
+  const terminalRaw = item.status === 'Done'
+    ? item.completedAt
+    : item.status === 'Cancelled'
+      ? item.cancelledAt
+      : null;
+  if (!terminal || !hasConfirmedClockTime(terminalRaw)) return null;
   const ms = terminal - item.createdDate;
   return ms >= 0 ? ms : null;
 }
@@ -268,17 +273,6 @@ function scopeLabel() {
   return state.selectedListId === 'all' ? 'All lists' : listName(Number(state.selectedListId));
 }
 
-function eventMaps(items) {
-  const created = new Map(), completed = new Map(), cancelled = new Map(), reopened = new Map();
-  for (const item of items) {
-    if (item.createdDate) increment(created, localDayKey(item.createdDate));
-    if (item.completedDate) increment(completed, localDayKey(item.completedDate));
-    if (item.cancelledDate) increment(cancelled, localDayKey(item.cancelledDate));
-    if (item.reopenedDate) increment(reopened, localDayKey(item.reopenedDate));
-  }
-  return { created, completed, cancelled, reopened };
-}
-
 function longestCreationStreaks(items) {
   const dates = items.map(x => x.createdDate).filter(Boolean).sort((a, b) => a - b);
   if (!dates.length) return { quiet: 0, active: 0, activeTotal: 0 };
@@ -371,10 +365,10 @@ function renderOverview() {
   renderMetricList($('#completionBehavior'), [
     ['Completion percentage', percent(done, total), 'Current Done tasks divided by all current tasks in the selected scope, including Open and Cancelled tasks.'],
     ['Cancellation percentage', percent(cancelled, total), 'Current Cancelled tasks divided by all current tasks in the selected scope.'],
-    ['Average observed completion time', formatDuration(average(durations)), 'The arithmetic mean of completed_at minus created_at for tasks that have both valid timestamps.'],
-    ['Median observed completion time', formatDuration(median(durations)), 'The middle observed created-to-completed duration after sorting all valid completion times. Half were faster and half were slower.'],
-    ['Fastest observed completion', formatDuration(fastest), 'The shortest non-negative time between created_at and completed_at among tasks with both timestamps.'],
-    ['Slowest observed completion', formatDuration(slowest), 'The longest time between created_at and completed_at among tasks with both timestamps.']
+    ['Average observed completion time', formatDuration(average(durations)), 'The arithmetic mean of completed_at minus created_at for tasks with confirmed creation and completion times. Date-only history is excluded.'],
+    ['Median observed completion time', formatDuration(median(durations)), 'The middle created-to-completed duration among tasks with confirmed creation and completion times. Date-only history is excluded.'],
+    ['Fastest observed completion', formatDuration(fastest), 'The shortest non-negative created-to-completed duration among tasks with confirmed creation and completion times.'],
+    ['Slowest observed completion', formatDuration(slowest), 'The longest created-to-completed duration among tasks with confirmed creation and completion times.']
   ]);
 
   const now = new Date();
@@ -544,10 +538,11 @@ function populateYearSelector(items) {
   else select.value = years.includes(new Date().getFullYear()) ? new Date().getFullYear() : years.at(-1) || new Date().getFullYear();
 
   const monthInput = $('#calendarMonth');
-  if (!monthInput.value) {
-    const y = Number(select.value);
-    const latest = items.map(x=>x.createdDate).filter(d=>d && d.getFullYear()===y).sort((a,b)=>b-a)[0];
-    const d = latest || new Date(y, new Date().getMonth(), 1);
+  const selectedYear = Number(select.value);
+  const selectedMonth = /^(\d{4})-(\d{2})$/.exec(monthInput.value);
+  if (!selectedMonth || Number(selectedMonth[1]) !== selectedYear) {
+    const latest = items.map(x=>x.createdDate).filter(d=>d && d.getFullYear()===selectedYear).sort((a,b)=>b-a)[0];
+    const d = latest || new Date(selectedYear, new Date().getMonth(), 1);
     monthInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
   }
 }
