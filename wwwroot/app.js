@@ -1066,33 +1066,6 @@ function drawGroupedBarChart(canvas,labels,aValues,bValues,aColor,bColor,yLabel=
   const step=n>=24?3:Math.max(1,Math.ceil(n/12));ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';labels.forEach((l,i)=>{if(i%step===0||i===n-1)ctx.fillText(l,a.left+(i+.5)*slot,height-19);});
 }
 
-function ensureChartTooltip(canvas){
-  const frame=canvas.parentElement;
-  let tooltip=frame.querySelector('.chart-tooltip');
-  if(!tooltip){tooltip=document.createElement('div');tooltip.className='chart-tooltip';frame.append(tooltip);}
-  if(!canvas._tooltipBound){
-    canvas.addEventListener('mousemove',event=>{
-      const config=canvas._tooltipConfig;if(!config||!config.labels.length){tooltip.style.display='none';return;}
-      const rect=canvas.getBoundingClientRect();
-      const x=event.clientX-rect.left;
-      if(x<config.left-8||x>config.left+config.plotW+8){tooltip.style.display='none';return;}
-      const idx=config.labels.length===1?0:Math.max(0,Math.min(config.labels.length-1,Math.round(((x-config.left)/config.plotW)*(config.labels.length-1))));
-      const lines=[String(config.labels[idx]),...config.series.map(series=>`${series.name}: ${numberFmt.format(series.values[idx]||0)}`)];
-      tooltip.textContent=lines.join('\n');tooltip.style.display='block';
-      const pointX=config.labels.length===1?config.left+config.plotW/2:config.left+(config.plotW*idx/(config.labels.length-1));
-      const tipWidth=tooltip.offsetWidth||160;
-      const tipHeight=tooltip.offsetHeight||60;
-      tooltip.style.left=`${Math.max(4,Math.min(frame.clientWidth-tipWidth-4,pointX-tipWidth/2))}px`;
-      const mouseY=event.clientY-rect.top;
-      const above=mouseY-tipHeight-10;
-      tooltip.style.top=`${Math.max(4,Math.min(frame.clientHeight-tipHeight-4,above>=4?above:mouseY+12))}px`;
-    });
-    canvas.addEventListener('mouseleave',()=>{tooltip.style.display='none';});
-    canvas._tooltipBound=true;
-  }
-  return tooltip;
-}
-
 function drawLineChart(canvas,labels,values,color='#000080',yLabel='Tasks',seriesName='Series'){
   drawMultiLineChart(canvas,labels,[{name:seriesName,values,color}],yLabel);
 }
@@ -1128,5 +1101,21 @@ document.addEventListener('click',closeMenus);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenus();});
 let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>renderAll(),120);});
 
+
+function initializeNativeRetroSelects(){
+  for(const select of document.querySelectorAll('select.native-retro-select')){
+    if(select.closest('.single-arrow-select'))continue;
+    const wrapper=document.createElement('span');
+    wrapper.className='single-arrow-select';
+    select.before(wrapper);
+    wrapper.append(select);
+    const arrow=document.createElement('span');
+    arrow.className='single-arrow-select-icon';
+    arrow.setAttribute('aria-hidden','true');
+    arrow.textContent='▼';
+    wrapper.append(arrow);
+  }
+}
+initializeNativeRetroSelects();
+
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
-loadSnapshot();

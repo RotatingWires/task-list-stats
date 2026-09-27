@@ -32,7 +32,6 @@ style.textContent=`
   }
   .tap-help-tooltip{background:#ffffe1;color:#000}
   .chart-tap-tooltip{background:#111;color:#fff;border-top-color:#555;border-left-color:#555;border-right-color:#000;border-bottom-color:#000}
-  .chart-tooltip{display:none!important}
   .has-tooltip{touch-action:manipulation}
 
   #hourChart{min-width:1900px!important}
@@ -219,16 +218,10 @@ function renderCleanupDay(){
 function renderV09(){
   if(!state.snapshot)return;
   renderNightOwl();renderEarlyBird();renderSameDaySpeedrun();renderCleanupDay();
-  document.querySelectorAll('canvas').forEach(installChartTap);
 }
 const previousRenderAll=renderAll;
 renderAll=function(){previousRenderAll();renderV09();};
 
-document.title='TaskList Stats v0.9';
-const titleNode=document.querySelector('.title-left');if(titleNode)titleNode.textContent='TaskList Stats v0.9';
-const aboutTitle=document.querySelector('#aboutDialog .dialog-title');if(aboutTitle)aboutTitle.textContent='About TaskList Stats';
-const aboutStrong=document.querySelector('#aboutDialog strong');if(aboutStrong)aboutStrong.textContent='TaskList Stats v0.9';
-const aboutButtonLabel=document.querySelector('#aboutButton .menu-label');if(aboutButtonLabel)aboutButtonLabel.textContent='About TaskList Stats';
 
-requestAnimationFrame(()=>{try{renderAll();}catch{}});
+loadSnapshot();
 })();

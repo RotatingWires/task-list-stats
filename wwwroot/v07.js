@@ -13,64 +13,17 @@ style.textContent=`
 `;
 document.head.append(style);
 
-const removedFunTabs=['randomday','guess','fortune'];
-for(const key of removedFunTabs){
-  document.querySelector(`.subtabs [data-fun-tab="${key}"]`)?.remove();
-  const panel=document.querySelector(`.fun-panel[data-fun-panel="${key}"]`);
-  if(panel){panel.hidden=true;panel.style.display='none';}
-}
-
 const TASK_LIST_ORIGIN='http://tasklist.lehighradio.com:8711';
-function taskOrigin(){return TASK_LIST_ORIGIN;}
-
-function prettyTaskUrl(item){
-  return `${taskOrigin()}/task/${encodeURIComponent(item.universalId)}`;
-}
-
 function makeTaskLink(item,label=`#${item.displayId}`){
   const a=document.createElement('a');
   a.className='task-id-link';
-  a.href=prettyTaskUrl(item);
+  a.href=`${TASK_LIST_ORIGIN}/task/${encodeURIComponent(item.universalId)}`;
   a.target='_blank';
   a.rel='noopener';
   a.textContent=label;
   a.title=`Open ${listName(item.listId)} task #${item.displayId} in a new tab`;
   return a;
 }
-
-function upgradeTaskLink(a){
-  if(!(a instanceof HTMLAnchorElement))return;
-  try{
-    const u=new URL(a.href,location.href);
-    let uid=null;
-    const pretty=/^\/task\/(\d+)\/?$/.exec(u.pathname);
-    if(pretty)uid=pretty[1];
-    else uid=u.searchParams.get('task');
-    if(uid&&/^\d+$/.test(uid))a.href=`${TASK_LIST_ORIGIN}/task/${uid}`;
-  }catch{}
-  a.target='_blank';
-  a.rel='noopener';
-}
-
-function upgradeTaskLinks(){
-  document.querySelectorAll('a.task-id-link').forEach(upgradeTaskLink);
-}
-
-const linkObserver=new MutationObserver(records=>{
-  for(const record of records){
-    for(const node of record.addedNodes){
-      if(!(node instanceof Element))continue;
-      if(node.matches?.('a.task-id-link'))upgradeTaskLink(node);
-      node.querySelectorAll?.('a.task-id-link').forEach(upgradeTaskLink);
-    }
-  }
-});
-linkObserver.observe(document.body,{childList:true,subtree:true});
-
-document.addEventListener('click',event=>{
-  const a=event.target.closest?.('a.task-id-link');
-  if(a)upgradeTaskLink(a);
-},true);
 
 function pickRandom(values){return values.length?values[Math.floor(Math.random()*values.length)]:null;}
 function maxEntryOf(map){return [...map.entries()].sort((a,b)=>b[1]-a[1]||String(a[0]).localeCompare(String(b[0])))[0]||null;}
@@ -215,7 +168,6 @@ function renderV07(){
   renderTimeMachineV07();
   renderRecordsV07();
   renderOnThisDayV07();
-  upgradeTaskLinks();
 }
 
 const tmNote=$('#timemachineNote');
@@ -232,8 +184,7 @@ if(oldTimeMachineButton){
   button.addEventListener('click',()=>{
     state.fun.timeMachine=pickRandom(eventDaysV07(scopedItems()));
     renderTimeMachineV07();
-    upgradeTaskLinks();
-  });
+    });
 }
 
 const renderAllV06=renderAll;
@@ -242,10 +193,5 @@ renderAll=function(){
   renderV07();
 };
 
-document.title='TaskList Stats v0.7';
-const titleNode=document.querySelector('.title-left');if(titleNode)titleNode.textContent='TaskList Stats v0.7';
-const statusNode=$('#statusLeft');if(statusNode)statusNode.textContent='TaskList Stats v0.7';
-const about=document.querySelector('#aboutDialog strong');if(about)about.textContent='TaskList Stats v0.7';
 
-renderV07();
 })();

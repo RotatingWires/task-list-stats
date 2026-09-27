@@ -4,6 +4,17 @@
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
 
+## v0.11
+
+- Physically removed Random Day, Guess the Stat, and Fortune Cookie code/CSS instead of creating them and hiding/removing their UI later.
+- Removed the old task-link upgrade observer and query-string compatibility parsing; Stats now creates canonical `/task/<UniversalID>` links directly.
+- Removed the all-canvas tooltip binding left over from v0.9; only line charts install chart tooltip behavior.
+- Removed the old desktop `.chart-tooltip` implementation and the unused Roulette titlebar styles.
+- Consolidated v0.8 layout/mobile CSS and v0.10 single-arrow dropdown CSS into `style.css`.
+- Moved single-arrow select initialization into `app.js`.
+- Deleted `v06.js`, `v08.js`, and `v10.js`; active scripts now load directly and sequentially.
+- Removed stale runtime version-title setters from older feature layers.
+
 ## v0.10
 
 - Standardized TaskList and TaskList Stats naming directly across current source and documentation.
