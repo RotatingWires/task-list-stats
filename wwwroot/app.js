@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.18';
+const VERSION = '0.19';
 const state = {
   snapshot: null,
   selectedListId: 'all',
@@ -30,6 +30,10 @@ function parseDate(value) {
   }
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function hasConfirmedClockTime(value) {
+  return typeof value === 'string' && /T\d{2}:\d{2}/.test(value);
 }
 
 function localDayKey(date) {
@@ -713,22 +717,29 @@ function renderPatterns() {
   const createWeek = Array(7).fill(0), doneWeek = Array(7).fill(0);
   const createHour = Array(24).fill(0), doneHour = Array(24).fill(0);
   for (const item of items) {
-    if (item.createdDate) { createWeek[item.createdDate.getDay()]++; createHour[item.createdDate.getHours()]++; }
-    if (item.completedDate) { doneWeek[item.completedDate.getDay()]++; doneHour[item.completedDate.getHours()]++; }
+    if (item.createdDate) {
+      createWeek[item.createdDate.getDay()]++;
+      if (hasConfirmedClockTime(item.createdAt)) createHour[item.createdDate.getHours()]++;
+    }
+    if (item.completedDate) {
+      doneWeek[item.completedDate.getDay()]++;
+      if (hasConfirmedClockTime(item.completedAt)) doneHour[item.completedDate.getHours()]++;
+    }
   }
   Charts.drawGroupedBarChart($('#weekdayChart'), WEEKDAYS, createWeek, doneWeek, '#000080', '#008000', 'Tasks');
   Charts.drawGroupedBarChart($('#hourChart'), Array.from({length:24},(_,h)=>formatHour(h)), createHour, doneHour, '#000080', '#008000', 'Tasks');
   renderWeekdayHourHeatmap(items);
 
   const bestWeek = createWeek.indexOf(Math.max(...createWeek));
-  const bestHour = createHour.indexOf(Math.max(...createHour));
+  const bestHourCount = Math.max(...createHour);
+  const bestHour = bestHourCount > 0 ? createHour.indexOf(bestHourCount) : null;
   const activeWeeks = new Set(items.map(x=>x.createdDate && weekKey(x.createdDate)).filter(Boolean));
   const activeMonths = new Set(items.map(x=>x.createdDate && monthKey(x.createdDate)).filter(Boolean));
   const datedCount = items.filter(x=>x.createdDate).length;
   const streaks = longestCreationStreaks(items);
   renderMetricList($('#rhythmMetrics'), [
     ['Busiest creation weekday', `${WEEKDAYS[bestWeek]} (${createWeek[bestWeek] || 0})`, 'The weekday with the highest total number of task creation timestamps in the selected scope.'],
-    ['Busiest creation hour', `${formatHour(bestHour)} (${createHour[bestHour] || 0})`, "The hour of the day in which the most tasks were created, using your browser\'s local time."],
+    ['Busiest creation hour', bestHour == null ? '—' : `${formatHour(bestHour)} (${createHour[bestHour]})`, "The hour of the day in which the most tasks with confirmed creation times were created, using your browser\'s local time. Date-only history is excluded."],
     ['Average per active week', activeWeeks.size ? oneDecimal.format(datedCount / activeWeeks.size) : '—', 'Dated task creations divided by the number of calendar weeks that contain at least one creation. Weeks with no creations are not included.'],
     ['Average per active month', activeMonths.size ? oneDecimal.format(datedCount / activeMonths.size) : '—', 'Dated task creations divided by the number of months that contain at least one creation. Months with no creations are not included.'],
     ['Longest quiet streak', `${streaks.quiet} days`, 'The longest run of consecutive days with zero task creations between the first and latest dated task creation.'],
@@ -742,7 +753,8 @@ function renderWeekdayHourHeatmap(items) {
   const matrix = Array.from({length:7},()=>Array(24).fill(0));
   for (const item of items) {
     const d = mode === 'completed' ? item.completedDate : item.createdDate;
-    if (d) matrix[d.getDay()][d.getHours()]++;
+    const raw = mode === 'completed' ? item.completedAt : item.createdAt;
+    if (d && hasConfirmedClockTime(raw)) matrix[d.getDay()][d.getHours()]++;
   }
   const max = Math.max(0, ...matrix.flat());
   const grid = document.createElement('div'); grid.className='wh-grid';
