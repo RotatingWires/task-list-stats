@@ -6,8 +6,9 @@ const oneDecimal = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }
 let tooltip = null;
 
 function prepareCanvas(canvas, minHeight = 220) {
-  if (!canvas.dataset.cssHeight) canvas.dataset.cssHeight = String(Number(canvas.getAttribute('height')) || minHeight);
-  const cssHeight = Math.max(minHeight, Number(canvas.dataset.cssHeight) || minHeight);
+  const declaredHeight = Number(canvas.getAttribute('height')) || minHeight;
+  const mobile = window.matchMedia('(max-width: 780px)').matches;
+  const cssHeight = mobile ? Math.max(220, declaredHeight) : Math.min(180, declaredHeight);
   const ratio = window.devicePixelRatio || 1;
   canvas.style.width = '100%';
   canvas.style.height = `${cssHeight}px`;

@@ -1,6 +1,6 @@
 # TaskList Stats
 
-**TaskList Stats v0.15** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.16** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
 
@@ -12,6 +12,12 @@ It intentionally stays separate from TaskList so charts, heatmaps, historical an
 - Resized the Help dropdown to fit `About TaskList Stats` without an oversized button or a truncated label.
 - Restored **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** during normal initial page load.
 - Bumped server, snapshot, assembly, UI, About dialog, and PWA cache metadata to v0.12.
+
+## v0.16
+
+- Removed the regular Speedrun Fun tool completely; Same-Day Speedrun remains.
+- Made charts shorter and capped full-width chart frames on laptop/desktop screens.
+- Kept the larger horizontally scrollable chart widths on mobile, while retaining smaller desktop minimum widths only for dense Hour-of-Day and Task-Title charts.
 
 ## v0.15
 
@@ -186,7 +192,6 @@ The interface follows the same Windows 95-style visual language as TaskList.
 - On This Day
 - Déjà Vu
 - Slowest Task
-- Speedrun
 - Night Owl
 - Early Bird
 - Same-Day Speedrun
@@ -279,4 +284,4 @@ The same philosophy as TaskList:
 
 ## Version
 
-TaskList Stats v0.12
+TaskList Stats v0.16

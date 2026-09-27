@@ -562,14 +562,23 @@ html,body{height:100%;min-height:0}
     overscroll-behavior-x:contain;
   }
   .chart-frame canvas{max-width:none!important}
-  #completionBucketsChart{min-width:1050px}
-  #trendChart,#backlogChart{min-width:900px}
-  #seasonalityChart{min-width:1000px}
-  #listShareChart{min-width:900px}
-  #weekdayChart{min-width:900px}
-  #hourChart{min-width:1900px}
-  #depthChart{min-width:650px}
-  #taskTypeChart{min-width:1350px}
+  @media (min-width:781px){
+    .chart-frame{max-width:1000px;min-height:190px;margin-left:auto;margin-right:auto}
+    .chart-frame.tall{min-height:200px}
+    #hourChart{min-width:1050px}
+    #taskTypeChart{min-width:850px}
+  }
+
+  @media (max-width:780px){
+    #completionBucketsChart{min-width:1050px}
+    #trendChart,#backlogChart{min-width:900px}
+    #seasonalityChart{min-width:1000px}
+    #listShareChart{min-width:900px}
+    #weekdayChart{min-width:900px}
+    #hourChart{min-width:1900px}
+    #depthChart{min-width:650px}
+    #taskTypeChart{min-width:1350px}
+  }
 
   .year-heatmap,.month-year-heatmap,.weekday-hour-heatmap{
     width:100%;
