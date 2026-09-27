@@ -1,6 +1,6 @@
 # Task List Stats
 
-**Task List Stats v0.2** is a separate, read-only statistics app for the self-hosted **Task List** database.
+**Task List Stats v0.3** is a separate, read-only statistics app for the self-hosted **Task List** database.
 
 It intentionally stays separate from Task List so charts, heatmaps, historical analysis, and reporting do not add bloat to the main task app.
 
@@ -17,7 +17,7 @@ It intentionally stays separate from Task List so charts, heatmaps, historical a
 
 The interface follows the same Windows 95-style visual language as Task List.
 
-## v0.2 statistics
+## Statistics
 
 ### Overview
 
@@ -97,6 +97,18 @@ The interface follows the same Windows 95-style visual language as Task List.
 - Added Created/Completed legends to weekday and hour pattern charts
 - 12-hour AM/PM time labels throughout
 - Removed the reopened-at implementation note from the tree summary
+
+## v0.3 interface refinements
+
+- Removed the duplicate custom metric tooltip so explanatory labels use only the browser-native tooltip
+- Changed canvas-chart hover cards to a single black tooltip that follows the hovered data point
+- Fixed trend/backlog month labels to use readable spacing such as `May 26`
+- Increased chart label/value text size and added extra axis margins so first/last labels are not clipped
+- Reduced hour-chart label density and staggered close grouped-bar values to avoid overlap
+- Enlarged the year activity and month × year heatmaps while keeping the weekday × hour heatmap at its existing size
+- Printed counts directly inside every heatmap cell and removed heatmap hover tooltips
+- Increased month-calendar text size
+- Fixed the View menu label to display `Trees & Titles` with one ampersand
 
 ## Historical-data limitation
 
@@ -178,7 +190,7 @@ The server and client are cross-platform. They can run on Windows, Linux, or mac
 
 ## Security
 
-v0.2 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
+v0.3 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
 
 The database connection itself is read-only, so the stats app cannot intentionally edit Task List data.
 
@@ -195,4 +207,4 @@ The same philosophy as Task List:
 
 ## Version
 
-Task List Stats v0.2
+Task List Stats v0.3

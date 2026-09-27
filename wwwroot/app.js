@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.2';
+const VERSION = '0.3';
 const state = {
   snapshot: null,
   selectedListId: 'all',
@@ -169,7 +169,6 @@ function renderMetricList(container, rows) {
     const l = document.createElement('div'); l.className = 'metric-label'; l.textContent = label;
     if (tooltip) {
       l.classList.add('has-tooltip');
-      l.dataset.tooltip = tooltip;
       l.title = tooltip;
       l.tabIndex = 0;
     }
@@ -363,7 +362,10 @@ function groupKey(date, mode) {
 }
 
 function groupLabel(key, mode) {
-  if (mode === 'month') return formatMonthKey(key).replace(/\s\d{4}$/, m => m.trim().slice(-2));
+  if (mode === 'month') {
+    const [year, month] = key.split('-').map(Number);
+    return `${MONTHS[month - 1]} ${String(year).slice(-2)}`;
+  }
   if (mode === 'week') {
     const d = new Date(`${key}T12:00:00`);
     return `${d.getMonth()+1}/${d.getDate()}/${String(d.getFullYear()).slice(-2)}`;
@@ -452,7 +454,7 @@ function approximateBacklog(items) {
   while (cursor <= end) {
     const key = monthKey(cursor);
     running += deltas.get(key) || 0;
-    labels.push(`${MONTHS[cursor.getMonth()]} '${String(cursor.getFullYear()).slice(-2)}`);
+    labels.push(`${MONTHS[cursor.getMonth()]} ${String(cursor.getFullYear()).slice(-2)}`);
     values.push(Math.max(0, running));
     cursor.setMonth(cursor.getMonth() + 1);
   }
@@ -530,8 +532,8 @@ function renderYearHeatmap(items) {
 
   const grid = document.createElement('div');
   grid.className = 'heatmap-grid';
-  grid.style.gridTemplateColumns = `24px repeat(${weeks}, 18px)`;
-  grid.style.gridTemplateRows = '18px repeat(7, 18px)';
+  grid.style.gridTemplateColumns = `32px repeat(${weeks}, 24px)`;
+  grid.style.gridTemplateRows = '20px repeat(7, 24px)';
   grid.style.gridAutoFlow = 'row';
 
   const corner = document.createElement('div'); grid.append(corner);
@@ -552,7 +554,7 @@ function renderYearHeatmap(items) {
       const value = inYear ? (map.get(localDayKey(d)) || 0) : 0;
       cell.className = `heat ${inYear ? heatClass(value, max) : 'h0'}`;
       if (!inYear) cell.style.visibility = 'hidden';
-      cell.title = `${formatDate(d)}: ${value} ${mode === 'activity' ? 'events' : mode}`;
+      else cell.textContent = String(value);
       grid.append(cell);
     }
   }
@@ -596,15 +598,14 @@ function renderMonthYearHeatmap(items) {
   const max = Math.max(0, ...counts.values());
   const grid = document.createElement('div');
   grid.className = 'month-year-grid';
-  grid.style.gridTemplateColumns = `52px repeat(12, minmax(42px, 1fr))`;
+  grid.style.gridTemplateColumns = `58px repeat(12, 56px)`;
   const blank = document.createElement('div'); grid.append(blank);
   for (const m of MONTHS) { const h=document.createElement('div'); h.className='month-year-head'; h.textContent=m; grid.append(h); }
   for (const year of years) {
     const yl = document.createElement('div'); yl.className='month-year-year'; yl.textContent=year; grid.append(yl);
     for (let m=1;m<=12;m++) {
       const value = counts.get(`${year}-${String(m).padStart(2,'0')}`) || 0;
-      const cell = document.createElement('div'); cell.className=`month-year-cell heat ${heatClass(value,max)}`; cell.textContent=value || '';
-      cell.title = `${MONTHS[m-1]} ${year}: ${value} created`; grid.append(cell);
+      const cell = document.createElement('div'); cell.className=`month-year-cell heat ${heatClass(value,max)}`; cell.textContent=String(value); grid.append(cell);
     }
   }
   $('#monthYearHeatmap').replaceChildren(grid);
@@ -701,7 +702,7 @@ function renderWeekdayHourHeatmap(items) {
     const l=document.createElement('div');l.className='wh-label';l.textContent=WEEKDAYS[d];grid.append(l);
     for(let h=0;h<24;h++){
       const value=matrix[d][h]; const c=document.createElement('div'); c.className=`wh-cell heat ${heatClass(value,max)}`;
-      c.title=`${WEEKDAYS[d]} ${formatHour(h)} — ${value}`; grid.append(c);
+      c.textContent=String(value); grid.append(c);
     }
   }
   $('#weekdayHourHeatmap').replaceChildren(grid);
@@ -853,7 +854,7 @@ function populateListFilter() {
 }
 
 function populateViewMenu() {
-  const labels = [['overview','Overview'],['trends','Trends'],['calendar','Calendar'],['lists','Lists'],['patterns','Patterns'],['trees','Trees && Titles']];
+  const labels = [['overview','Overview'],['trends','Trends'],['calendar','Calendar'],['lists','Lists'],['patterns','Patterns'],['trees','Trees & Titles']];
   const menu=$('#viewMenu'); menu.replaceChildren();
   for(const [value,label] of labels){
     const button=document.createElement('button'); button.type='button'; button.setAttribute('role','menuitemradio'); button.setAttribute('aria-checked',value===state.activeTab?'true':'false');
@@ -914,11 +915,11 @@ function prepareCanvas(canvas, minHeight=220) {
   canvas.width=Math.floor(cssWidth*ratio); canvas.height=Math.floor(cssHeight*ratio);
   const ctx=canvas.getContext('2d'); ctx.setTransform(ratio,0,0,ratio,0,0);
   ctx.clearRect(0,0,cssWidth,cssHeight); ctx.fillStyle='#fff'; ctx.fillRect(0,0,cssWidth,cssHeight);
-  ctx.font='10px Tahoma, Arial, sans-serif'; ctx.textBaseline='middle';
+  ctx.font='12px Tahoma, Arial, sans-serif'; ctx.textBaseline='middle';
   return {ctx,width:cssWidth,height:cssHeight};
 }
 
-function axes(ctx,width,height,maxValue,yLabel='Tasks',left=62,bottom=34,top=24,right=12,decimalTicks=false){
+function axes(ctx,width,height,maxValue,yLabel='Tasks',left=70,bottom=46,top=28,right=40,decimalTicks=false){
   const plotW=width-left-right, plotH=height-top-bottom;
   ctx.strokeStyle='#808080'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(left,top);ctx.lineTo(left,height-bottom);ctx.lineTo(width-right,height-bottom);ctx.stroke();
   const max=Math.max(decimalTicks ? 0.1 : 1,maxValue);
@@ -929,23 +930,23 @@ function axes(ctx,width,height,maxValue,yLabel='Tasks',left=62,bottom=34,top=24,
     if(i>0){ctx.strokeStyle='#e0e0e0';ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(width-right,y);ctx.stroke();}
   }
   if(yLabel){
-    ctx.save();ctx.translate(13,top+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#222';ctx.textAlign='center';ctx.font='10px Tahoma, Arial, sans-serif';ctx.fillText(yLabel,0,0);ctx.restore();
+    ctx.save();ctx.translate(13,top+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#222';ctx.textAlign='center';ctx.font='12px Tahoma, Arial, sans-serif';ctx.fillText(yLabel,0,0);ctx.restore();
   }
   return {left,bottom,top,right,plotW,plotH,max};
 }
 
 function drawBarValue(ctx,text,x,y){
-  ctx.save();ctx.font='9px Tahoma, Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#111';ctx.fillText(text,x,Math.max(11,y-3));ctx.restore();
+  ctx.save();ctx.font='11px Tahoma, Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#111';ctx.fillText(text,x,Math.max(13,y-4));ctx.restore();
 }
 
 function drawBarChart(canvas,labels,values,color='#000080',decimal=false,yLabel='Tasks'){
   if(!canvas||canvas.closest('[hidden]'))return;
   const {ctx,width,height}=prepareCanvas(canvas);
   if(!values.length){ctx.fillStyle='#333';ctx.textAlign='center';ctx.fillText('No data',width/2,height/2);return;}
-  const rawMax=Math.max(...values, decimal ? 0.1 : 1); const a=axes(ctx,width,height,rawMax*1.14,yLabel,62,34,24,12,decimal); const n=values.length; const slot=a.plotW/n; const barW=Math.max(2,slot*.68);
+  const rawMax=Math.max(...values, decimal ? 0.1 : 1); const a=axes(ctx,width,height,rawMax*1.14,yLabel,70,46,28,40,decimal); const n=values.length; const slot=a.plotW/n; const barW=Math.max(2,slot*.68);
   values.forEach((v,i)=>{const h=a.plotH*(v/a.max);const x=a.left+i*slot+(slot-barW)/2;const y=height-a.bottom-h;ctx.fillStyle=color;ctx.fillRect(x,y,barW,h);drawBarValue(ctx,decimal?oneDecimal.format(v):numberFmt.format(v),x+barW/2,y);});
   const step=Math.max(1,Math.ceil(n/12)); ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';
-  labels.forEach((label,i)=>{if(i%step===0||i===n-1)ctx.fillText(String(label),a.left+(i+.5)*slot,height-15);});
+  labels.forEach((label,i)=>{if(i%step===0||i===n-1)ctx.fillText(String(label),a.left+(i+.5)*slot,height-19);});
 }
 
 function drawGroupedBarChart(canvas,labels,aValues,bValues,aColor,bColor,yLabel='Tasks'){
@@ -955,10 +956,11 @@ function drawGroupedBarChart(canvas,labels,aValues,bValues,aColor,bColor,yLabel=
     const h1=a.plotH*aValues[i]/a.max,h2=a.plotH*bValues[i]/a.max; const center=a.left+(i+.5)*slot;
     const y1=height-a.bottom-h1,y2=height-a.bottom-h2;
     ctx.fillStyle=aColor;ctx.fillRect(center-bw,y1,bw,h1);ctx.fillStyle=bColor;ctx.fillRect(center,y2,bw,h2);
+    const labelsClose = aValues[i] && bValues[i] && Math.abs(y1-y2) < 14;
     if(aValues[i])drawBarValue(ctx,numberFmt.format(aValues[i]),center-bw/2,y1);
-    if(bValues[i])drawBarValue(ctx,numberFmt.format(bValues[i]),center+bw/2,y2);
+    if(bValues[i])drawBarValue(ctx,numberFmt.format(bValues[i]),center+bw/2,labelsClose ? y2-13 : y2);
   }
-  const step=Math.max(1,Math.ceil(n/12));ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';labels.forEach((l,i)=>{if(i%step===0||i===n-1)ctx.fillText(l,a.left+(i+.5)*slot,height-15);});
+  const step=n>=24?3:Math.max(1,Math.ceil(n/12));ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';labels.forEach((l,i)=>{if(i%step===0||i===n-1)ctx.fillText(l,a.left+(i+.5)*slot,height-19);});
 }
 
 function ensureChartTooltip(canvas){
@@ -976,8 +978,11 @@ function ensureChartTooltip(canvas){
       tooltip.textContent=lines.join('\n');tooltip.style.display='block';
       const pointX=config.labels.length===1?config.left+config.plotW/2:config.left+(config.plotW*idx/(config.labels.length-1));
       const tipWidth=tooltip.offsetWidth||160;
+      const tipHeight=tooltip.offsetHeight||60;
       tooltip.style.left=`${Math.max(4,Math.min(frame.clientWidth-tipWidth-4,pointX-tipWidth/2))}px`;
-      tooltip.style.top='7px';
+      const mouseY=event.clientY-rect.top;
+      const above=mouseY-tipHeight-10;
+      tooltip.style.top=`${Math.max(4,Math.min(frame.clientHeight-tipHeight-4,above>=4?above:mouseY+12))}px`;
     });
     canvas.addEventListener('mouseleave',()=>{tooltip.style.display='none';});
     canvas._tooltipBound=true;
@@ -995,7 +1000,7 @@ function drawMultiLineChart(canvas,labels,series,yLabel='Tasks'){
   if(!n){ctx.fillStyle='#333';ctx.textAlign='center';ctx.fillText('No data',width/2,height/2);return;}
   const xAt=i=>a.left+(n===1?a.plotW/2:(a.plotW*i/(n-1)));
   for(const seriesItem of series){ctx.strokeStyle=seriesItem.color;ctx.lineWidth=2;ctx.beginPath();seriesItem.values.forEach((v,i)=>{const x=xAt(i),y=a.top+a.plotH-(a.plotH*v/a.max);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.stroke();}
-  const step=Math.max(1,Math.ceil(n/10));ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';labels.forEach((l,i)=>{if(i%step===0||i===n-1)ctx.fillText(l,xAt(i),height-15);});
+  const step=Math.max(1,Math.ceil(n/10));ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';labels.forEach((l,i)=>{if(i%step===0||i===n-1)ctx.fillText(l,xAt(i),height-19);});
   ensureChartTooltip(canvas);
   canvas._tooltipConfig={labels,series,left:a.left,plotW:a.plotW};
 }

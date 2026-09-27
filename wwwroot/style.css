@@ -181,6 +181,7 @@ button:active,
   gap: 2px;
   padding: 7px 8px 0;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
   border-bottom: 1px solid #808080;
@@ -255,28 +256,7 @@ button:active,
 .metric-list { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: baseline; }
 .metric-list .metric-label { overflow-wrap: anywhere; position: relative; }
 .metric-label.has-tooltip { cursor: help; text-decoration: underline dotted; text-underline-offset: 2px; }
-.metric-label.has-tooltip::after {
-  content: attr(data-tooltip);
-  display: none;
-  position: absolute;
-  z-index: 120;
-  left: 0;
-  top: calc(100% + 5px);
-  width: max-content;
-  max-width: min(360px, 75vw);
-  padding: 5px 7px;
-  color: #000;
-  background: #ffffe1;
-  border: 1px solid #000;
-  box-shadow: 1px 1px 0 #808080;
-  font-size: 11px;
-  line-height: 1.35;
-  font-weight: 400;
-  text-decoration: none;
-  white-space: normal;
-}
-.metric-label.has-tooltip:hover::after,
-.metric-label.has-tooltip:focus::after { display: block; }
+/* Explanations use the browser's native title tooltip only. */
 .metric-list .metric-value { font-weight: 700; text-align: right; }
 .note, .small-note { font-size: 11px; color: #333; line-height: 1.35; }
 
@@ -330,21 +310,25 @@ tr:last-child td { border-bottom: 0; }
 .small-row { margin-bottom: 5px; }
 .month-input { min-width: 160px; }
 
-.year-heatmap { overflow-x: auto; padding: 5px 2px 2px; }
+.year-heatmap { overflow-x: auto; padding: 6px 2px 3px; }
 .heatmap-grid {
   display: grid;
-  grid-template-rows: 18px repeat(7, 18px);
+  grid-template-rows: 20px repeat(7, 24px);
   grid-auto-flow: column;
-  grid-auto-columns: 18px;
+  grid-auto-columns: 24px;
   gap: 2px;
   min-width: max-content;
 }
-.heat-label { font-size: 9px; line-height: 14px; text-align: right; padding-right: 2px; min-width: 22px; }
-.heat-month { font-size: 9px; line-height: 14px; white-space: nowrap; overflow: visible; }
+.heat-label { font-size: 10px; line-height: 18px; text-align: right; padding-right: 3px; min-width: 30px; }
+.heat-month { font-size: 10px; line-height: 18px; white-space: nowrap; overflow: visible; }
 .heat {
-  width: 16px;
-  height: 16px;
-  display: inline-block;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 700;
   border-top: 1px solid #fff;
   border-left: 1px solid #fff;
   border-right: 1px solid #606060;
@@ -356,7 +340,9 @@ tr:last-child td { border-bottom: 0; }
 .h2 { background: #6f9bb5; }
 .h3 { background: #2d6587; }
 .h4 { background: #003b5c; }
-.heat-legend { font-size: 10px; display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-top: 6px; }
+.h3, .h4 { color: #fff; }
+.heat-legend { font-size: 11px; display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-top: 6px; }
+.heat-legend .heat { width: 16px; height: 16px; font-size: 0; }
 
 .month-calendar {
   display: grid;
@@ -366,14 +352,14 @@ tr:last-child td { border-bottom: 0; }
   overflow: auto;
 }
 .calendar-head {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   text-align: center;
   padding: 4px;
   border-bottom: 1px solid #808080;
 }
 .calendar-day {
-  min-height: 83px;
+  min-height: 92px;
   background: #fff;
   border-top: 1px solid #404040;
   border-left: 1px solid #404040;
@@ -382,23 +368,23 @@ tr:last-child td { border-bottom: 0; }
   padding: 4px;
 }
 .calendar-day.empty { background: #d0d0d0; }
-.calendar-date { font-weight: 700; font-size: 11px; margin-bottom: 5px; }
-.calendar-count { font-size: 10px; line-height: 1.35; }
+.calendar-date { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+.calendar-count { font-size: 12px; line-height: 1.4; }
 .calendar-count.created { color: #000080; }
 .calendar-count.done { color: #006000; }
 .calendar-count.cancelled { color: #800000; }
 
 .month-year-heatmap { overflow: auto; }
-.month-year-grid { display: grid; gap: 2px; align-items: center; min-width: 650px; }
-.month-year-cell { width: 100%; min-width: 42px; height: 30px; display: grid; place-items: center; font-size: 10px; }
-.month-year-head, .month-year-year { font-size: 10px; font-weight: 700; text-align: center; }
-.month-year-head { align-self: end; padding-bottom: 3px; }
+.month-year-grid { display: grid; gap: 3px; align-items: center; min-width: max-content; }
+.month-year-cell { width: 56px; min-width: 56px; height: 36px; display: grid; place-items: center; font-size: 12px; }
+.month-year-head, .month-year-year { font-size: 11px; font-weight: 700; text-align: center; }
+.month-year-head { width: 56px; align-self: end; padding-bottom: 3px; }
 
 .weekday-hour-heatmap { overflow-x: auto; }
 .wh-grid { display: grid; gap: 2px; grid-template-columns: 44px repeat(24, 26px); min-width: 720px; align-items: center; }
 .wh-label { font-size: 9px; text-align: right; padding-right: 3px; }
 .wh-hour { font-size: 8px; text-align: center; white-space: nowrap; }
-.wh-cell { width: 26px; height: 22px; }
+.wh-cell { width: 26px; height: 22px; font-size: 8px; font-weight: 700; }
 
 .word-cloud {
   display: flex;
@@ -486,11 +472,11 @@ tr:last-child td { border-bottom: 0; }
   pointer-events: none;
   max-width: min(320px, 80%);
   padding: 5px 7px;
-  background: #ffffe1;
-  color: #000;
+  background: #111;
+  color: #fff;
   border: 1px solid #000;
   box-shadow: 1px 1px 0 #808080;
-  font: 11px Tahoma, "MS Sans Serif", Arial, sans-serif;
+  font: 12px Tahoma, "MS Sans Serif", Arial, sans-serif;
   line-height: 1.35;
   white-space: pre-line;
 }
