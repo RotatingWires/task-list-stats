@@ -1,8 +1,16 @@
 # Task List Stats
 
-**Task List Stats v0.5** is a separate, read-only statistics app for the self-hosted **Task List** database.
+**Task List Stats v0.6** is a separate, read-only statistics app for the self-hosted **Task List** database.
 
 It intentionally stays separate from Task List so charts, heatmaps, historical analysis, and reporting do not add bloat to the main task app.
+
+## v0.6
+
+- Task IDs shown in Stats now deep-link into Task List, selecting the correct list, switching to **All**, scrolling to the task, and highlighting it.
+- Fixed high-DPI canvas charts growing taller after repeated list-filter changes.
+- Expanded **Fun** with Task Roulette, Ancient Task, Forgotten Task, Time Machine, Productivity Jackpot, Task Graveyard, Personal Records, On This Day, Déjà Vu, Slowest Task, Speedrun, Random Day, Guess the Stat, and Task Fortune Cookie.
+- Fun features remain local and use the read-only Stats snapshot.
+
 
 ## Stack
 
@@ -217,7 +225,7 @@ The server and client are cross-platform. They can run on Windows, Linux, or mac
 
 ## Security
 
-v0.5 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
+v0.6 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
 
 The database connection itself is read-only, so the stats app cannot intentionally edit Task List data.
 
@@ -234,4 +242,4 @@ The same philosophy as Task List:
 
 ## Version
 
-Task List Stats v0.5
+Task List Stats v0.6
