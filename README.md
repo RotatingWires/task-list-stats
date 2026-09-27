@@ -1,16 +1,35 @@
 # Task List Stats
 
-**Task List Stats v0.6** is a separate, read-only statistics app for the self-hosted **Task List** database.
+**Task List Stats v0.8** is a separate, read-only statistics app for the self-hosted **Task List** database.
 
 It intentionally stays separate from Task List so charts, heatmaps, historical analysis, and reporting do not add bloat to the main task app.
 
+## v0.8
+
+- Changed the app shell to a fixed-height desktop-style window so the page itself stays fixed and only the Stats workspace scrolls.
+- Made canvas charts horizontally scrollable when their readable minimum width is wider than the viewport, preventing mobile label/value collisions.
+- Added larger minimum widths for completion, trend, weekday/hour, seasonality, list-share, nesting-depth, and task-type charts.
+- Fixed the mobile Month Calendar so its seven columns scroll inside the Calendar panel instead of forcing the whole page wider.
+- Kept year, month/year, and weekday/hour heatmaps contained inside their own horizontal scroll areas.
+- Standardized Fun result presentation so spotlight-style results use the same recessed table treatment as Time Machine.
+- Removed the extra Task Roulette Result titlebar and flattened its result shell to match the other Fun tools.
+
+## v0.7
+
+- Task-ID links open Task List in a new tab and use clean `/task/<UniversalID>` links.
+- Removed Random Day, Guess the Stat, and Fortune Cookie from Fun.
+- Increased Fun description and Déjà Vu table text sizes.
+- Clarified Time Machine by separating the event on the selected date from each task's current status.
+- Fixed bottom-edge presentation for Task Graveyard and Slowest Task.
+- Expanded Personal Records, removed Highest Universal ID, and added additional day/month/tree/title records.
+- On This Day now shows full month/day/year event dates.
+
 ## v0.6
 
-- Task IDs shown in Stats now deep-link into Task List, selecting the correct list, switching to **All**, scrolling to the task, and highlighting it.
+- Task IDs shown in Stats deep-link into Task List, selecting the correct list, switching to **All**, scrolling to the task, and highlighting it.
 - Fixed high-DPI canvas charts growing taller after repeated list-filter changes.
 - Expanded **Fun** with Task Roulette, Ancient Task, Forgotten Task, Time Machine, Productivity Jackpot, Task Graveyard, Personal Records, On This Day, Déjà Vu, Slowest Task, Speedrun, Random Day, Guess the Stat, and Task Fortune Cookie.
 - Fun features remain local and use the read-only Stats snapshot.
-
 
 ## Stack
 
@@ -91,9 +110,17 @@ The interface follows the same Windows 95-style visual language as Task List.
 
 ### Fun
 
-- Task Roulette chooses a random current task from the active list filter
-- Shows Task List-style identifiers plus hierarchy size, parent/child relationships, nesting depth, age, terminal-status duration, timestamps, and description
-- Designed as the first subtab in an expandable Fun section for future experiments
+- Task Roulette
+- Ancient Task
+- Forgotten Task
+- Time Machine
+- Productivity Jackpot
+- Task Graveyard
+- Personal Records
+- On This Day
+- Déjà Vu
+- Slowest Task
+- Speedrun
 
 ## v0.2 interface refinements
 
@@ -123,7 +150,6 @@ The interface follows the same Windows 95-style visual language as Task List.
 - Printed counts directly inside every heatmap cell and removed heatmap hover tooltips
 - Increased month-calendar text size
 - Fixed the View menu label to display `Trees & Titles` with one ampersand
-
 
 ## v0.4 interface refinements
 
@@ -169,42 +195,9 @@ Therefore:
 
 Task List Stats never creates or modifies Task List tables. SQLite is opened with `Mode=ReadOnly` and `PRAGMA query_only=ON`.
 
-Edit `appsettings.json`:
+Edit `appsettings.json` for your local database path and listening address.
 
-```json
-{
-  "TaskListStats": {
-    "DatabasePath": "../task-list/data/task-list.db",
-    "ListenUrl": "http://0.0.0.0:8172"
-  }
-}
-```
-
-The default path assumes the two Git repositories are sibling directories:
-
-```text
-projects/
-├── task-list/
-│   └── data/task-list.db
-└── task-list-stats/
-```
-
-You can also override it without editing the file:
-
-### Linux / macOS
-
-```bash
-TASKLIST_DB_PATH=/path/to/task-list.db dotnet run
-```
-
-### Windows PowerShell
-
-```powershell
-$env:TASKLIST_DB_PATH = 'C:\path\to\task-list.db'
-dotnet run
-```
-
-The listening URL can likewise be overridden with `TASKLIST_STATS_URL`.
+You can also override the database path with `TASKLIST_DB_PATH` and the listening URL with `TASKLIST_STATS_URL`.
 
 ## Run
 
@@ -215,17 +208,11 @@ dotnet restore
 dotnet run
 ```
 
-Then open:
-
-```text
-http://NAS-IP:8172
-```
-
 The server and client are cross-platform. They can run on Windows, Linux, or macOS; the browser/PWA works on normal desktop and mobile browsers.
 
 ## Security
 
-v0.6 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
+v0.8 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
 
 The database connection itself is read-only, so the stats app cannot intentionally edit Task List data.
 
@@ -242,4 +229,4 @@ The same philosophy as Task List:
 
 ## Version
 
-Task List Stats v0.6
+Task List Stats v0.8

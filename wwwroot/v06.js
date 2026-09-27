@@ -3,9 +3,14 @@
   const core = document.createElement('script');
   core.src = '/v06-core.js';
   core.onload = () => {
-    const next = document.createElement('script');
-    next.src = '/v07.js';
-    document.body.append(next);
+    const v07 = document.createElement('script');
+    v07.src = '/v07.js';
+    v07.onload = () => {
+      const v08 = document.createElement('script');
+      v08.src = '/v08.js';
+      document.body.append(v08);
+    };
+    document.body.append(v07);
   };
   document.body.append(core);
 })();
