@@ -1,6 +1,6 @@
 # TaskList Stats
 
-**TaskList Stats v0.13** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.14** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
 
@@ -12,6 +12,13 @@ It intentionally stays separate from TaskList so charts, heatmaps, historical an
 - Resized the Help dropdown to fit `About TaskList Stats` without an oversized button or a truncated label.
 - Restored **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** during normal initial page load.
 - Bumped server, snapshot, assembly, UI, About dialog, and PWA cache metadata to v0.12.
+
+## v0.14
+
+- Speedrun and Same-Day Speedrun now require confirmed creation and completion times; date-only imported history is excluded.
+- Added a 5-minute minimum elapsed time to Speedrun, Same-Day Speedrun, and the fastest-completion record.
+- Cleanup Day now counts and lists only creation/completion events with confirmed times.
+- Night Owl and Early Bird now ignore date-only history because time-of-day is unknown.
 
 ## v0.13
 
