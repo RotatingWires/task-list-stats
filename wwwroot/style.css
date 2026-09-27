@@ -17,6 +17,13 @@
 
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
+
+/* Match Task List: the application UI behaves like desktop chrome, not selectable page text. */
+.window,
+.retro-dialog {
+  user-select: none;
+  -webkit-user-select: none;
+}
 body {
   min-height: 100vh;
   padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
@@ -255,7 +262,7 @@ button:active,
 .groupbox legend { padding: 0 5px; font-weight: 700; }
 .metric-list { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: baseline; }
 .metric-list .metric-label { overflow-wrap: anywhere; position: relative; }
-.metric-label.has-tooltip { cursor: help; text-decoration: underline dotted; text-underline-offset: 2px; }
+.has-tooltip { cursor: help; text-decoration: underline dotted; text-underline-offset: 2px; }
 /* Explanations use the browser's native title tooltip only. */
 .metric-list .metric-value { font-weight: 700; text-align: right; }
 .note, .small-note { font-size: 11px; color: #333; line-height: 1.35; }
@@ -352,14 +359,14 @@ tr:last-child td { border-bottom: 0; }
   overflow: auto;
 }
 .calendar-head {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   text-align: center;
   padding: 4px;
   border-bottom: 1px solid #808080;
 }
 .calendar-day {
-  min-height: 92px;
+  min-height: 108px;
   background: #fff;
   border-top: 1px solid #404040;
   border-left: 1px solid #404040;
@@ -368,8 +375,8 @@ tr:last-child td { border-bottom: 0; }
   padding: 4px;
 }
 .calendar-day.empty { background: #d0d0d0; }
-.calendar-date { font-weight: 700; font-size: 13px; margin-bottom: 6px; }
-.calendar-count { font-size: 12px; line-height: 1.4; }
+.calendar-date { font-weight: 700; font-size: 16px; margin-bottom: 7px; }
+.calendar-count { font-size: 14px; line-height: 1.45; }
 .calendar-count.created { color: #000080; }
 .calendar-count.done { color: #006000; }
 .calendar-count.cancelled { color: #800000; }
@@ -381,10 +388,10 @@ tr:last-child td { border-bottom: 0; }
 .month-year-head { width: 56px; align-self: end; padding-bottom: 3px; }
 
 .weekday-hour-heatmap { overflow-x: auto; }
-.wh-grid { display: grid; gap: 2px; grid-template-columns: 44px repeat(24, 26px); min-width: 720px; align-items: center; }
-.wh-label { font-size: 9px; text-align: right; padding-right: 3px; }
-.wh-hour { font-size: 8px; text-align: center; white-space: nowrap; }
-.wh-cell { width: 26px; height: 22px; font-size: 8px; font-weight: 700; }
+.wh-grid { display: grid; gap: 2px; grid-template-columns: 48px repeat(24, 34px); min-width: 920px; align-items: center; }
+.wh-label { font-size: 10px; font-weight: 700; text-align: right; padding-right: 4px; }
+.wh-hour { font-size: 9px; font-weight: 700; text-align: center; white-space: nowrap; }
+.wh-cell { width: 34px; height: 28px; font-size: 10px; font-weight: 700; }
 
 .word-cloud {
   display: flex;

@@ -1,6 +1,6 @@
 # Task List Stats
 
-**Task List Stats v0.3** is a separate, read-only statistics app for the self-hosted **Task List** database.
+**Task List Stats v0.4** is a separate, read-only statistics app for the self-hosted **Task List** database.
 
 It intentionally stays separate from Task List so charts, heatmaps, historical analysis, and reporting do not add bloat to the main task app.
 
@@ -110,6 +110,17 @@ The interface follows the same Windows 95-style visual language as Task List.
 - Increased month-calendar text size
 - Fixed the View menu label to display `Trees & Titles` with one ampersand
 
+
+## v0.4 interface refinements
+
+- Made the statistics UI non-selectable to behave more like desktop application chrome
+- Increased month-calendar typography and day-cell height
+- Increased and bolded canvas chart labels, axis titles, ticks, and bar values
+- Added explanatory hover text to day-of-week and hour-of-day pattern headings, including scope/history behavior
+- Enlarged the weekday × hour heatmap cells and labels
+- Explicitly use the Stats bar-chart icon as the browser favicon
+- Removed the redundant `Depth N` subtitle from the Deepest nesting level card
+
 ## Historical-data limitation
 
 Task List stores useful current timestamps:
@@ -190,7 +201,7 @@ The server and client are cross-platform. They can run on Windows, Linux, or mac
 
 ## Security
 
-v0.3 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
+v0.4 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
 
 The database connection itself is read-only, so the stats app cannot intentionally edit Task List data.
 
@@ -207,4 +218,4 @@ The same philosophy as Task List:
 
 ## Version
 
-Task List Stats v0.3
+Task List Stats v0.4

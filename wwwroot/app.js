@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.3';
+const VERSION = '0.4';
 const state = {
   snapshot: null,
   selectedListId: 'all',
@@ -747,7 +747,7 @@ function renderTrees() {
   const directChildCounts = parents.map(parent => items.filter(x=>x.listId===parent.listId && x.parentDisplayId===parent.displayId).length);
   const reopened = items.filter(x=>x.reopenedDate).length;
   renderCards($('#treeCards'), [
-    { label:'Deepest nesting level', value:String(deepest), sub: deepest===0?'Root tasks only':`Depth ${deepest}` },
+    { label:'Deepest nesting level', value:String(deepest) },
     { label:'Roots with subtasks', value:percent(rootTrees.filter(x=>x.size>1).length, roots.length) },
     { label:'Average subtasks per root', value:roots.length?oneDecimal.format((items.length-roots.length)/roots.length):'0' },
     { label:'Average direct children per parent', value:directChildCounts.length?oneDecimal.format(average(directChildCounts)):'0' },
@@ -915,11 +915,11 @@ function prepareCanvas(canvas, minHeight=220) {
   canvas.width=Math.floor(cssWidth*ratio); canvas.height=Math.floor(cssHeight*ratio);
   const ctx=canvas.getContext('2d'); ctx.setTransform(ratio,0,0,ratio,0,0);
   ctx.clearRect(0,0,cssWidth,cssHeight); ctx.fillStyle='#fff'; ctx.fillRect(0,0,cssWidth,cssHeight);
-  ctx.font='12px Tahoma, Arial, sans-serif'; ctx.textBaseline='middle';
+  ctx.font='bold 14px Tahoma, Arial, sans-serif'; ctx.textBaseline='middle';
   return {ctx,width:cssWidth,height:cssHeight};
 }
 
-function axes(ctx,width,height,maxValue,yLabel='Tasks',left=70,bottom=46,top=28,right=40,decimalTicks=false){
+function axes(ctx,width,height,maxValue,yLabel='Tasks',left=78,bottom=54,top=32,right=44,decimalTicks=false){
   const plotW=width-left-right, plotH=height-top-bottom;
   ctx.strokeStyle='#808080'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(left,top);ctx.lineTo(left,height-bottom);ctx.lineTo(width-right,height-bottom);ctx.stroke();
   const max=Math.max(decimalTicks ? 0.1 : 1,maxValue);
@@ -930,20 +930,20 @@ function axes(ctx,width,height,maxValue,yLabel='Tasks',left=70,bottom=46,top=28,
     if(i>0){ctx.strokeStyle='#e0e0e0';ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(width-right,y);ctx.stroke();}
   }
   if(yLabel){
-    ctx.save();ctx.translate(13,top+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#222';ctx.textAlign='center';ctx.font='12px Tahoma, Arial, sans-serif';ctx.fillText(yLabel,0,0);ctx.restore();
+    ctx.save();ctx.translate(13,top+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#222';ctx.textAlign='center';ctx.font='bold 14px Tahoma, Arial, sans-serif';ctx.fillText(yLabel,0,0);ctx.restore();
   }
   return {left,bottom,top,right,plotW,plotH,max};
 }
 
 function drawBarValue(ctx,text,x,y){
-  ctx.save();ctx.font='11px Tahoma, Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#111';ctx.fillText(text,x,Math.max(13,y-4));ctx.restore();
+  ctx.save();ctx.font='bold 13px Tahoma, Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#111';ctx.fillText(text,x,Math.max(13,y-4));ctx.restore();
 }
 
 function drawBarChart(canvas,labels,values,color='#000080',decimal=false,yLabel='Tasks'){
   if(!canvas||canvas.closest('[hidden]'))return;
   const {ctx,width,height}=prepareCanvas(canvas);
   if(!values.length){ctx.fillStyle='#333';ctx.textAlign='center';ctx.fillText('No data',width/2,height/2);return;}
-  const rawMax=Math.max(...values, decimal ? 0.1 : 1); const a=axes(ctx,width,height,rawMax*1.14,yLabel,70,46,28,40,decimal); const n=values.length; const slot=a.plotW/n; const barW=Math.max(2,slot*.68);
+  const rawMax=Math.max(...values, decimal ? 0.1 : 1); const a=axes(ctx,width,height,rawMax*1.14,yLabel,78,54,32,44,decimal); const n=values.length; const slot=a.plotW/n; const barW=Math.max(2,slot*.68);
   values.forEach((v,i)=>{const h=a.plotH*(v/a.max);const x=a.left+i*slot+(slot-barW)/2;const y=height-a.bottom-h;ctx.fillStyle=color;ctx.fillRect(x,y,barW,h);drawBarValue(ctx,decimal?oneDecimal.format(v):numberFmt.format(v),x+barW/2,y);});
   const step=Math.max(1,Math.ceil(n/12)); ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';
   labels.forEach((label,i)=>{if(i%step===0||i===n-1)ctx.fillText(String(label),a.left+(i+.5)*slot,height-19);});
