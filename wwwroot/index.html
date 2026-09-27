@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000080">
-  <title>TaskList Stats v0.22</title>
+  <title>TaskList Stats v0.23</title>
   <link rel="icon" href="/icons/stats.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
@@ -12,7 +12,7 @@
 <body>
   <main class="window" id="appWindow">
     <header class="titlebar">
-      <span class="title-left">TaskList Stats v0.22</span>
+      <span class="title-left">TaskList Stats v0.23</span>
       <span class="title-center" id="titleScope">All lists</span>
       <span class="title-buttons" aria-hidden="true">_ □ ×</span>
     </header>
@@ -99,7 +99,7 @@
       <section class="tab-panel" data-panel="patterns" hidden>
         <div class="two-column"><fieldset class="groupbox"><legend><span class="has-tooltip" title="Groups task timestamps by weekday across all dated history available in the selected list scope. Created uses created_at; Completed uses completed_at.">Day-of-Week Patterns</span></legend><div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span></div><div class="chart-frame"><canvas id="weekdayChart" height="220"></canvas></div></fieldset><fieldset class="groupbox"><legend><span class="has-tooltip" title="Groups task timestamps by local hour of day across all dated history available in the selected list scope.">Hour-of-Day Patterns</span></legend><div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span></div><div class="chart-frame"><canvas id="hourChart" height="220"></canvas></div></fieldset></div>
         <fieldset class="groupbox"><legend><span class="has-tooltip" title="Counts task timestamps by both weekday and local hour across all dated history available in the selected list scope.">Weekday × Hour Heatmap</span></legend><div class="control-row small-row"><label>Event:<select id="hourHeatmapMode" class="native-retro-select"><option value="created">Created</option><option value="completed">Completed</option></select></label></div><div id="weekdayHourHeatmap" class="weekday-hour-heatmap"></div></fieldset>
-        <div class="two-column"><fieldset class="groupbox"><legend>Workload Rhythm</legend><div id="rhythmMetrics" class="metric-list"></div></fieldset><fieldset class="groupbox"><legend>Exam / Test Windows</legend><div id="examMetrics" class="metric-list"></div></fieldset></div>
+        <div class="two-column"><fieldset class="groupbox"><legend>Workload Rhythm</legend><div id="rhythmMetrics" class="metric-list"></div></fieldset><fieldset class="groupbox"><legend>Exam / Test Windows</legend><div class="note exam-scope-note has-tooltip" title="School or homework lists" tabindex="0">Make sure to select the correct list for the context of these stats.</div><div id="examMetrics" class="metric-list"></div></fieldset></div>
       </section>
 
       <section class="tab-panel" data-panel="trees" hidden>
@@ -115,10 +115,10 @@
       </section>
     </section>
 
-    <footer class="statusbar"><span id="statusLeft">TaskList Stats v0.22</span><span id="statusRight">Read-only database access</span></footer>
+    <footer class="statusbar"><span id="statusLeft">TaskList Stats v0.23</span><span id="statusRight">Read-only database access</span></footer>
   </main>
 
-  <dialog id="aboutDialog" class="retro-dialog"><form method="dialog" class="dialog-window"><div class="dialog-title">About TaskList Stats</div><div class="dialog-body"><strong>TaskList Stats v0.22</strong><p>Read-only statistics and history explorer for TaskList.</p><p>No chart libraries. No ORM. No database writes.</p><p class="small-note">Historical status transitions are limited by the timestamps TaskList stores. Backlog history involving repeated reopen cycles is therefore approximate.</p></div><div class="dialog-buttons"><button type="submit">OK</button></div></form></dialog>
+  <dialog id="aboutDialog" class="retro-dialog"><form method="dialog" class="dialog-window"><div class="dialog-title">About TaskList Stats</div><div class="dialog-body"><strong>TaskList Stats v0.23</strong><p>Read-only statistics and history explorer for TaskList.</p><p>No chart libraries. No ORM. No database writes.</p><p class="small-note">Historical status transitions are limited by the timestamps TaskList stores. Backlog history involving repeated reopen cycles is therefore approximate.</p></div><div class="dialog-buttons"><button type="submit">OK</button></div></form></dialog>
 
   <script src="charts.js"></script>
   <script src="fun.js"></script>

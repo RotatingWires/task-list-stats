@@ -1,8 +1,18 @@
 # TaskList Stats
 
-**TaskList Stats v0.22** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.23** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
+
+## v0.23
+
+- Turn the top List selector into a Windows 95-style checklist so any combination of TaskList lists can be analyzed together.
+- Treat **All lists** as the default scope; selecting individual lists builds a multi-list scope, and unchecking the last selected list returns to All lists.
+- Apply the selected list set consistently to charts, tables, Pattern metrics, Trees & Titles, and Fun analyses.
+- Show a compact multi-list scope label while keeping the full selected list names available from the selector.
+- Expand Exam / Test Windows tooltips with plain-language explanations and add a reminder to choose the appropriate School/homework list context.
+- Remove the old "all dated tasks" wording from the baseline active-day explanation.
+- Correct the consolidated `app.js` version constant and bump server, assembly, UI, README, and PWA cache metadata to v0.23.
 
 ## v0.22
 

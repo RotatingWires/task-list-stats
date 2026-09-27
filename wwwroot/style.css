@@ -122,6 +122,17 @@ button { cursor: pointer; }
   background: currentColor;
   display: block;
 }
+.filter-dropdown button[aria-checked="true"] .menu-check::before {
+  content: "✓";
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  font-family: Tahoma, "MS Sans Serif", Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
 .menu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .toolbar {
@@ -168,7 +179,7 @@ button:active,
   gap: 14px;
   box-shadow: 1px 1px 0 #000;
 }
-.filter-dropdown { min-width: 100%; max-width: min(360px, calc(100vw - 35px)); }
+.filter-dropdown { min-width: 100%; max-width: min(360px, calc(100vw - 35px)); max-height: min(60vh, 420px); overflow-y: auto; }
 .select-arrow { font-size: 9px; }
 .native-retro-select,
 .retro-input {
@@ -268,6 +279,7 @@ button:active,
 /* Explanations use native hover text plus the mobile tap-help bubble. */
 .metric-list .metric-value { font-weight: 700; text-align: right; }
 .note, .small-note { font-size: 11px; color: #333; line-height: 1.35; }
+.exam-scope-note { display: inline-block; margin: 0 0 8px; }
 
 .table-wrap {
   overflow: auto;

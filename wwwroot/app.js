@@ -1,9 +1,9 @@
 'use strict';
 
-const VERSION = '0.21';
+const VERSION = '0.23';
 const state = {
   snapshot: null,
-  selectedListId: 'all',
+  selectedListIds: new Set(),
   activeTab: 'overview'
 };
 
@@ -174,11 +174,20 @@ function normalizeSnapshot(raw) {
   return raw;
 }
 
+function isAllListScope() {
+  return state.selectedListIds.size === 0;
+}
+
+function selectedListNames() {
+  return [...state.selectedListIds]
+    .map(id => listName(id))
+    .sort((a, b) => a.localeCompare(b));
+}
+
 function scopedItems() {
   if (!state.snapshot) return [];
-  if (state.selectedListId === 'all') return state.snapshot.items;
-  const id = Number(state.selectedListId);
-  return state.snapshot.items.filter(item => item.listId === id);
+  if (isAllListScope()) return state.snapshot.items;
+  return state.snapshot.items.filter(item => state.selectedListIds.has(item.listId));
 }
 
 function allValidYears(items = scopedItems()) {
@@ -270,7 +279,13 @@ function setTable(table, headers, rows, numericColumns = []) {
 }
 
 function scopeLabel() {
-  return state.selectedListId === 'all' ? 'All lists' : listName(Number(state.selectedListId));
+  if (isAllListScope()) return 'All lists';
+  if (state.selectedListIds.size === 1) return listName([...state.selectedListIds][0]);
+  return `${state.selectedListIds.size} lists`;
+}
+
+function scopeDetailLabel() {
+  return isAllListScope() ? 'All lists' : selectedListNames().join(', ');
 }
 
 function longestCreationStreaks(items) {
@@ -328,7 +343,7 @@ function renderOverview() {
   const cancelled = items.filter(x => x.status === 'Cancelled').length;
   const roots = items.filter(x => !x.parentDisplayId).length;
   const subtasks = total - roots;
-  const deletedEstimate = state.selectedListId === 'all'
+  const deletedEstimate = isAllListScope()
     ? Math.max(0, state.snapshot.highestUniversalId - state.snapshot.items.length)
     : null;
 
@@ -672,7 +687,7 @@ function renderSeasonality(items) {
 
 function renderLists() {
   const allItems = state.snapshot.items;
-  const currentIds = state.selectedListId === 'all' ? null : new Set([Number(state.selectedListId)]);
+  const currentIds = isAllListScope() ? null : state.selectedListIds;
   const lists = state.snapshot.lists.filter(l => !currentIds || currentIds.has(l.id));
   const totalScope = lists.reduce((sum,l)=>sum+allItems.filter(i=>i.listId===l.id).length,0);
   const rows = [];
@@ -784,10 +799,10 @@ function renderExamMetrics(items) {
   const windowAvg = windowDays.size ? windowTasks/windowDays.size : 0;
   const ratio = baseline ? windowAvg / baseline : null;
   renderMetricList($('#examMetrics'), [
-    ['Titles containing exam/test/midterm/final', numberFmt.format(examItems.length), 'Counts dated tasks whose titles contain exam, test, midterm, or final.'],
-    ['Average creations/day near those tasks (±7 days)', oneDecimal.format(windowAvg), 'For every matching exam/test task, take the 7 days before through 7 days after. Overlapping dates are counted once, then all creations in those dates are divided by the number of unique dates.'],
-    ['Baseline creations/active day', oneDecimal.format(baseline), 'All dated task creations divided by the number of days that contain at least one creation. Quiet days are not included in this baseline.'],
-    ['Exam-window activity vs baseline', ratio == null ? '—' : `${oneDecimal.format(ratio)}×`, 'The exam-window average creations per day divided by the baseline active-day average. Above 1× means those windows were busier than a typical active day.']
+    ['Titles containing exam/test/midterm/final', numberFmt.format(examItems.length), 'Counts tasks in the selected list scope whose title contains exam, test, midterm, or final and whose creation date is known. This is used to identify likely exam/test dates from task titles; descriptions are not searched.'],
+    ['Average creations/day near those tasks (±7 days)', oneDecimal.format(windowAvg), 'Builds a 15-day window around each matching exam/test task: 7 days before, the task creation day, and 7 days after. Overlapping dates are merged, then all task creations on those unique dates are divided by the number of dates. This estimates how busy task creation becomes around exam/test periods.'],
+    ['Baseline creations/active day', oneDecimal.format(baseline), 'Task creations are divided by the number of calendar days that had at least one creation. Days with zero creations are excluded, so this represents a typical day when you were actively adding tasks.'],
+    ['Exam-window activity vs baseline', ratio == null ? '—' : `${oneDecimal.format(ratio)}×`, 'Compares the exam/test-window creation average with the normal active-day baseline. 1.0× means the same activity, 1.5× means 50% more task creations, and 0.5× means half as many. This measures task-creation activity, not study time or exam performance.']
   ]);
 }
 
@@ -868,8 +883,10 @@ function renderCommonWords(items) {
 
 function renderAll() {
   if (!state.snapshot) return;
-  $('#titleScope').textContent = scopeLabel();
-  $('#listFilterLabel').textContent = scopeLabel();
+  const currentScopeLabel = scopeLabel();
+  $('#titleScope').textContent = currentScopeLabel;
+  $('#listFilterLabel').textContent = currentScopeLabel;
+  $('#listFilterButton').title = scopeDetailLabel();
   const renderers = {
     overview: renderOverview,
     trends: renderTrends,
@@ -898,16 +915,22 @@ function populateListFilter() {
   menu.replaceChildren();
   const options = [['all','All lists'], ...state.snapshot.lists.map(l=>[String(l.id),l.name])];
   for (const [value,label] of options) {
-    const button=document.createElement('button'); button.type='button'; button.dataset.value=value; button.setAttribute('role','menuitemradio');
-    button.setAttribute('aria-checked', value===state.selectedListId?'true':'false');
+    const id = value === 'all' ? null : Number(value);
+    const checked = value === 'all' ? isAllListScope() : state.selectedListIds.has(id);
+    const button=document.createElement('button');
+    button.type='button';
+    button.dataset.value=value;
+    button.setAttribute('role','menuitemcheckbox');
+    button.setAttribute('aria-checked',checked?'true':'false');
     const check=document.createElement('span'); check.className='menu-check';
     const text=document.createElement('span'); text.className='menu-label'; text.textContent=label;
     button.append(check,text);
-    button.addEventListener('click',()=>{
-      state.selectedListId=value;
+    button.addEventListener('click',event=>{
+      event.stopPropagation();
+      if(value==='all') state.selectedListIds.clear();
+      else if(state.selectedListIds.has(id)) state.selectedListIds.delete(id);
+      else state.selectedListIds.add(id);
       populateListFilter();
-      $('#listFilterLabel').textContent=scopeLabel();
-      $('#listFilterMenu').hidden=true; $('#listFilterButton').setAttribute('aria-expanded','false');
       renderAll();
     });
     menu.append(button);
@@ -947,7 +970,8 @@ async function loadSnapshot() {
       throw new Error(message);
     }
     state.snapshot=normalizeSnapshot(await response.json());
-    if(state.selectedListId!=='all'&&!state.snapshot.lists.some(l=>String(l.id)===state.selectedListId)) state.selectedListId='all';
+    const validListIds=new Set(state.snapshot.lists.map(list=>list.id));
+    state.selectedListIds=new Set([...state.selectedListIds].filter(id=>validListIds.has(id)));
     populateListFilter(); populateViewMenu();
     $('#databaseStatus').textContent=`${numberFmt.format(state.snapshot.items.length)} current items`;
     $('#loadingPanel').hidden=true;
