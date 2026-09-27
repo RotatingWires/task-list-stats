@@ -26,7 +26,7 @@ html, body { margin: 0; min-height: 100%; }
 }
 body {
   min-height: 100vh;
-  padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
+  padding: 0;
   background: var(--face);
 }
 button, input, select { font: inherit; }
@@ -35,8 +35,8 @@ button { cursor: pointer; }
 .window {
   width: 100%;
   max-width: none;
-  min-height: calc(100vh - 20px);
-  margin: 0 auto;
+  min-height: 100vh;
+  margin: 0;
   background: var(--face);
   border-top: 2px solid var(--light);
   border-left: 2px solid var(--light);
@@ -449,7 +449,7 @@ tr:last-child td { border-bottom: 0; }
 .dialog-buttons { display: flex; justify-content: flex-end; padding: 0 12px 12px; }
 
 @media (max-width: 780px) {
-  body { padding: max(env(safe-area-inset-top), 20px) 4px max(4px, env(safe-area-inset-bottom)); }
+  body { padding: 0; }
   .window { min-height: calc(100vh - max(env(safe-area-inset-top), 20px) - max(4px, env(safe-area-inset-bottom))); }
   .titlebar { grid-template-columns: 1fr auto; }
   .title-center { display: none; }
@@ -544,7 +544,7 @@ tr:last-child td { border-bottom: 0; }
 html,body{height:100%;min-height:0}
   body{height:100dvh;overflow:hidden}
   .window{
-    height:calc(100dvh - max(10px,env(safe-area-inset-top)) - max(10px,env(safe-area-inset-bottom)));
+    height:100dvh;
     min-height:0;
   }
   .workspace{
@@ -611,11 +611,11 @@ html,body{height:100%;min-height:0}
   @media (max-width:780px){
     body{
       height:100dvh;
-      padding:max(env(safe-area-inset-top),20px) 4px max(4px,env(safe-area-inset-bottom));
+      padding:0;
       overflow:hidden;
     }
     .window{
-      height:calc(100dvh - max(env(safe-area-inset-top),20px) - max(4px,env(safe-area-inset-bottom)));
+      height:100dvh;
       min-height:0;
       width:100%;
     }

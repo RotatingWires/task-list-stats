@@ -135,7 +135,8 @@ function drawGroupedBarChart(canvas, labels, aValues, bValues, aColor, bColor, y
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   labels.forEach((label, i) => {
-    if (i % step === 0 || i === n - 1) ctx.fillText(String(label), a.left + (i + .5) * slot, height - 19);
+    const showLabel = n >= 24 ? i % step === 0 : (i % step === 0 || i === n - 1);
+    if (showLabel) ctx.fillText(String(label), a.left + (i + .5) * slot, height - 19);
   });
   delete canvas._tooltipConfig;
 }
