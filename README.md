@@ -1,6 +1,6 @@
 # TaskList Stats
 
-**TaskList Stats v0.12** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.13** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
 
@@ -12,6 +12,16 @@ It intentionally stays separate from TaskList so charts, heatmaps, historical an
 - Resized the Help dropdown to fit `About TaskList Stats` without an oversized button or a truncated label.
 - Restored **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** during normal initial page load.
 - Bumped server, snapshot, assembly, UI, About dialog, and PWA cache metadata to v0.12.
+
+## v0.13
+
+- Replaced the historical `v06-core.js`, `v07.js`, and `v09.js` patch chain with current-purpose `charts.js` and `fun.js` modules.
+- Removed runtime monkey-patching of `renderAll`, chart renderers, Roulette, and table rendering.
+- Kept one canonical task-link implementation in `app.js`.
+- Moved line-chart tooltip behavior into the chart module; bar charts remain tooltip-free.
+- Moved all active Fun behavior into one current Fun module, including Night Owl, Early Bird, Same-Day Speedrun, and Cleanup Day.
+- Folded dynamically injected Fun/mobile/menu styles into `style.css`; no current module injects release-specific CSS.
+- Deleted the three historical-version JavaScript files from the repository and PWA cache.
 
 ## v0.11
 

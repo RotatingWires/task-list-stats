@@ -1,12 +1,10 @@
 'use strict';
 
-const VERSION = '0.5';
+const VERSION = '0.13';
 const state = {
   snapshot: null,
   selectedListId: 'all',
-  activeTab: 'overview',
-  activeFunTab: 'roulette',
-  rouletteUniversalId: null
+  activeTab: 'overview'
 };
 
 const $ = selector => document.querySelector(selector);
@@ -131,6 +129,22 @@ function listName(id) {
   return state.snapshot?.lists.find(x => x.id === id)?.name ?? `List ${id}`;
 }
 
+
+const TASKLIST_ORIGIN = 'http://tasklist.lehighradio.com:8711';
+function taskUrl(item) {
+  return `${TASKLIST_ORIGIN}/task/${encodeURIComponent(item.universalId)}`;
+}
+function taskLink(item, label = `#${item.displayId}`) {
+  const a = document.createElement('a');
+  a.className = 'task-id-link';
+  a.href = taskUrl(item);
+  a.target = '_blank';
+  a.rel = 'noopener';
+  a.textContent = label;
+  a.title = `Open ${listName(item.listId)} task #${item.displayId} in a new tab`;
+  return a;
+}
+
 function normalizeSnapshot(raw) {
   raw.lists = raw.lists ?? [];
   raw.items = (raw.items ?? []).map(item => ({
@@ -202,13 +216,29 @@ function setTable(table, headers, rows, numericColumns = []) {
     trh.append(th);
   });
   thead.append(trh);
+
   const tbody = document.createElement('tbody');
   for (const row of rows) {
     const tr = document.createElement('tr');
     row.forEach((value, i) => {
       const td = document.createElement('td');
       if (numericColumns.includes(i)) td.className = 'num';
-      td.textContent = value == null ? '—' : String(value);
+      if (value instanceof Node) {
+        td.append(value);
+      } else {
+        let linked = false;
+        if ((headers[i] === 'ID' || headers[i] === 'Root') && typeof value === 'string' && value.startsWith('#')) {
+          const displayId = value.slice(1);
+          const listIndex = headers.indexOf('List');
+          const listLabel = listIndex >= 0 ? String(row[listIndex]) : null;
+          const item = state.snapshot?.items.find(x => x.displayId === displayId && (!listLabel || listName(x.listId) === listLabel));
+          if (item) {
+            td.append(taskLink(item));
+            linked = true;
+          }
+        }
+        if (!linked) td.textContent = value == null ? '—' : String(value);
+      }
       tr.append(td);
     });
     tbody.append(tr);
@@ -361,7 +391,7 @@ function renderOverview() {
     else if (days <= 30) buckets[3][1]++;
     else buckets[4][1]++;
   }
-  drawBarChart($('#completionBucketsChart'), buckets.map(x => x[0]), buckets.map(x => x[1]), '#000080', false, 'Completed tasks');
+  Charts.drawBarChart($('#completionBucketsChart'), buckets.map(x => x[0]), buckets.map(x => x[1]), '#000080', false, 'Completed tasks');
 
   const oldest = openItems.sort((a,b)=>a.createdDate-b.createdDate).slice(0, 15);
   setTable($('#oldestOpenTable'), ['List', 'ID', 'Task', 'Created', 'Age'], oldest.map(item => [
@@ -405,14 +435,14 @@ function renderTrends() {
   const items = scopedItems();
   const mode = $('#trendGroup').value;
   const grouped = groupedEvents(items, mode);
-  drawMultiLineChart($('#trendChart'), grouped.keys.map(k => groupLabel(k, mode)), [
+  Charts.drawMultiLineChart($('#trendChart'), grouped.keys.map(k => groupLabel(k, mode)), [
     { name: 'Created', values: grouped.keys.map(k => grouped.maps.created.get(k) || 0), color: '#000080' },
     { name: 'Completed', values: grouped.keys.map(k => grouped.maps.completed.get(k) || 0), color: '#008000' },
     { name: 'Cancelled', values: grouped.keys.map(k => grouped.maps.cancelled.get(k) || 0), color: '#800000' }
   ], 'Tasks per period');
 
   const backlog = approximateBacklog(items);
-  drawLineChart($('#backlogChart'), backlog.labels, backlog.values, '#000080', 'Approx. open tasks', 'Approx. backlog');
+  Charts.drawLineChart($('#backlogChart'), backlog.labels, backlog.values, '#000080', 'Approx. open tasks', 'Approx. backlog');
 
   const monthly = new Map();
   const monthlyCompleted = new Map();
@@ -632,7 +662,7 @@ function renderSeasonality(items) {
     for (const item of items) if (item.createdDate) counts[item.createdDate.getMonth()]++;
     for (let i=0;i<12;i++) counts[i] /= years.length;
   }
-  drawBarChart($('#seasonalityChart'), MONTHS, counts, '#000080', true, 'Average tasks created');
+  Charts.drawBarChart($('#seasonalityChart'), MONTHS, counts, '#000080', true, 'Average tasks created');
 }
 
 function renderLists() {
@@ -656,7 +686,7 @@ function renderLists() {
   }
   rows.sort((a,b)=>Number(b[1].replaceAll(',',''))-Number(a[1].replaceAll(',','')));
   setTable($('#listStatsTable'), ['List','Total','Open','Done','Cancelled','Completion','Avg completion','Share'], rows, [1,2,3,4]);
-  drawBarChart($('#listShareChart'), shareLabels, shareValues, '#000080', false, 'Current entries');
+  Charts.drawBarChart($('#listShareChart'), shareLabels, shareValues, '#000080', false, 'Current entries');
 
   const monthListCounts = new Map();
   for (const item of allItems) {
@@ -680,8 +710,8 @@ function renderPatterns() {
     if (item.createdDate) { createWeek[item.createdDate.getDay()]++; createHour[item.createdDate.getHours()]++; }
     if (item.completedDate) { doneWeek[item.completedDate.getDay()]++; doneHour[item.completedDate.getHours()]++; }
   }
-  drawGroupedBarChart($('#weekdayChart'), WEEKDAYS, createWeek, doneWeek, '#000080', '#008000', 'Tasks');
-  drawGroupedBarChart($('#hourChart'), Array.from({length:24},(_,h)=>formatHour(h)), createHour, doneHour, '#000080', '#008000', 'Tasks');
+  Charts.drawGroupedBarChart($('#weekdayChart'), WEEKDAYS, createWeek, doneWeek, '#000080', '#008000', 'Tasks');
+  Charts.drawGroupedBarChart($('#hourChart'), Array.from({length:24},(_,h)=>formatHour(h)), createHour, doneHour, '#000080', '#008000', 'Tasks');
   renderWeekdayHourHeatmap(items);
 
   const bestWeek = createWeek.indexOf(Math.max(...createWeek));
@@ -772,10 +802,10 @@ function renderTrees() {
   const depthCounts = new Map();
   for(const item of items) increment(depthCounts,item.depth);
   const depths=[...depthCounts.keys()].sort((a,b)=>a-b);
-  drawBarChart($('#depthChart'),depths.map(d=>d===0?'Root':`Depth ${d}`),depths.map(d=>depthCounts.get(d)),'#000080',false,'Tasks');
+  Charts.drawBarChart($('#depthChart'),depths.map(d=>d===0?'Root':`Depth ${d}`),depths.map(d=>depthCounts.get(d)),'#000080',false,'Tasks');
 
   const typeCounts = inferTaskTypes(items);
-  drawBarChart($('#taskTypeChart'),typeCounts.map(x=>x[0]),typeCounts.map(x=>x[1]),'#000080',false,'Tasks');
+  Charts.drawBarChart($('#taskTypeChart'),typeCounts.map(x=>x[0]),typeCounts.map(x=>x[1]),'#000080',false,'Tasks');
 
   const largest=[...rootTrees].sort((a,b)=>b.size-a.size).slice(0,12);
   setTable($('#largestTreesTable'),['List','Root','Title','Tree size','Max depth'],largest.map(x=>[
@@ -823,89 +853,6 @@ function renderCommonWords(items) {
   $('#commonWords').replaceChildren(...nodes);
 }
 
-function findTaskByUniversalId(id) {
-  return state.snapshot?.items.find(item => item.universalId === id) || null;
-}
-
-function taskHierarchyStats(item) {
-  const sameList = state.snapshot.items.filter(x => x.listId === item.listId);
-  const prefix = `${item.displayId}.`;
-  const descendants = sameList.filter(x => String(x.displayId).startsWith(prefix));
-  const directChildren = sameList.filter(x => x.parentDisplayId === item.displayId);
-  const parent = item.parentDisplayId
-    ? sameList.find(x => x.displayId === item.parentDisplayId) || null
-    : null;
-  const rootId = String(item.displayId).split('.')[0];
-  const rootPrefix = `${rootId}.`;
-  const rootTree = sameList.filter(x => x.displayId === rootId || String(x.displayId).startsWith(rootPrefix));
-  const siblings = sameList.filter(x => x.parentDisplayId === item.parentDisplayId && x.displayId !== item.displayId);
-  return { parent, descendants, directChildren, rootTree, siblings };
-}
-
-function renderRoulette() {
-  const result = $('#rouletteResult');
-  const empty = $('#rouletteEmpty');
-  const item = state.rouletteUniversalId == null ? null : findTaskByUniversalId(state.rouletteUniversalId);
-  if (!item || !scopedItems().some(x => x.universalId === item.universalId)) {
-    state.rouletteUniversalId = null;
-    result.hidden = true;
-    empty.hidden = false;
-    empty.textContent = scopedItems().length ? 'No task selected yet.' : 'No current tasks are available in this list scope.';
-    return;
-  }
-
-  const hierarchy = taskHierarchyStats(item);
-  const now = new Date();
-  const terminalMs = terminalDurationMs(item);
-  const currentAge = item.createdDate ? Math.max(0, now - item.createdDate) : null;
-  const lifetimePosition = state.snapshot.highestUniversalId
-    ? `${numberFmt.format(item.universalId)} of ${numberFmt.format(state.snapshot.highestUniversalId)} lifetime IDs`
-    : numberFmt.format(item.universalId);
-
-  $('#rouletteTaskHeading').textContent = `${listName(item.listId)} — #${item.displayId}`;
-  $('#rouletteTaskTitle').textContent = item.title || '(Untitled task)';
-  const rows = [
-    ['Universal ID', lifetimePosition],
-    ['Type', item.parentDisplayId ? 'Subtask' : 'Root task'],
-    ['Status', item.status],
-    ['Nesting depth', numberFmt.format(item.depth)],
-    ['Parent task', hierarchy.parent ? `#${hierarchy.parent.displayId} — ${hierarchy.parent.title}` : '—'],
-    ['Direct children', numberFmt.format(hierarchy.directChildren.length)],
-    ['All descendants', numberFmt.format(hierarchy.descendants.length)],
-    ['Sibling tasks', numberFmt.format(hierarchy.siblings.length)],
-    ['Root tree size', numberFmt.format(hierarchy.rootTree.length)],
-    ['Created', formatDateTime(item.createdDate)],
-    ['Current age', item.status === 'Open' ? formatDuration(currentAge) : '—'],
-    ['Time to terminal status', terminalMs == null ? '—' : formatDuration(terminalMs)],
-    ['Last updated', formatDateTime(item.updatedDate)],
-    ['Completed', formatDateTime(item.completedDate)],
-    ['Cancelled', formatDateTime(item.cancelledDate)],
-    ['Reopened', formatDateTime(item.reopenedDate)],
-    ['Description', item.description || '—']
-  ];
-  setTable($('#rouletteTable'), ['Statistic', 'Value'], rows);
-  empty.hidden = true;
-  result.hidden = false;
-}
-
-function pickRouletteTask() {
-  const items = scopedItems();
-  if (!items.length) {
-    state.rouletteUniversalId = null;
-    renderRoulette();
-    return;
-  }
-  const pick = items[Math.floor(Math.random() * items.length)];
-  state.rouletteUniversalId = pick.universalId;
-  renderRoulette();
-}
-
-function switchFunTab(name) {
-  state.activeFunTab = name;
-  $$('.subtabs [role="tab"]').forEach(btn => btn.setAttribute('aria-selected', btn.dataset.funTab === name ? 'true' : 'false'));
-  $$('.fun-panel').forEach(panel => panel.hidden = panel.dataset.funPanel !== name);
-}
-
 function renderAll() {
   if (!state.snapshot) return;
   $('#titleScope').textContent = scopeLabel();
@@ -916,7 +863,7 @@ function renderAll() {
   renderLists();
   renderPatterns();
   renderTrees();
-  renderRoulette();
+  Fun.render();
   $('#statusLeft').textContent = `${numberFmt.format(scopedItems().length)} current items • ${scopeLabel()}`;
   $('#statusRight').textContent = `DB updated ${formatDateTime(parseDate(state.snapshot.databaseLastWriteUtc))} • Read-only`;
 }
@@ -942,7 +889,6 @@ function populateListFilter() {
     button.append(check,text);
     button.addEventListener('click',()=>{
       state.selectedListId=value;
-      state.rouletteUniversalId=null;
       populateListFilter();
       $('#listFilterLabel').textContent=scopeLabel();
       $('#listFilterMenu').hidden=true; $('#listFilterButton').setAttribute('aria-expanded','false');
@@ -1004,83 +950,6 @@ function downloadSnapshot() {
   a.href=url; a.download=`task-list-stats-snapshot-${localDayKey(new Date())}.json`; a.click(); URL.revokeObjectURL(url);
 }
 
-// ---------- lightweight canvas charts (no chart library) ----------
-function prepareCanvas(canvas, minHeight=220) {
-  const cssHeight=Math.max(minHeight,Number(canvas.getAttribute('height'))||minHeight);
-  const ratio=window.devicePixelRatio||1;
-  // Keep canvas layout width tied to its container. The old pixel width was fed back
-  // into layout on repeated renders, which could make charts grow after filter changes.
-  canvas.style.width='100%';
-  canvas.style.height=`${cssHeight}px`;
-  const measured=Math.floor(canvas.getBoundingClientRect().width || canvas.parentElement.clientWidth || 280);
-  const cssWidth=Math.max(260,measured);
-  canvas.width=Math.floor(cssWidth*ratio);
-  canvas.height=Math.floor(cssHeight*ratio);
-  const ctx=canvas.getContext('2d'); ctx.setTransform(ratio,0,0,ratio,0,0);
-  ctx.clearRect(0,0,cssWidth,cssHeight); ctx.fillStyle='#fff'; ctx.fillRect(0,0,cssWidth,cssHeight);
-  ctx.font='bold 15px Tahoma, Arial, sans-serif'; ctx.textBaseline='middle';
-  return {ctx,width:cssWidth,height:cssHeight};
-}
-
-function axes(ctx,width,height,maxValue,yLabel='Tasks',left=78,bottom=54,top=32,right=44,decimalTicks=false){
-  const plotW=width-left-right, plotH=height-top-bottom;
-  ctx.strokeStyle='#808080'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(left,top);ctx.lineTo(left,height-bottom);ctx.lineTo(width-right,height-bottom);ctx.stroke();
-  const max=Math.max(decimalTicks ? 0.1 : 1,maxValue);
-  for(let i=0;i<=4;i++){
-    const y=top+plotH-(plotH*i/4); const raw=max*i/4;
-    const value=decimalTicks ? oneDecimal.format(raw) : numberFmt.format(Math.round(raw));
-    ctx.fillStyle='#333';ctx.textAlign='right';ctx.fillText(value,left-5,y);
-    if(i>0){ctx.strokeStyle='#e0e0e0';ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(width-right,y);ctx.stroke();}
-  }
-  if(yLabel){
-    ctx.save();ctx.translate(13,top+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#222';ctx.textAlign='center';ctx.font='bold 16px Tahoma, Arial, sans-serif';ctx.fillText(yLabel,0,0);ctx.restore();
-  }
-  return {left,bottom,top,right,plotW,plotH,max};
-}
-
-function drawBarValue(ctx,text,x,y){
-  ctx.save();ctx.font='bold 14px Tahoma, Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#111';ctx.fillText(text,x,Math.max(13,y-4));ctx.restore();
-}
-
-function drawBarChart(canvas,labels,values,color='#000080',decimal=false,yLabel='Tasks'){
-  if(!canvas||canvas.closest('[hidden]'))return;
-  const {ctx,width,height}=prepareCanvas(canvas);
-  if(!values.length){ctx.fillStyle='#333';ctx.textAlign='center';ctx.fillText('No data',width/2,height/2);return;}
-  const rawMax=Math.max(...values, decimal ? 0.1 : 1); const a=axes(ctx,width,height,rawMax*1.14,yLabel,78,54,32,44,decimal); const n=values.length; const slot=a.plotW/n; const barW=Math.max(2,slot*.68);
-  values.forEach((v,i)=>{const h=a.plotH*(v/a.max);const x=a.left+i*slot+(slot-barW)/2;const y=height-a.bottom-h;ctx.fillStyle=color;ctx.fillRect(x,y,barW,h);drawBarValue(ctx,decimal?oneDecimal.format(v):numberFmt.format(v),x+barW/2,y);});
-  const step=Math.max(1,Math.ceil(n/12)); ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';
-  labels.forEach((label,i)=>{if(i%step===0||i===n-1)ctx.fillText(String(label),a.left+(i+.5)*slot,height-19);});
-}
-
-function drawGroupedBarChart(canvas,labels,aValues,bValues,aColor,bColor,yLabel='Tasks'){
-  if(!canvas||canvas.closest('[hidden]'))return;
-  const {ctx,width,height}=prepareCanvas(canvas); const rawMax=Math.max(1,...aValues,...bValues); const a=axes(ctx,width,height,rawMax*1.16,yLabel); const n=labels.length; const slot=a.plotW/n; const bw=Math.max(1,slot*.30);
-  for(let i=0;i<n;i++){
-    const h1=a.plotH*aValues[i]/a.max,h2=a.plotH*bValues[i]/a.max; const center=a.left+(i+.5)*slot;
-    const y1=height-a.bottom-h1,y2=height-a.bottom-h2;
-    ctx.fillStyle=aColor;ctx.fillRect(center-bw,y1,bw,h1);ctx.fillStyle=bColor;ctx.fillRect(center,y2,bw,h2);
-    const labelsClose = aValues[i] && bValues[i] && Math.abs(y1-y2) < 14;
-    if(aValues[i])drawBarValue(ctx,numberFmt.format(aValues[i]),center-bw/2,y1);
-    if(bValues[i])drawBarValue(ctx,numberFmt.format(bValues[i]),center+bw/2,labelsClose ? y2-13 : y2);
-  }
-  const step=n>=24?3:Math.max(1,Math.ceil(n/12));ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';labels.forEach((l,i)=>{if(i%step===0||i===n-1)ctx.fillText(l,a.left+(i+.5)*slot,height-19);});
-}
-
-function drawLineChart(canvas,labels,values,color='#000080',yLabel='Tasks',seriesName='Series'){
-  drawMultiLineChart(canvas,labels,[{name:seriesName,values,color}],yLabel);
-}
-
-function drawMultiLineChart(canvas,labels,series,yLabel='Tasks'){
-  if(!canvas||canvas.closest('[hidden]'))return;
-  const {ctx,width,height}=prepareCanvas(canvas,Number(canvas.getAttribute('height'))||220); const rawMax=Math.max(1,...series.flatMap(s=>s.values)); const a=axes(ctx,width,height,rawMax*1.08,yLabel); const n=labels.length;
-  if(!n){ctx.fillStyle='#333';ctx.textAlign='center';ctx.fillText('No data',width/2,height/2);return;}
-  const xAt=i=>a.left+(n===1?a.plotW/2:(a.plotW*i/(n-1)));
-  for(const seriesItem of series){ctx.strokeStyle=seriesItem.color;ctx.lineWidth=2;ctx.beginPath();seriesItem.values.forEach((v,i)=>{const x=xAt(i),y=a.top+a.plotH-(a.plotH*v/a.max);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.stroke();}
-  const step=Math.max(1,Math.ceil(n/10));ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';labels.forEach((l,i)=>{if(i%step===0||i===n-1)ctx.fillText(l,xAt(i),height-19);});
-  ensureChartTooltip(canvas);
-  canvas._tooltipConfig={labels,series,left:a.left,plotW:a.plotW};
-}
-
 // ---------- events ----------
 $('#fileMenuButton').addEventListener('click',e=>{e.stopPropagation();toggleMenu($('#fileMenuButton'),$('#fileMenu'));});
 $('#viewMenuButton').addEventListener('click',e=>{e.stopPropagation();populateViewMenu();toggleMenu($('#viewMenuButton'),$('#viewMenu'));});
@@ -1090,8 +959,6 @@ $('#refreshButton').addEventListener('click',()=>{closeMenus();loadSnapshot();})
 $('#exportButton').addEventListener('click',()=>{closeMenus();downloadSnapshot();});
 $('#aboutButton').addEventListener('click',()=>{closeMenus();$('#aboutDialog').showModal();});
 $$('.tabs [role="tab"]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
-$$('.subtabs [role="tab"]').forEach(btn=>btn.addEventListener('click',()=>switchFunTab(btn.dataset.funTab)));
-$('#rouletteButton').addEventListener('click',pickRouletteTask);
 $('#trendGroup').addEventListener('change',renderTrends);
 $('#heatmapYear').addEventListener('change',()=>{renderYearHeatmap(scopedItems());const y=$('#heatmapYear').value;const m=$('#calendarMonth').value?.split('-')[1]||'01';$('#calendarMonth').value=`${y}-${m}`;renderMonthCalendar(scopedItems());});
 $('#heatmapMode').addEventListener('change',()=>renderYearHeatmap(scopedItems()));
@@ -1101,6 +968,50 @@ document.addEventListener('click',closeMenus);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenus();});
 let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>renderAll(),120);});
 
+
+
+function initializeTouchHelp() {
+  const popup = document.createElement('div');
+  popup.className = 'tap-help-tooltip';
+  popup.hidden = true;
+  document.body.append(popup);
+
+  function hide() { popup.hidden = true; }
+  function showFor(element) {
+    const text = element.getAttribute('title');
+    if (!text) return;
+    popup.textContent = text;
+    popup.hidden = false;
+    const rect = element.getBoundingClientRect();
+    const margin = 10;
+    const width = popup.offsetWidth || 260;
+    const height = popup.offsetHeight || 60;
+    const x = rect.left + rect.width / 2;
+    const left = Math.max(margin, Math.min(window.innerWidth - width - margin, x - width / 2));
+    let top = rect.bottom + 12;
+    if (top + height + margin > window.innerHeight) top = Math.max(margin, rect.top - height - 12);
+    popup.style.left = `${left}px`;
+    popup.style.top = `${top}px`;
+  }
+
+  document.addEventListener('click', event => {
+    const target = event.target.closest?.('.has-tooltip[title], .word-chip[title]');
+    if (target) {
+      showFor(target);
+      return;
+    }
+    hide();
+  }, true);
+  document.addEventListener('keydown', event => {
+    if ((event.key === 'Enter' || event.key === ' ') && event.target.matches?.('.has-tooltip[title], .word-chip[title]')) {
+      event.preventDefault();
+      showFor(event.target);
+    } else if (event.key === 'Escape') {
+      hide();
+    }
+  });
+  $('#workspace')?.addEventListener('scroll', hide, { passive: true });
+}
 
 function initializeNativeRetroSelects(){
   for(const select of document.querySelectorAll('select.native-retro-select')){
@@ -1116,6 +1027,11 @@ function initializeNativeRetroSelects(){
     wrapper.append(arrow);
   }
 }
-initializeNativeRetroSelects();
+document.addEventListener('DOMContentLoaded', () => {
+  Fun.initialize();
+  initializeNativeRetroSelects();
+  initializeTouchHelp();
+  loadSnapshot();
+});
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
