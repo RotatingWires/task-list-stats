@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.1';
+const VERSION = '0.2';
 const state = {
   snapshot: null,
   selectedListId: 'all',
@@ -55,7 +55,15 @@ function formatDate(date) {
 }
 
 function formatDateTime(date) {
-  return date ? date.toLocaleString() : '—';
+  return date ? date.toLocaleString(undefined, {
+    year: 'numeric', month: 'numeric', day: 'numeric',
+    hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
+  }) : '—';
+}
+
+function formatHour(hour) {
+  const d = new Date(2000, 0, 1, hour, 0, 0);
+  return d.toLocaleTimeString(undefined, { hour: 'numeric', hour12: true });
 }
 
 function durationMs(item) {
@@ -140,9 +148,9 @@ function allValidYears(items = scopedItems()) {
   return [...years].sort((a, b) => a - b);
 }
 
-function makeStatCard(label, value, sub = '') {
+function makeStatCard(label, value, sub = '', kind = '') {
   const card = document.createElement('div');
-  card.className = 'stat-card';
+  card.className = `stat-card${kind ? ` ${kind}` : ''}`;
   const l = document.createElement('div'); l.className = 'label'; l.textContent = label;
   const v = document.createElement('div'); v.className = 'value'; v.textContent = value;
   card.append(l, v);
@@ -151,13 +159,20 @@ function makeStatCard(label, value, sub = '') {
 }
 
 function renderCards(container, cards) {
-  container.replaceChildren(...cards.map(c => makeStatCard(c.label, c.value, c.sub || '')));
+  container.replaceChildren(...cards.map(c => makeStatCard(c.label, c.value, c.sub || '', c.kind || '')));
 }
 
 function renderMetricList(container, rows) {
   container.replaceChildren();
-  for (const [label, value] of rows) {
+  for (const row of rows) {
+    const [label, value, tooltip = ''] = row;
     const l = document.createElement('div'); l.className = 'metric-label'; l.textContent = label;
+    if (tooltip) {
+      l.classList.add('has-tooltip');
+      l.dataset.tooltip = tooltip;
+      l.title = tooltip;
+      l.tabIndex = 0;
+    }
     const v = document.createElement('div'); v.className = 'metric-value'; v.textContent = value;
     container.append(l, v);
   }
@@ -266,7 +281,6 @@ function renderOverview() {
   const cancelled = items.filter(x => x.status === 'Cancelled').length;
   const roots = items.filter(x => !x.parentDisplayId).length;
   const subtasks = total - roots;
-  const unknownDates = items.filter(x => !x.createdDate).length;
   const deletedEstimate = state.selectedListId === 'all'
     ? Math.max(0, state.snapshot.highestUniversalId - state.snapshot.items.length)
     : null;
@@ -279,8 +293,7 @@ function renderOverview() {
     { label: 'Root tasks', value: numberFmt.format(roots) },
     { label: 'Subtasks', value: numberFmt.format(subtasks) },
     { label: 'Lifetime entries', value: numberFmt.format(state.snapshot.highestUniversalId), sub: 'All lists, counting deletions' },
-    { label: 'Deleted estimate', value: deletedEstimate == null ? '—' : numberFmt.format(deletedEstimate), sub: deletedEstimate == null ? 'Only knowable globally' : 'Lifetime IDs minus current items' },
-    { label: 'Unknown creation dates', value: numberFmt.format(unknownDates), sub: 'Excluded from date statistics' }
+    { label: 'Deleted estimate', value: deletedEstimate == null ? '—' : numberFmt.format(deletedEstimate), sub: deletedEstimate == null ? 'Only knowable globally' : 'Lifetime IDs minus current items' }
   ]);
 
   const month = busiestPeriod(items, monthKey);
@@ -290,9 +303,9 @@ function renderOverview() {
   const firstCreated = items.map(x => x.createdDate).filter(Boolean).sort((a,b)=>a-b)[0] || null;
   const lastCreated = items.map(x => x.createdDate).filter(Boolean).sort((a,b)=>b-a)[0] || null;
   renderCards($('#recordCards'), [
-    { label: 'Busiest month', value: month ? numberFmt.format(month[1]) : '—', sub: month ? formatMonthKey(month[0]) : '' },
-    { label: 'Busiest week', value: week ? numberFmt.format(week[1]) : '—', sub: week ? formatWeekKey(week[0]) : '' },
-    { label: 'Busiest day', value: day ? numberFmt.format(day[1]) : '—', sub: day ? formatDate(new Date(`${day[0]}T12:00:00`)) : '' },
+    { label: 'Busiest month', value: month ? formatMonthKey(month[0]) : '—', sub: month ? `${numberFmt.format(month[1])} tasks created` : '', kind: 'subject-first' },
+    { label: 'Busiest week', value: week ? formatWeekKey(week[0]) : '—', sub: week ? `${numberFmt.format(week[1])} tasks created` : '', kind: 'subject-first' },
+    { label: 'Busiest day', value: day ? formatDate(new Date(`${day[0]}T12:00:00`)) : '—', sub: day ? `${numberFmt.format(day[1])} tasks created` : '', kind: 'subject-first' },
     { label: 'Longest quiet streak', value: `${streaks.quiet} days`, sub: 'Between first and latest dated creation' },
     { label: 'Longest active streak', value: `${streaks.active} days`, sub: streaks.active ? `${streaks.activeTotal} tasks during best streak` : '' },
     { label: 'First dated task', value: formatDate(firstCreated) },
@@ -303,13 +316,12 @@ function renderOverview() {
   const fastest = durations.length ? Math.min(...durations) : null;
   const slowest = durations.length ? Math.max(...durations) : null;
   renderMetricList($('#completionBehavior'), [
-    ['Completion percentage', percent(done, total)],
-    ['Cancellation percentage', percent(cancelled, total)],
-    ['Average observed completion time', formatDuration(average(durations))],
-    ['Median observed completion time', formatDuration(median(durations))],
-    ['Fastest observed completion', formatDuration(fastest)],
-    ['Slowest observed completion', formatDuration(slowest)],
-    ['Tasks with a completion timestamp', numberFmt.format(durations.length)]
+    ['Completion percentage', percent(done, total), 'Current Done tasks divided by all current tasks in the selected scope, including Open and Cancelled tasks.'],
+    ['Cancellation percentage', percent(cancelled, total), 'Current Cancelled tasks divided by all current tasks in the selected scope.'],
+    ['Average observed completion time', formatDuration(average(durations)), 'The arithmetic mean of completed_at minus created_at for tasks that have both valid timestamps.'],
+    ['Median observed completion time', formatDuration(median(durations)), 'The middle observed created-to-completed duration after sorting all valid completion times. Half were faster and half were slower.'],
+    ['Fastest observed completion', formatDuration(fastest), 'The shortest non-negative time between created_at and completed_at among tasks with both timestamps.'],
+    ['Slowest observed completion', formatDuration(slowest), 'The longest time between created_at and completed_at among tasks with both timestamps.']
   ]);
 
   const now = new Date();
@@ -336,7 +348,7 @@ function renderOverview() {
     else if (days <= 30) buckets[3][1]++;
     else buckets[4][1]++;
   }
-  drawBarChart($('#completionBucketsChart'), buckets.map(x => x[0]), buckets.map(x => x[1]), '#000080');
+  drawBarChart($('#completionBucketsChart'), buckets.map(x => x[0]), buckets.map(x => x[1]), '#000080', false, 'Completed tasks');
 
   const oldest = openItems.sort((a,b)=>a.createdDate-b.createdDate).slice(0, 15);
   setTable($('#oldestOpenTable'), ['List', 'ID', 'Task', 'Created', 'Age'], oldest.map(item => [
@@ -381,17 +393,21 @@ function renderTrends() {
     { name: 'Created', values: grouped.keys.map(k => grouped.maps.created.get(k) || 0), color: '#000080' },
     { name: 'Completed', values: grouped.keys.map(k => grouped.maps.completed.get(k) || 0), color: '#008000' },
     { name: 'Cancelled', values: grouped.keys.map(k => grouped.maps.cancelled.get(k) || 0), color: '#800000' }
-  ]);
+  ], 'Tasks per period');
 
   const backlog = approximateBacklog(items);
-  drawLineChart($('#backlogChart'), backlog.labels, backlog.values, '#000080');
+  drawLineChart($('#backlogChart'), backlog.labels, backlog.values, '#000080', 'Approx. open tasks', 'Approx. backlog');
 
   const monthly = new Map();
-  for (const item of items) if (item.createdDate) increment(monthly, monthKey(item.createdDate));
+  const monthlyCompleted = new Map();
+  for (const item of items) {
+    if (item.createdDate) increment(monthly, monthKey(item.createdDate));
+    if (item.completedDate) increment(monthlyCompleted, monthKey(item.completedDate));
+  }
   const topMonths = [...monthly.entries()].sort((a,b)=>b[1]-a[1] || b[0].localeCompare(a[0])).slice(0,10);
-  setTable($('#topMonthsTable'), ['Rank', 'Month', 'Created'], topMonths.map((x,i)=>[
-    i+1, formatMonthKey(x[0]), numberFmt.format(x[1])
-  ]), [0,2]);
+  setTable($('#topMonthsTable'), ['Rank', 'Month', 'Created', 'Completed'], topMonths.map((x,i)=>[
+    i+1, formatMonthKey(x[0]), numberFmt.format(x[1]), numberFmt.format(monthlyCompleted.get(x[0]) || 0)
+  ]), [0,2,3]);
 
   const monthDurations = new Map();
   for (const item of items) {
@@ -514,8 +530,8 @@ function renderYearHeatmap(items) {
 
   const grid = document.createElement('div');
   grid.className = 'heatmap-grid';
-  grid.style.gridTemplateColumns = `24px repeat(${weeks}, 14px)`;
-  grid.style.gridTemplateRows = '16px repeat(7, 14px)';
+  grid.style.gridTemplateColumns = `24px repeat(${weeks}, 18px)`;
+  grid.style.gridTemplateRows = '18px repeat(7, 18px)';
   grid.style.gridAutoFlow = 'row';
 
   const corner = document.createElement('div'); grid.append(corner);
@@ -580,7 +596,7 @@ function renderMonthYearHeatmap(items) {
   const max = Math.max(0, ...counts.values());
   const grid = document.createElement('div');
   grid.className = 'month-year-grid';
-  grid.style.gridTemplateColumns = `52px repeat(12, minmax(36px, 1fr))`;
+  grid.style.gridTemplateColumns = `52px repeat(12, minmax(42px, 1fr))`;
   const blank = document.createElement('div'); grid.append(blank);
   for (const m of MONTHS) { const h=document.createElement('div'); h.className='month-year-head'; h.textContent=m; grid.append(h); }
   for (const year of years) {
@@ -601,7 +617,7 @@ function renderSeasonality(items) {
     for (const item of items) if (item.createdDate) counts[item.createdDate.getMonth()]++;
     for (let i=0;i<12;i++) counts[i] /= years.length;
   }
-  drawBarChart($('#seasonalityChart'), MONTHS, counts, '#000080', true);
+  drawBarChart($('#seasonalityChart'), MONTHS, counts, '#000080', true, 'Average tasks created');
 }
 
 function renderLists() {
@@ -625,7 +641,7 @@ function renderLists() {
   }
   rows.sort((a,b)=>Number(b[1].replaceAll(',',''))-Number(a[1].replaceAll(',','')));
   setTable($('#listStatsTable'), ['List','Total','Open','Done','Cancelled','Completion','Avg completion','Share'], rows, [1,2,3,4]);
-  drawBarChart($('#listShareChart'), shareLabels, shareValues, '#000080');
+  drawBarChart($('#listShareChart'), shareLabels, shareValues, '#000080', false, 'Current entries');
 
   const monthListCounts = new Map();
   for (const item of allItems) {
@@ -649,8 +665,8 @@ function renderPatterns() {
     if (item.createdDate) { createWeek[item.createdDate.getDay()]++; createHour[item.createdDate.getHours()]++; }
     if (item.completedDate) { doneWeek[item.completedDate.getDay()]++; doneHour[item.completedDate.getHours()]++; }
   }
-  drawGroupedBarChart($('#weekdayChart'), WEEKDAYS, createWeek, doneWeek, '#000080', '#008000');
-  drawGroupedBarChart($('#hourChart'), Array.from({length:24},(_,h)=>String(h)), createHour, doneHour, '#000080', '#008000');
+  drawGroupedBarChart($('#weekdayChart'), WEEKDAYS, createWeek, doneWeek, '#000080', '#008000', 'Tasks');
+  drawGroupedBarChart($('#hourChart'), Array.from({length:24},(_,h)=>formatHour(h)), createHour, doneHour, '#000080', '#008000', 'Tasks');
   renderWeekdayHourHeatmap(items);
 
   const bestWeek = createWeek.indexOf(Math.max(...createWeek));
@@ -660,12 +676,12 @@ function renderPatterns() {
   const datedCount = items.filter(x=>x.createdDate).length;
   const streaks = longestCreationStreaks(items);
   renderMetricList($('#rhythmMetrics'), [
-    ['Busiest creation weekday', `${WEEKDAYS[bestWeek]} (${createWeek[bestWeek] || 0})`],
-    ['Busiest creation hour', `${String(bestHour).padStart(2,'0')}:00 (${createHour[bestHour] || 0})`],
-    ['Average per active week', activeWeeks.size ? oneDecimal.format(datedCount / activeWeeks.size) : '—'],
-    ['Average per active month', activeMonths.size ? oneDecimal.format(datedCount / activeMonths.size) : '—'],
-    ['Longest quiet streak', `${streaks.quiet} days`],
-    ['Longest active streak', `${streaks.active} days`]
+    ['Busiest creation weekday', `${WEEKDAYS[bestWeek]} (${createWeek[bestWeek] || 0})`, 'The weekday with the highest total number of task creation timestamps in the selected scope.'],
+    ['Busiest creation hour', `${formatHour(bestHour)} (${createHour[bestHour] || 0})`, "The hour of the day in which the most tasks were created, using your browser\'s local time."],
+    ['Average per active week', activeWeeks.size ? oneDecimal.format(datedCount / activeWeeks.size) : '—', 'Dated task creations divided by the number of calendar weeks that contain at least one creation. Weeks with no creations are not included.'],
+    ['Average per active month', activeMonths.size ? oneDecimal.format(datedCount / activeMonths.size) : '—', 'Dated task creations divided by the number of months that contain at least one creation. Months with no creations are not included.'],
+    ['Longest quiet streak', `${streaks.quiet} days`, 'The longest run of consecutive days with zero task creations between the first and latest dated task creation.'],
+    ['Longest active streak', `${streaks.active} days`, 'The longest run of consecutive days where at least one task was created each day.']
   ]);
   renderExamMetrics(items);
 }
@@ -680,12 +696,12 @@ function renderWeekdayHourHeatmap(items) {
   const max = Math.max(0, ...matrix.flat());
   const grid = document.createElement('div'); grid.className='wh-grid';
   const corner=document.createElement('div'); grid.append(corner);
-  for(let h=0;h<24;h++){const el=document.createElement('div');el.className='wh-hour';el.textContent=h%3===0?h:'';grid.append(el);}
+  for(let h=0;h<24;h++){const el=document.createElement('div');el.className='wh-hour';el.textContent=h%3===0?formatHour(h):'';grid.append(el);}
   for(let d=0;d<7;d++){
     const l=document.createElement('div');l.className='wh-label';l.textContent=WEEKDAYS[d];grid.append(l);
     for(let h=0;h<24;h++){
       const value=matrix[d][h]; const c=document.createElement('div'); c.className=`wh-cell heat ${heatClass(value,max)}`;
-      c.title=`${WEEKDAYS[d]} ${String(h).padStart(2,'0')}:00 — ${value}`; grid.append(c);
+      c.title=`${WEEKDAYS[d]} ${formatHour(h)} — ${value}`; grid.append(c);
     }
   }
   $('#weekdayHourHeatmap').replaceChildren(grid);
@@ -710,10 +726,10 @@ function renderExamMetrics(items) {
   const windowAvg = windowDays.size ? windowTasks/windowDays.size : 0;
   const ratio = baseline ? windowAvg / baseline : null;
   renderMetricList($('#examMetrics'), [
-    ['Titles containing exam/test/midterm/final', numberFmt.format(examItems.length)],
-    ['Average creations/day near those tasks (±7 days)', oneDecimal.format(windowAvg)],
-    ['Baseline creations/active day', oneDecimal.format(baseline)],
-    ['Exam-window activity vs baseline', ratio == null ? '—' : `${oneDecimal.format(ratio)}×`]
+    ['Titles containing exam/test/midterm/final', numberFmt.format(examItems.length), 'Counts dated tasks whose titles contain exam, test, midterm, or final.'],
+    ['Average creations/day near those tasks (±7 days)', oneDecimal.format(windowAvg), 'For every matching exam/test task, take the 7 days before through 7 days after. Overlapping dates are counted once, then all creations in those dates are divided by the number of unique dates.'],
+    ['Baseline creations/active day', oneDecimal.format(baseline), 'All dated task creations divided by the number of days that contain at least one creation. Quiet days are not included in this baseline.'],
+    ['Exam-window activity vs baseline', ratio == null ? '—' : `${oneDecimal.format(ratio)}×`, 'The exam-window average creations per day divided by the baseline active-day average. Above 1× means those windows were busier than a typical active day.']
   ]);
 }
 
@@ -728,25 +744,23 @@ function renderTrees() {
   });
   const deepest = Math.max(0, ...items.map(x=>x.depth));
   const directChildCounts = parents.map(parent => items.filter(x=>x.listId===parent.listId && x.parentDisplayId===parent.displayId).length);
-  const unknownDates = items.filter(x=>!x.createdDate).length;
   const reopened = items.filter(x=>x.reopenedDate).length;
   renderCards($('#treeCards'), [
     { label:'Deepest nesting level', value:String(deepest), sub: deepest===0?'Root tasks only':`Depth ${deepest}` },
     { label:'Roots with subtasks', value:percent(rootTrees.filter(x=>x.size>1).length, roots.length) },
     { label:'Average subtasks per root', value:roots.length?oneDecimal.format((items.length-roots.length)/roots.length):'0' },
     { label:'Average direct children per parent', value:directChildCounts.length?oneDecimal.format(average(directChildCounts)):'0' },
-    { label:'Tasks ever reopened (known)', value:numberFmt.format(reopened), sub:'Based on current reopened_at value' },
-    { label:'Unknown creation dates', value:numberFmt.format(unknownDates) },
+    { label:'Tasks ever reopened (known)', value:numberFmt.format(reopened) },
     { label:'Highest Universal ID', value:numberFmt.format(state.snapshot.highestUniversalId), sub:'Lifetime counter across all lists' }
   ]);
 
   const depthCounts = new Map();
   for(const item of items) increment(depthCounts,item.depth);
   const depths=[...depthCounts.keys()].sort((a,b)=>a-b);
-  drawBarChart($('#depthChart'),depths.map(d=>d===0?'Root':`Depth ${d}`),depths.map(d=>depthCounts.get(d)),'#000080');
+  drawBarChart($('#depthChart'),depths.map(d=>d===0?'Root':`Depth ${d}`),depths.map(d=>depthCounts.get(d)),'#000080',false,'Tasks');
 
   const typeCounts = inferTaskTypes(items);
-  drawBarChart($('#taskTypeChart'),typeCounts.map(x=>x[0]),typeCounts.map(x=>x[1]),'#000080');
+  drawBarChart($('#taskTypeChart'),typeCounts.map(x=>x[0]),typeCounts.map(x=>x[1]),'#000080',false,'Tasks');
 
   const largest=[...rootTrees].sort((a,b)=>b.size-a.size).slice(0,12);
   setTable($('#largestTreesTable'),['List','Root','Title','Tree size','Max depth'],largest.map(x=>[
@@ -873,8 +887,7 @@ async function loadSnapshot() {
     state.snapshot=normalizeSnapshot(await response.json());
     if(state.selectedListId!=='all'&&!state.snapshot.lists.some(l=>String(l.id)===state.selectedListId)) state.selectedListId='all';
     populateListFilter(); populateViewMenu();
-    const dated=state.snapshot.items.filter(x=>x.createdDate).length;
-    $('#databaseStatus').textContent=`${numberFmt.format(state.snapshot.items.length)} current items • ${numberFmt.format(dated)} with creation dates`;
+    $('#databaseStatus').textContent=`${numberFmt.format(state.snapshot.items.length)} current items`;
     $('#loadingPanel').hidden=true;
     renderAll();
   } catch(error) {
@@ -905,50 +918,86 @@ function prepareCanvas(canvas, minHeight=220) {
   return {ctx,width:cssWidth,height:cssHeight};
 }
 
-function axes(ctx,width,height,maxValue,left=40,bottom=32,top=12,right=10){
+function axes(ctx,width,height,maxValue,yLabel='Tasks',left=62,bottom=34,top=24,right=12,decimalTicks=false){
   const plotW=width-left-right, plotH=height-top-bottom;
   ctx.strokeStyle='#808080'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(left,top);ctx.lineTo(left,height-bottom);ctx.lineTo(width-right,height-bottom);ctx.stroke();
-  const max=Math.max(1,maxValue);
+  const max=Math.max(decimalTicks ? 0.1 : 1,maxValue);
   for(let i=0;i<=4;i++){
-    const y=top+plotH-(plotH*i/4); const value=Math.round(max*i/4);
-    ctx.fillStyle='#333';ctx.textAlign='right';ctx.fillText(String(value),left-5,y);
+    const y=top+plotH-(plotH*i/4); const raw=max*i/4;
+    const value=decimalTicks ? oneDecimal.format(raw) : numberFmt.format(Math.round(raw));
+    ctx.fillStyle='#333';ctx.textAlign='right';ctx.fillText(value,left-5,y);
     if(i>0){ctx.strokeStyle='#e0e0e0';ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(width-right,y);ctx.stroke();}
+  }
+  if(yLabel){
+    ctx.save();ctx.translate(13,top+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillStyle='#222';ctx.textAlign='center';ctx.font='10px Tahoma, Arial, sans-serif';ctx.fillText(yLabel,0,0);ctx.restore();
   }
   return {left,bottom,top,right,plotW,plotH,max};
 }
 
-function drawBarChart(canvas,labels,values,color='#000080',decimal=false){
+function drawBarValue(ctx,text,x,y){
+  ctx.save();ctx.font='9px Tahoma, Arial, sans-serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#111';ctx.fillText(text,x,Math.max(11,y-3));ctx.restore();
+}
+
+function drawBarChart(canvas,labels,values,color='#000080',decimal=false,yLabel='Tasks'){
   if(!canvas||canvas.closest('[hidden]'))return;
   const {ctx,width,height}=prepareCanvas(canvas);
   if(!values.length){ctx.fillStyle='#333';ctx.textAlign='center';ctx.fillText('No data',width/2,height/2);return;}
-  const a=axes(ctx,width,height,Math.max(...values)); const n=values.length; const slot=a.plotW/n; const barW=Math.max(2,slot*.68);
-  values.forEach((v,i)=>{const h=a.plotH*(v/a.max);const x=a.left+i*slot+(slot-barW)/2;const y=height-a.bottom-h;ctx.fillStyle=color;ctx.fillRect(x,y,barW,h);});
-  const step=Math.max(1,Math.ceil(n/12)); ctx.fillStyle='#222';ctx.textAlign='center';
+  const rawMax=Math.max(...values, decimal ? 0.1 : 1); const a=axes(ctx,width,height,rawMax*1.14,yLabel,62,34,24,12,decimal); const n=values.length; const slot=a.plotW/n; const barW=Math.max(2,slot*.68);
+  values.forEach((v,i)=>{const h=a.plotH*(v/a.max);const x=a.left+i*slot+(slot-barW)/2;const y=height-a.bottom-h;ctx.fillStyle=color;ctx.fillRect(x,y,barW,h);drawBarValue(ctx,decimal?oneDecimal.format(v):numberFmt.format(v),x+barW/2,y);});
+  const step=Math.max(1,Math.ceil(n/12)); ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';
   labels.forEach((label,i)=>{if(i%step===0||i===n-1)ctx.fillText(String(label),a.left+(i+.5)*slot,height-15);});
-  if(decimal){ctx.fillStyle='#333';ctx.textAlign='left';ctx.fillText('Average per year',a.left+4,a.top+7);}
 }
 
-function drawGroupedBarChart(canvas,labels,aValues,bValues,aColor,bColor){
+function drawGroupedBarChart(canvas,labels,aValues,bValues,aColor,bColor,yLabel='Tasks'){
   if(!canvas||canvas.closest('[hidden]'))return;
-  const {ctx,width,height}=prepareCanvas(canvas); const max=Math.max(1,...aValues,...bValues); const a=axes(ctx,width,height,max); const n=labels.length; const slot=a.plotW/n; const bw=Math.max(1,slot*.32);
+  const {ctx,width,height}=prepareCanvas(canvas); const rawMax=Math.max(1,...aValues,...bValues); const a=axes(ctx,width,height,rawMax*1.16,yLabel); const n=labels.length; const slot=a.plotW/n; const bw=Math.max(1,slot*.30);
   for(let i=0;i<n;i++){
     const h1=a.plotH*aValues[i]/a.max,h2=a.plotH*bValues[i]/a.max; const center=a.left+(i+.5)*slot;
-    ctx.fillStyle=aColor;ctx.fillRect(center-bw,height-a.bottom-h1,bw,h1);ctx.fillStyle=bColor;ctx.fillRect(center,height-a.bottom-h2,bw,h2);
+    const y1=height-a.bottom-h1,y2=height-a.bottom-h2;
+    ctx.fillStyle=aColor;ctx.fillRect(center-bw,y1,bw,h1);ctx.fillStyle=bColor;ctx.fillRect(center,y2,bw,h2);
+    if(aValues[i])drawBarValue(ctx,numberFmt.format(aValues[i]),center-bw/2,y1);
+    if(bValues[i])drawBarValue(ctx,numberFmt.format(bValues[i]),center+bw/2,y2);
   }
-  const step=Math.max(1,Math.ceil(n/12));ctx.fillStyle='#222';ctx.textAlign='center';labels.forEach((l,i)=>{if(i%step===0)ctx.fillText(l,a.left+(i+.5)*slot,height-15);});
+  const step=Math.max(1,Math.ceil(n/12));ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';labels.forEach((l,i)=>{if(i%step===0||i===n-1)ctx.fillText(l,a.left+(i+.5)*slot,height-15);});
 }
 
-function drawLineChart(canvas,labels,values,color='#000080'){
-  drawMultiLineChart(canvas,labels,[{name:'Series',values,color}]);
+function ensureChartTooltip(canvas){
+  const frame=canvas.parentElement;
+  let tooltip=frame.querySelector('.chart-tooltip');
+  if(!tooltip){tooltip=document.createElement('div');tooltip.className='chart-tooltip';frame.append(tooltip);}
+  if(!canvas._tooltipBound){
+    canvas.addEventListener('mousemove',event=>{
+      const config=canvas._tooltipConfig;if(!config||!config.labels.length){tooltip.style.display='none';return;}
+      const rect=canvas.getBoundingClientRect();
+      const x=event.clientX-rect.left;
+      if(x<config.left-8||x>config.left+config.plotW+8){tooltip.style.display='none';return;}
+      const idx=config.labels.length===1?0:Math.max(0,Math.min(config.labels.length-1,Math.round(((x-config.left)/config.plotW)*(config.labels.length-1))));
+      const lines=[String(config.labels[idx]),...config.series.map(series=>`${series.name}: ${numberFmt.format(series.values[idx]||0)}`)];
+      tooltip.textContent=lines.join('\n');tooltip.style.display='block';
+      const pointX=config.labels.length===1?config.left+config.plotW/2:config.left+(config.plotW*idx/(config.labels.length-1));
+      const tipWidth=tooltip.offsetWidth||160;
+      tooltip.style.left=`${Math.max(4,Math.min(frame.clientWidth-tipWidth-4,pointX-tipWidth/2))}px`;
+      tooltip.style.top='7px';
+    });
+    canvas.addEventListener('mouseleave',()=>{tooltip.style.display='none';});
+    canvas._tooltipBound=true;
+  }
+  return tooltip;
 }
 
-function drawMultiLineChart(canvas,labels,series){
+function drawLineChart(canvas,labels,values,color='#000080',yLabel='Tasks',seriesName='Series'){
+  drawMultiLineChart(canvas,labels,[{name:seriesName,values,color}],yLabel);
+}
+
+function drawMultiLineChart(canvas,labels,series,yLabel='Tasks'){
   if(!canvas||canvas.closest('[hidden]'))return;
-  const {ctx,width,height}=prepareCanvas(canvas,Number(canvas.getAttribute('height'))||230); const max=Math.max(1,...series.flatMap(s=>s.values)); const a=axes(ctx,width,height,max); const n=labels.length;
+  const {ctx,width,height}=prepareCanvas(canvas,Number(canvas.getAttribute('height'))||220); const rawMax=Math.max(1,...series.flatMap(s=>s.values)); const a=axes(ctx,width,height,rawMax*1.08,yLabel); const n=labels.length;
   if(!n){ctx.fillStyle='#333';ctx.textAlign='center';ctx.fillText('No data',width/2,height/2);return;}
   const xAt=i=>a.left+(n===1?a.plotW/2:(a.plotW*i/(n-1)));
-  for(const s of series){ctx.strokeStyle=s.color;ctx.lineWidth=2;ctx.beginPath();s.values.forEach((v,i)=>{const x=xAt(i),y=a.top+a.plotH-(a.plotH*v/a.max);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.stroke();}
-  const step=Math.max(1,Math.ceil(n/10));ctx.fillStyle='#222';ctx.textAlign='center';labels.forEach((l,i)=>{if(i%step===0||i===n-1)ctx.fillText(l,xAt(i),height-15);});
+  for(const seriesItem of series){ctx.strokeStyle=seriesItem.color;ctx.lineWidth=2;ctx.beginPath();seriesItem.values.forEach((v,i)=>{const x=xAt(i),y=a.top+a.plotH-(a.plotH*v/a.max);if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});ctx.stroke();}
+  const step=Math.max(1,Math.ceil(n/10));ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';labels.forEach((l,i)=>{if(i%step===0||i===n-1)ctx.fillText(l,xAt(i),height-15);});
+  ensureChartTooltip(canvas);
+  canvas._tooltipConfig={labels,series,left:a.left,plotW:a.plotW};
 }
 
 // ---------- events ----------

@@ -181,8 +181,11 @@ button:active,
   gap: 2px;
   padding: 7px 8px 0;
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   border-bottom: 1px solid #808080;
 }
+.tabs::-webkit-scrollbar { display: none; }
 .tabs button {
   white-space: nowrap;
   padding: 5px 11px 6px;
@@ -237,6 +240,8 @@ button:active,
 .stat-card .label { font-size: 12px; min-height: 30px; }
 .stat-card .value { font-weight: 700; font-size: 24px; line-height: 1.1; margin-top: 4px; overflow-wrap: anywhere; }
 .stat-card .sub { font-size: 11px; color: #333; margin-top: 4px; }
+.stat-card.subject-first .value { font-size: 19px; line-height: 1.2; }
+.stat-card.subject-first .sub { font-size: 14px; font-weight: 700; color: #000; margin-top: 7px; }
 
 .two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .groupbox {
@@ -248,7 +253,30 @@ button:active,
 }
 .groupbox legend { padding: 0 5px; font-weight: 700; }
 .metric-list { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: baseline; }
-.metric-list .metric-label { overflow-wrap: anywhere; }
+.metric-list .metric-label { overflow-wrap: anywhere; position: relative; }
+.metric-label.has-tooltip { cursor: help; text-decoration: underline dotted; text-underline-offset: 2px; }
+.metric-label.has-tooltip::after {
+  content: attr(data-tooltip);
+  display: none;
+  position: absolute;
+  z-index: 120;
+  left: 0;
+  top: calc(100% + 5px);
+  width: max-content;
+  max-width: min(360px, 75vw);
+  padding: 5px 7px;
+  color: #000;
+  background: #ffffe1;
+  border: 1px solid #000;
+  box-shadow: 1px 1px 0 #808080;
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 400;
+  text-decoration: none;
+  white-space: normal;
+}
+.metric-label.has-tooltip:hover::after,
+.metric-label.has-tooltip:focus::after { display: block; }
 .metric-list .metric-value { font-weight: 700; text-align: right; }
 .note, .small-note { font-size: 11px; color: #333; line-height: 1.35; }
 
@@ -278,6 +306,7 @@ td.num, th.num { text-align: right; }
 tr:last-child td { border-bottom: 0; }
 
 .chart-frame {
+  position: relative;
   width: 100%;
   min-height: 220px;
   background: #fff;
@@ -288,9 +317,9 @@ tr:last-child td { border-bottom: 0; }
   padding: 4px;
   overflow: hidden;
 }
-.chart-frame.tall { min-height: 300px; }
+.chart-frame.tall { min-height: 240px; }
 .chart-frame canvas { display: block; width: 100%; max-width: 100%; }
-.chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 5px 4px; font-size: 11px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 6px 4px; font-size: 13px; font-weight: 700; }
 .legend-created { color: #000080; }
 .legend-done { color: #008000; }
 .legend-cancelled { color: #800000; }
@@ -304,17 +333,17 @@ tr:last-child td { border-bottom: 0; }
 .year-heatmap { overflow-x: auto; padding: 5px 2px 2px; }
 .heatmap-grid {
   display: grid;
-  grid-template-rows: 16px repeat(7, 14px);
+  grid-template-rows: 18px repeat(7, 18px);
   grid-auto-flow: column;
-  grid-auto-columns: 14px;
+  grid-auto-columns: 18px;
   gap: 2px;
   min-width: max-content;
 }
 .heat-label { font-size: 9px; line-height: 14px; text-align: right; padding-right: 2px; min-width: 22px; }
 .heat-month { font-size: 9px; line-height: 14px; white-space: nowrap; overflow: visible; }
 .heat {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   display: inline-block;
   border-top: 1px solid #fff;
   border-left: 1px solid #fff;
@@ -361,14 +390,15 @@ tr:last-child td { border-bottom: 0; }
 
 .month-year-heatmap { overflow: auto; }
 .month-year-grid { display: grid; gap: 2px; align-items: center; min-width: 650px; }
-.month-year-cell { min-width: 36px; height: 25px; display: grid; place-items: center; font-size: 10px; }
+.month-year-cell { width: 100%; min-width: 42px; height: 30px; display: grid; place-items: center; font-size: 10px; }
 .month-year-head, .month-year-year { font-size: 10px; font-weight: 700; text-align: center; }
+.month-year-head { align-self: end; padding-bottom: 3px; }
 
 .weekday-hour-heatmap { overflow-x: auto; }
-.wh-grid { display: grid; gap: 2px; grid-template-columns: 38px repeat(24, 20px); min-width: 565px; align-items: center; }
+.wh-grid { display: grid; gap: 2px; grid-template-columns: 44px repeat(24, 26px); min-width: 720px; align-items: center; }
 .wh-label { font-size: 9px; text-align: right; padding-right: 3px; }
-.wh-hour { font-size: 8px; text-align: center; }
-.wh-cell { width: 20px; height: 18px; }
+.wh-hour { font-size: 8px; text-align: center; white-space: nowrap; }
+.wh-cell { width: 26px; height: 22px; }
 
 .word-cloud {
   display: flex;
@@ -448,3 +478,20 @@ tr:last-child td { border-bottom: 0; }
   .tabs { padding-left: 4px; padding-right: 4px; }
   .tabs button { padding-left: 8px; padding-right: 8px; }
 }
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 100;
+  display: none;
+  pointer-events: none;
+  max-width: min(320px, 80%);
+  padding: 5px 7px;
+  background: #ffffe1;
+  color: #000;
+  border: 1px solid #000;
+  box-shadow: 1px 1px 0 #808080;
+  font: 11px Tahoma, "MS Sans Serif", Arial, sans-serif;
+  line-height: 1.35;
+  white-space: pre-line;
+}
+.backlog-note { margin: 0 2px 7px; }

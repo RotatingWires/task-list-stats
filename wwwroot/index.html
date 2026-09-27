@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#008080">
-  <title>Task List Stats v0.1</title>
+  <title>Task List Stats v0.2</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
   <main class="window" id="appWindow">
     <header class="titlebar">
-      <span class="title-left">Task List Stats v0.1</span>
+      <span class="title-left">Task List Stats v0.2</span>
       <span class="title-center" id="titleScope">All lists</span>
       <span class="title-buttons" aria-hidden="true">_ □ ×</span>
     </header>
@@ -103,12 +103,12 @@
         <fieldset class="groupbox">
           <legend>Created / completed / cancelled</legend>
           <div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span><span class="legend-cancelled">■ Cancelled</span></div>
-          <div class="chart-frame tall"><canvas id="trendChart" height="300"></canvas></div>
+          <div class="chart-frame"><canvas id="trendChart" height="220"></canvas></div>
         </fieldset>
         <fieldset class="groupbox">
           <legend>Approximate backlog over time</legend>
-          <div class="note">Uses creation, completion, cancellation, and the last known reopen timestamp. Task List does not keep a complete event history, so older reopen cycles cannot be reconstructed exactly.</div>
-          <div class="chart-frame"><canvas id="backlogChart" height="230"></canvas></div>
+          <div class="note backlog-note"><strong>What this means:</strong> this estimates how many tasks were still in your backlog at the end of each month. A creation or reopen adds one; a completion or cancellation removes one. Task List only stores the latest reopen timestamp, so repeated older reopen cycles cannot be reconstructed exactly.</div>
+          <div class="chart-frame"><canvas id="backlogChart" height="200"></canvas></div>
         </fieldset>
         <div class="two-column">
           <fieldset class="groupbox">
@@ -121,7 +121,7 @@
           </fieldset>
         </div>
         <fieldset class="groupbox">
-          <legend>Year-over-year monthly comparison</legend>
+          <legend>Year-over-year monthly comparison — tasks created</legend>
           <div class="table-wrap"><table id="yearComparisonTable"></table></div>
         </fieldset>
       </section>
@@ -186,11 +186,13 @@
         <div class="two-column">
           <fieldset class="groupbox">
             <legend>Day-of-week patterns</legend>
-            <div class="chart-frame"><canvas id="weekdayChart" height="240"></canvas></div>
+            <div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span></div>
+            <div class="chart-frame"><canvas id="weekdayChart" height="220"></canvas></div>
           </fieldset>
           <fieldset class="groupbox">
             <legend>Hour-of-day patterns</legend>
-            <div class="chart-frame"><canvas id="hourChart" height="240"></canvas></div>
+            <div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span></div>
+            <div class="chart-frame"><canvas id="hourChart" height="220"></canvas></div>
           </fieldset>
         </div>
         <fieldset class="groupbox">
@@ -253,7 +255,7 @@
     </section>
 
     <footer class="statusbar">
-      <span id="statusLeft">Task List Stats v0.1</span>
+      <span id="statusLeft">Task List Stats v0.2</span>
       <span id="statusRight">Read-only database access</span>
     </footer>
   </main>
@@ -262,7 +264,7 @@
     <form method="dialog" class="dialog-window">
       <div class="dialog-title">About Task List Stats</div>
       <div class="dialog-body">
-        <strong>Task List Stats v0.1</strong>
+        <strong>Task List Stats v0.2</strong>
         <p>Read-only statistics and history explorer for Task List.</p>
         <p>No chart libraries. No ORM. No database writes.</p>
         <p class="small-note">Historical status transitions are limited by the timestamps Task List stores. Backlog history involving repeated reopen cycles is therefore approximate.</p>

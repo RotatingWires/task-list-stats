@@ -1,6 +1,6 @@
 # Task List Stats
 
-**Task List Stats v0.1** is a separate, read-only statistics app for the self-hosted **Task List** database.
+**Task List Stats v0.2** is a separate, read-only statistics app for the self-hosted **Task List** database.
 
 It intentionally stays separate from Task List so charts, heatmaps, historical analysis, and reporting do not add bloat to the main task app.
 
@@ -17,7 +17,7 @@ It intentionally stays separate from Task List so charts, heatmaps, historical a
 
 The interface follows the same Windows 95-style visual language as Task List.
 
-## v0.1 statistics
+## v0.2 statistics
 
 ### Overview
 
@@ -25,7 +25,6 @@ The interface follows the same Windows 95-style visual language as Task List.
 - Root tasks vs subtasks
 - Highest Universal ID / lifetime-entry count
 - Approximate deleted-entry count
-- Unknown/imported creation-date count
 - Busiest month, week, and day
 - Longest quiet streak
 - Longest active streak
@@ -39,11 +38,12 @@ The interface follows the same Windows 95-style visual language as Task List.
 
 ### Trends
 
-- Created / completed / cancelled trends grouped by day, week, or month
+- Created / completed / cancelled trends grouped by day, week, or month, with hover values
 - Approximate historical backlog curve
-- Top 10 busiest months
+- Top 10 busiest months with created and completed counts
 - Fastest and slowest completion months
 - Year-over-year monthly creation comparison
+- Axis labels and exact bar values on charts
 
 ### Calendar & heatmaps
 
@@ -81,6 +81,23 @@ The interface follows the same Windows 95-style visual language as Task List.
 - Simple task-type inference (quiz, exam/test, reading, discussion, assignment, project, paper/essay, lab)
 - Known reopened-task count and recently reopened tasks
 
+## v0.2 interface refinements
+
+- Hidden tab-strip scrollbar while retaining horizontal scrolling on narrow screens
+- Removed the static unknown-date cards and the toolbar's dated-item count
+- Record cards emphasize the winning month/week/day first, with counts underneath
+- Windows 95-style hover explanations for completion behavior, workload rhythm, and exam/test-window metrics
+- Removed the redundant completion-timestamp count from Completion behavior
+- Added Y-axis labels and exact values above bar columns
+- Added hover values to the trend and backlog line charts
+- Made trend/backlog charts more compact and expanded the backlog explanation
+- Added Completed counts to the Top 10 busiest months table
+- Clarified that the year-over-year table counts tasks created
+- Enlarged activity and weekday/hour heatmap cells and aligned month labels above month/year cells
+- Added Created/Completed legends to weekday and hour pattern charts
+- 12-hour AM/PM time labels throughout
+- Removed the reopened-at implementation note from the tree summary
+
 ## Historical-data limitation
 
 Task List stores useful current timestamps:
@@ -99,7 +116,7 @@ Therefore:
 - Creation statistics are exact for records with valid creation dates.
 - Current stored completion/cancellation/reopen timestamps are exact.
 - The historical backlog graph is explicitly **approximate** when repeated reopen cycles occurred.
-- Imported records whose creation date is `Unknown` are counted separately and excluded from date-based statistics.
+- Imported records whose creation date is `Unknown` are excluded from date-based statistics.
 
 ## Database configuration
 
@@ -161,7 +178,7 @@ The server and client are cross-platform. They can run on Windows, Linux, or mac
 
 ## Security
 
-v0.1 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
+v0.2 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
 
 The database connection itself is read-only, so the stats app cannot intentionally edit Task List data.
 
@@ -178,4 +195,4 @@ The same philosophy as Task List:
 
 ## Version
 
-Task List Stats v0.1
+Task List Stats v0.2
