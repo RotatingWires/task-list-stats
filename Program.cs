@@ -18,7 +18,7 @@ app.MapGet("/api/health", () =>
     return Results.Ok(new
     {
         ok = File.Exists(path),
-        version = "0.11",
+        version = "0.12",
         databaseFound = File.Exists(path),
         databaseFile = Path.GetFileName(path)
     });
@@ -107,7 +107,7 @@ app.MapGet("/api/snapshot", async () =>
 
         var fileInfo = new FileInfo(dbPath);
         return Results.Ok(new StatsSnapshot(
-            "0.9",
+            "0.12",
             DateTimeOffset.UtcNow.ToString("O"),
             fileInfo.LastWriteTimeUtc.ToString("O"),
             highestUniversalId,

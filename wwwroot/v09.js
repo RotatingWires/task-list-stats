@@ -11,8 +11,8 @@ style.textContent=`
   .tabs button,.subtabs button{padding-bottom:10px!important}
   .tabs button[aria-selected="true"],.subtabs button[aria-selected="true"]{padding-bottom:10px!important}
 
-  #helpMenu{width:max-content;min-width:270px;max-width:calc(100vw - 20px)}
-  #helpMenu button{grid-template-columns:18px max-content}
+  #helpMenu{width:max-content;min-width:0;max-width:calc(100vw - 20px)}
+  #helpMenu button{grid-template-columns:18px max-content;width:auto;min-width:0}
   #helpMenu .menu-label{overflow:visible;text-overflow:clip;white-space:nowrap}
 
   .tap-help-tooltip,.chart-tap-tooltip{
@@ -42,7 +42,6 @@ style.textContent=`
   @media(max-width:780px){
     body{background:var(--face)!important}
     .window{width:100%;max-width:none}
-    #helpMenu{min-width:250px}
   }
 `;
 document.head.append(style);
@@ -111,7 +110,7 @@ function installChartTap(canvas){
   canvas.addEventListener('pointerleave',event=>{if(event.pointerType!=='touch')hideChartTip();});
   canvas.addEventListener('click',event=>showChartTip(canvas,event));
 }
-ensureChartTooltip=function(canvas){installChartTap(canvas);return chartTip;};
+window.ensureChartTooltip=function(canvas){installChartTap(canvas);return chartTip;};
 
 drawBarChart=function(canvas,labels,values,color='#000080',decimal=false,yLabel='Tasks'){
   if(!canvas||canvas.closest('[hidden]'))return;
@@ -221,7 +220,6 @@ function renderV09(){
 }
 const previousRenderAll=renderAll;
 renderAll=function(){previousRenderAll();renderV09();};
-
 
 loadSnapshot();
 })();

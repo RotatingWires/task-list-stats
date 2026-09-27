@@ -1,8 +1,17 @@
 # TaskList Stats
 
-**TaskList Stats v0.9** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.12** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
+
+## v0.12
+
+- Fixed the cleanup regression that left fresh page loads stuck on `Loading database...` until **File → Refresh** was clicked.
+- Fixed the strict-mode line-chart tooltip binding that caused `v09.js` to stop before automatic startup finished.
+- Kept line-chart hover/tap tooltips while bar charts remain tooltip-free.
+- Resized the Help dropdown to fit `About TaskList Stats` without an oversized button or a truncated label.
+- Restored **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** during normal initial page load.
+- Bumped server, snapshot, assembly, UI, About dialog, and PWA cache metadata to v0.12.
 
 ## v0.11
 
@@ -20,7 +29,7 @@ It intentionally stays separate from TaskList so charts, heatmaps, historical an
 - Standardized TaskList and TaskList Stats naming directly across current source and documentation.
 - Removed bar-chart hover/tap tooltips while keeping line-chart hover and mobile tap-to-inspect tooltips.
 - Replaced native up/down select chrome in tab controls with a single-down-arrow Win95-style wrapper matching the top List picker.
-- Set the repository ListenUrl to `http://192.168.1.12:8711`.
+- Set the repository ListenUrl to `http://192.168.1.12:8712`.
 - Bumped server/assembly metadata and the PWA cache to v0.10.
 
 ## v0.9
@@ -30,7 +39,7 @@ It intentionally stays separate from TaskList so charts, heatmaps, historical an
 - Added more bottom padding to the main tabs and Fun subtabs so labels no longer look clipped against the lower bevel.
 - Added tap/click explanations for labels that previously depended on desktop hover tooltips.
 - Added tap-to-inspect chart tooltips while retaining pointer hover behavior on desktop.
-- Widened the Hour-of-Day chart and its grouped bars so values are easier to read and tap; tooltips include the actual hour plus Created/Completed counts.
+- Widened the Hour-of-Day chart and its grouped bars so values are easier to read.
 - Fixed the Help dropdown width so `About TaskList Stats` is no longer truncated.
 - Added **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** to Fun.
 
@@ -226,7 +235,7 @@ The server and client are cross-platform. They can run on Windows, Linux, or mac
 
 ## Security
 
-v0.9 does not add a second login system. Treat it like the rest of the local TaskList deployment: keep it on your LAN/VPN and do not publicly forward the port.
+TaskList Stats does not add a second login system. Treat it like the rest of the local TaskList deployment: keep it on your LAN/VPN and do not publicly forward the port.
 
 The database connection itself is read-only, so the Stats app cannot intentionally edit TaskList data.
 
@@ -243,4 +252,4 @@ The same philosophy as TaskList:
 
 ## Version
 
-TaskList Stats v0.9
+TaskList Stats v0.12
