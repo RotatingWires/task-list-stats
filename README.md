@@ -1,8 +1,16 @@
 # TaskList Stats
 
-**TaskList Stats v0.21** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.22** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
+
+## v0.22
+
+- Make Fun render only the currently visible Fun subtab instead of recalculating every hidden Fun analysis after each button click.
+- Time Machine, Ancient Task, Productivity Jackpot, Task Graveyard, and future Fun actions now share the same active-panel rendering path, preventing hidden expensive work from delaying interactive buttons.
+- Optimize Personal Records tree-size and direct-child calculations from repeated whole-list scans to single-pass lookup maps.
+- Keep Fun rerendering scoped to the currently selected subtab when the database snapshot or list filter changes.
+- Bump server, snapshot, assembly, UI, README, and PWA cache metadata to v0.22.
 
 ## v0.21
 
