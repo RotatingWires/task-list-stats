@@ -94,10 +94,10 @@ document.head.append(style);
 
 document.querySelector('.roulette-titlebar')?.remove();
 
-document.title='Task List Stats v0.8';
-const titleNode=document.querySelector('.title-left');if(titleNode)titleNode.textContent='Task List Stats v0.8';
-const statusNode=$('#statusLeft');if(statusNode)statusNode.textContent='Task List Stats v0.8';
-const about=document.querySelector('#aboutDialog strong');if(about)about.textContent='Task List Stats v0.8';
+document.title='TaskList Stats v0.8';
+const titleNode=document.querySelector('.title-left');if(titleNode)titleNode.textContent='TaskList Stats v0.8';
+const statusNode=$('#statusLeft');if(statusNode)statusNode.textContent='TaskList Stats v0.8';
+const about=document.querySelector('#aboutDialog strong');if(about)about.textContent='TaskList Stats v0.8';
 
 requestAnimationFrame(()=>{
   try{renderAll();}catch{}

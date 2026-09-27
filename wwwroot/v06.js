@@ -8,6 +8,11 @@
     v07.onload = () => {
       const v08 = document.createElement('script');
       v08.src = '/v08.js';
+      v08.onload = () => {
+        const v09 = document.createElement('script');
+        v09.src = '/v09.js';
+        document.body.append(v09);
+      };
       document.body.append(v08);
     };
     document.body.append(v07);

@@ -1,10 +1,10 @@
 {
-  "name": "Task List Stats",
-  "short_name": "Task Stats",
+  "name": "TaskList Stats",
+  "short_name": "TaskList Stats",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#008080",
-  "theme_color": "#008080",
+  "background_color": "#c0c0c0",
+  "theme_color": "#000080",
   "icons": [
     { "src": "/icons/stats.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]

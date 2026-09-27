@@ -3,16 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#008080">
-  <title>Task List Stats v0.6</title>
+  <meta name="theme-color" content="#000080">
+  <title>TaskList Stats v0.9</title>
   <link rel="icon" href="/icons/stats.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
+  <style>:root,body{background:#c0c0c0!important}</style>
 </head>
 <body>
   <main class="window" id="appWindow">
     <header class="titlebar">
-      <span class="title-left">Task List Stats v0.6</span>
+      <span class="title-left">TaskList Stats v0.9</span>
       <span class="title-center" id="titleScope">All lists</span>
       <span class="title-buttons" aria-hidden="true">_ □ ×</span>
     </header>
@@ -32,7 +33,7 @@
       <div class="menu-wrap">
         <button id="helpMenuButton" type="button" aria-haspopup="menu" aria-expanded="false"><u>H</u>elp</button>
         <div id="helpMenu" class="menu-dropdown" role="menu" hidden>
-          <button type="button" id="aboutButton" role="menuitem"><span></span><span class="menu-label">About Task List Stats</span></button>
+          <button type="button" id="aboutButton" role="menuitem"><span></span><span class="menu-label">About TaskList Stats</span></button>
         </div>
       </div>
     </nav>
@@ -60,7 +61,7 @@
     </section>
 
     <section class="workspace" id="workspace">
-      <div id="loadingPanel" class="message-panel">Reading Task List database...</div>
+      <div id="loadingPanel" class="message-panel">Reading TaskList database...</div>
       <div id="errorPanel" class="message-panel error-panel" hidden></div>
 
       <section class="tab-panel" data-panel="overview">
@@ -76,7 +77,7 @@
       <section class="tab-panel" data-panel="trends" hidden>
         <div class="control-row"><label>Group by:<select id="trendGroup" class="native-retro-select"><option value="day">Day</option><option value="week">Week</option><option value="month" selected>Month</option></select></label></div>
         <fieldset class="groupbox"><legend>Created / Completed / Cancelled</legend><div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span><span class="legend-cancelled">■ Cancelled</span></div><div class="chart-frame"><canvas id="trendChart" height="220"></canvas></div></fieldset>
-        <fieldset class="groupbox"><legend>Approximate Backlog Over Time</legend><div class="note backlog-note"><strong>What this means:</strong> this estimates how many tasks were still in your backlog at the end of each month. A creation or reopen adds one; a completion or cancellation removes one. Task List only stores the latest reopen timestamp, so repeated older reopen cycles cannot be reconstructed exactly.</div><div class="chart-frame"><canvas id="backlogChart" height="200"></canvas></div></fieldset>
+        <fieldset class="groupbox"><legend>Approximate Backlog Over Time</legend><div class="note backlog-note"><strong>What this means:</strong> this estimates how many tasks were still in your backlog at the end of each month. A creation or reopen adds one; a completion or cancellation removes one. TaskList only stores the latest reopen timestamp, so repeated older reopen cycles cannot be reconstructed exactly.</div><div class="chart-frame"><canvas id="backlogChart" height="200"></canvas></div></fieldset>
         <div class="two-column"><fieldset class="groupbox"><legend>Top 10 Busiest Months</legend><div class="table-wrap"><table id="topMonthsTable"></table></div></fieldset><fieldset class="groupbox"><legend>Fastest / Slowest Completion Months</legend><div class="table-wrap"><table id="monthSpeedTable"></table></div></fieldset></div>
         <fieldset class="groupbox"><legend>Year-Over-Year Monthly Comparison — Tasks Created</legend><div class="table-wrap"><table id="yearComparisonTable"></table></div></fieldset>
       </section>
@@ -111,14 +112,14 @@
 
       <section class="tab-panel" data-panel="fun" hidden>
         <section class="subtabs" role="tablist" aria-label="Fun sections"><button type="button" role="tab" aria-selected="true" data-fun-tab="roulette">Task Roulette</button></section>
-        <section class="fun-panel" data-fun-panel="roulette"><fieldset class="groupbox"><legend>Task Roulette</legend><div class="note roulette-note">Pick a random current task from the selected list scope and inspect a stats-focused snapshot of that task and its place in the hierarchy.</div><div class="roulette-actions"><button type="button" id="rouletteButton">Pick a Random Task</button></div><div id="rouletteEmpty" class="roulette-empty">No task selected yet.</div><div id="rouletteResult" class="roulette-result" hidden><div class="roulette-titlebar">Task Roulette Result</div><div class="roulette-body"><div id="rouletteTaskHeading" class="roulette-heading"></div><div id="rouletteTaskTitle" class="roulette-task-title"></div><div class="table-wrap roulette-table-wrap"><table id="rouletteTable"></table></div></div></div></fieldset></section>
+        <section class="fun-panel" data-fun-panel="roulette"><fieldset class="groupbox"><legend>Task Roulette</legend><div class="note roulette-note">Pick a random current task from the selected list scope and inspect a stats-focused snapshot of that task and its place in the hierarchy.</div><div class="roulette-actions"><button type="button" id="rouletteButton">Pick a Random Task</button></div><div id="rouletteEmpty" class="roulette-empty">No task selected yet.</div><div id="rouletteResult" class="roulette-result" hidden><div class="roulette-body"><div id="rouletteTaskHeading" class="roulette-heading"></div><div id="rouletteTaskTitle" class="roulette-task-title"></div><div class="table-wrap roulette-table-wrap"><table id="rouletteTable"></table></div></div></div></fieldset></section>
       </section>
     </section>
 
-    <footer class="statusbar"><span id="statusLeft">Task List Stats v0.6</span><span id="statusRight">Read-only database access</span></footer>
+    <footer class="statusbar"><span id="statusLeft">TaskList Stats v0.9</span><span id="statusRight">Read-only database access</span></footer>
   </main>
 
-  <dialog id="aboutDialog" class="retro-dialog"><form method="dialog" class="dialog-window"><div class="dialog-title">About Task List Stats</div><div class="dialog-body"><strong>Task List Stats v0.6</strong><p>Read-only statistics and history explorer for Task List.</p><p>No chart libraries. No ORM. No database writes.</p><p class="small-note">Historical status transitions are limited by the timestamps Task List stores. Backlog history involving repeated reopen cycles is therefore approximate.</p></div><div class="dialog-buttons"><button type="submit">OK</button></div></form></dialog>
+  <dialog id="aboutDialog" class="retro-dialog"><form method="dialog" class="dialog-window"><div class="dialog-title">About TaskList Stats</div><div class="dialog-body"><strong>TaskList Stats v0.9</strong><p>Read-only statistics and history explorer for TaskList.</p><p>No chart libraries. No ORM. No database writes.</p><p class="small-note">Historical status transitions are limited by the timestamps TaskList stores. Backlog history involving repeated reopen cycles is therefore approximate.</p></div><div class="dialog-buttons"><button type="submit">OK</button></div></form></dialog>
 
   <script src="app.js"></script>
   <script src="v06.js"></script>

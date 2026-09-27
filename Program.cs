@@ -18,7 +18,7 @@ app.MapGet("/api/health", () =>
     return Results.Ok(new
     {
         ok = File.Exists(path),
-        version = "0.8",
+        version = "0.9",
         databaseFound = File.Exists(path),
         databaseFile = Path.GetFileName(path)
     });
@@ -30,8 +30,8 @@ app.MapGet("/api/snapshot", async () =>
     if (!File.Exists(dbPath))
     {
         return Results.Problem(
-            title: "Task List database not found",
-            detail: $"Task List Stats could not find task-list.db. Set TaskListStats:DatabasePath in appsettings.json or the TASKLIST_DB_PATH environment variable. Resolved path: {dbPath}",
+            title: "TaskList database not found",
+            detail: $"TaskList Stats could not find task-list.db. Set TaskListStats:DatabasePath in appsettings.json or the TASKLIST_DB_PATH environment variable. Resolved path: {dbPath}",
             statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 
@@ -107,7 +107,7 @@ app.MapGet("/api/snapshot", async () =>
 
         var fileInfo = new FileInfo(dbPath);
         return Results.Ok(new StatsSnapshot(
-            "0.8",
+            "0.9",
             DateTimeOffset.UtcNow.ToString("O"),
             fileInfo.LastWriteTimeUtc.ToString("O"),
             highestUniversalId,
@@ -117,7 +117,7 @@ app.MapGet("/api/snapshot", async () =>
     catch (SqliteException ex)
     {
         return Results.Problem(
-            title: "Could not read Task List database",
+            title: "Could not read TaskList database",
             detail: ex.Message,
             statusCode: StatusCodes.Status503ServiceUnavailable);
     }

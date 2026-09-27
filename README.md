@@ -1,8 +1,19 @@
-# Task List Stats
+# TaskList Stats
 
-**Task List Stats v0.8** is a separate, read-only statistics app for the self-hosted **Task List** database.
+**TaskList Stats v0.9** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
-It intentionally stays separate from Task List so charts, heatmaps, historical analysis, and reporting do not add bloat to the main task app.
+It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
+
+## v0.9
+
+- Standardized current branding to **TaskList** and **TaskList Stats** across the UI, PWA metadata, product metadata, and documentation.
+- Changed the Stats page background from teal to the same gray desktop surface used by TaskList.
+- Added more bottom padding to the main tabs and Fun subtabs so labels no longer look clipped against the lower bevel.
+- Added tap/click explanations for labels that previously depended on desktop hover tooltips.
+- Added tap-to-inspect chart tooltips while retaining pointer hover behavior on desktop.
+- Widened the Hour-of-Day chart and its grouped bars so values are easier to read and tap; tooltips include the actual hour plus Created/Completed counts.
+- Fixed the Help dropdown width so `About TaskList Stats` is no longer truncated.
+- Added **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** to Fun.
 
 ## v0.8
 
@@ -16,7 +27,7 @@ It intentionally stays separate from Task List so charts, heatmaps, historical a
 
 ## v0.7
 
-- Task-ID links open Task List in a new tab and use clean `/task/<UniversalID>` links.
+- Task-ID links open TaskList in a new tab and use clean `/task/<UniversalID>` links.
 - Removed Random Day, Guess the Stat, and Fortune Cookie from Fun.
 - Increased Fun description and Déjà Vu table text sizes.
 - Clarified Time Machine by separating the event on the selected date from each task's current status.
@@ -26,7 +37,7 @@ It intentionally stays separate from Task List so charts, heatmaps, historical a
 
 ## v0.6
 
-- Task IDs shown in Stats deep-link into Task List, selecting the correct list, switching to **All**, scrolling to the task, and highlighting it.
+- Task IDs shown in Stats deep-link into TaskList, selecting the correct list, switching to **All**, scrolling to the task, and highlighting it.
 - Fixed high-DPI canvas charts growing taller after repeated list-filter changes.
 - Expanded **Fun** with Task Roulette, Ancient Task, Forgotten Task, Time Machine, Productivity Jackpot, Task Graveyard, Personal Records, On This Day, Déjà Vu, Slowest Task, Speedrun, Random Day, Guess the Stat, and Task Fortune Cookie.
 - Fun features remain local and use the read-only Stats snapshot.
@@ -42,7 +53,7 @@ It intentionally stays separate from Task List so charts, heatmaps, historical a
 - No frontend framework
 - No chart library
 
-The interface follows the same Windows 95-style visual language as Task List.
+The interface follows the same Windows 95-style visual language as TaskList.
 
 ## Statistics
 
@@ -65,7 +76,7 @@ The interface follows the same Windows 95-style visual language as Task List.
 
 ### Trends
 
-- Created / completed / cancelled trends grouped by day, week, or month, with hover values
+- Created / completed / cancelled trends grouped by day, week, or month, with pointer/tap values
 - Approximate historical backlog curve
 - Top 10 busiest months with created and completed counts
 - Fastest and slowest completion months
@@ -121,59 +132,45 @@ The interface follows the same Windows 95-style visual language as Task List.
 - Déjà Vu
 - Slowest Task
 - Speedrun
+- Night Owl
+- Early Bird
+- Same-Day Speedrun
+- Cleanup Day
 
-## v0.2 interface refinements
+## Earlier interface refinements
 
-- Hidden tab-strip scrollbar while retaining horizontal scrolling on narrow screens
-- Removed the static unknown-date cards and the toolbar's dated-item count
-- Record cards emphasize the winning month/week/day first, with counts underneath
-- Windows 95-style hover explanations for completion behavior, workload rhythm, and exam/test-window metrics
-- Removed the redundant completion-timestamp count from Completion behavior
-- Added Y-axis labels and exact values above bar columns
-- Added hover values to the trend and backlog line charts
-- Made trend/backlog charts more compact and expanded the backlog explanation
-- Added Completed counts to the Top 10 busiest months table
-- Clarified that the year-over-year table counts tasks created
-- Enlarged activity and weekday/hour heatmap cells and aligned month labels above month/year cells
-- Added Created/Completed legends to weekday and hour pattern charts
-- 12-hour AM/PM time labels throughout
-- Removed the reopened-at implementation note from the tree summary
+### v0.5
 
-## v0.3 interface refinements
+- Added a tooltip to the Weekday × Hour Heatmap explaining its event timestamps, scope, and full-history behavior.
+- Renamed the month/year panel to `Month × Year Heatmap (Created Tasks)` and standardized section headings to title case.
+- Fixed canvas sizing so repeatedly changing the list filter no longer causes graphs to grow.
+- Enlarged the Weekday × Hour Heatmap cells and labels.
+- Added the Fun tab and Task Roulette.
 
-- Removed the duplicate custom metric tooltip so explanatory labels use only the browser-native tooltip
-- Changed canvas-chart hover cards to a single black tooltip that follows the hovered data point
-- Fixed trend/backlog month labels to use readable spacing such as `May 26`
-- Increased chart label/value text size and added extra axis margins so first/last labels are not clipped
-- Reduced hour-chart label density and staggered close grouped-bar values to avoid overlap
-- Enlarged the year activity and month × year heatmaps while keeping the weekday × hour heatmap at its existing size
-- Printed counts directly inside every heatmap cell and removed heatmap hover tooltips
-- Increased month-calendar text size
-- Fixed the View menu label to display `Trees & Titles` with one ampersand
+### v0.4
 
-## v0.4 interface refinements
+- Made the statistics UI non-selectable to behave more like desktop application chrome.
+- Increased month-calendar typography and day-cell height.
+- Increased and bolded canvas chart labels, axis titles, ticks, and bar values.
+- Added explanatory hover text to day-of-week and hour-of-day pattern headings.
+- Enlarged the weekday × hour heatmap cells and labels.
+- Added the Stats bar-chart favicon.
 
-- Made the statistics UI non-selectable to behave more like desktop application chrome
-- Increased month-calendar typography and day-cell height
-- Increased and bolded canvas chart labels, axis titles, ticks, and bar values
-- Added explanatory hover text to day-of-week and hour-of-day pattern headings, including scope/history behavior
-- Enlarged the weekday × hour heatmap cells and labels
-- Explicitly use the Stats bar-chart icon as the browser favicon
-- Removed the redundant `Depth N` subtitle from the Deepest nesting level card
+### v0.3
 
-## v0.5 interface and Fun-tab additions
+- Removed the duplicate custom metric tooltip.
+- Added a single chart tooltip that follows hovered data.
+- Improved month labels, chart label/value size, axis margins, and grouped-bar spacing.
+- Enlarged heatmaps and printed counts inside heatmap cells.
+- Fixed the `Trees & Titles` menu label.
 
-- Added a tooltip to the Weekday × Hour Heatmap explaining its event timestamps, scope, and full-history behavior
-- Renamed the month/year panel to `Month × Year Heatmap (Created Tasks)` and standardized section headings to title case
-- Fixed canvas sizing so repeatedly changing the list filter no longer causes graphs to grow
-- Enlarged the Weekday × Hour Heatmap cells and labels
-- Added a new Fun tab with a Task Roulette subtab
-- Task Roulette picks a random current task from the active list scope and shows hierarchy, age, terminal-duration, timestamp, and identifier statistics
-- Included task descriptions in the read-only stats snapshot for Task Roulette
+### v0.2
+
+- Refined overview cards, chart axes/values, trend/backlog presentation, busiest-month reporting, heatmaps, legends, and 12-hour time labels.
 
 ## Historical-data limitation
 
-Task List stores useful current timestamps:
+TaskList stores useful current timestamps:
 
 - `created_at`
 - `updated_at`
@@ -193,11 +190,9 @@ Therefore:
 
 ## Database configuration
 
-Task List Stats never creates or modifies Task List tables. SQLite is opened with `Mode=ReadOnly` and `PRAGMA query_only=ON`.
+TaskList Stats never creates or modifies TaskList tables. SQLite is opened with `Mode=ReadOnly` and `PRAGMA query_only=ON`.
 
-Edit `appsettings.json` for your local database path and listening address.
-
-You can also override the database path with `TASKLIST_DB_PATH` and the listening URL with `TASKLIST_STATS_URL`.
+Edit `appsettings.json` for your local database path and listening address. You can also override the database path with `TASKLIST_DB_PATH` and the listening URL with `TASKLIST_STATS_URL`.
 
 ## Run
 
@@ -212,13 +207,13 @@ The server and client are cross-platform. They can run on Windows, Linux, or mac
 
 ## Security
 
-v0.8 does not add a second login system. Treat it like the rest of the local Task List deployment: keep it on your LAN/VPN and do not publicly forward the port.
+v0.9 does not add a second login system. Treat it like the rest of the local TaskList deployment: keep it on your LAN/VPN and do not publicly forward the port.
 
-The database connection itself is read-only, so the stats app cannot intentionally edit Task List data.
+The database connection itself is read-only, so the Stats app cannot intentionally edit TaskList data.
 
 ## Development philosophy
 
-The same philosophy as Task List:
+The same philosophy as TaskList:
 
 - boring technology
 - small source tree
@@ -229,4 +224,4 @@ The same philosophy as Task List:
 
 ## Version
 
-Task List Stats v0.8
+TaskList Stats v0.9
