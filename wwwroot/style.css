@@ -646,3 +646,10 @@ html,body{height:100%;min-height:0}
 .task-id-link{color:#0000a0;text-decoration:underline;font-weight:700}.task-id-link:visited{color:#551a8b}.fun-actions{margin:8px 0 10px}.fun-content{display:grid;gap:9px;margin-top:8px}.fun-empty{background:#fff;border-top:2px solid #404040;border-left:2px solid #404040;border-right:2px solid #fff;border-bottom:2px solid #fff;padding:14px}.fun-task-heading,.fun-task-title,.fun-day-heading{font-weight:700}.fun-task-title,.fun-day-heading{font-size:17px;margin:5px 0 9px}.fun-panel .note{font-size:13px;line-height:1.45}.fun-record-cards .stat-card{min-height:94px;padding:10px}.fun-record-cards .stat-card .value{font-size:22px;line-height:1.15}.fun-record-cards .stat-card .sub{font-size:12px;line-height:1.35}#dejavuResult table{font-size:14px}#dejavuResult th,#dejavuResult td{padding:7px 8px}.fun-current-summary{font-weight:700;font-size:15px;margin:4px 2px 8px}.fun-current-sub{font-size:13px;line-height:1.4;margin:0 2px 9px;color:#333}
 #helpMenu{width:max-content;min-width:0;max-width:calc(100vw - 20px)}#helpMenu button{grid-template-columns:18px max-content;width:auto;min-width:0}#helpMenu .menu-label{overflow:visible;text-overflow:clip;white-space:nowrap}
 .tap-help-tooltip,.chart-tap-tooltip{position:fixed;z-index:1000;max-width:min(360px,calc(100vw - 20px));padding:7px 9px;border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #404040;border-bottom:2px solid #404040;box-shadow:1px 1px 0 #000;font:13px Tahoma,"MS Sans Serif",Arial,sans-serif;line-height:1.4;white-space:pre-line;pointer-events:none}.tap-help-tooltip{background:#ffffe1;color:#000}.chart-tap-tooltip{background:#111;color:#fff;border-top-color:#555;border-left-color:#555;border-right-color:#000;border-bottom-color:#000}.has-tooltip{touch-action:manipulation}
+
+
+/* v0.15 menu/link fixes */
+#fileMenu{width:max-content;min-width:0;max-width:calc(100vw - 20px)}
+#fileMenu button{grid-template-columns:18px max-content;width:auto;min-width:0}
+#fileMenu .menu-label{overflow:visible;text-overflow:clip;white-space:nowrap}
+.task-id-link{pointer-events:auto;touch-action:manipulation;cursor:pointer}

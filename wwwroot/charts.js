@@ -173,6 +173,7 @@ function showTooltip(canvas, event) {
 function installLineTooltip(canvas) {
   if (!canvas || canvas._lineTooltipInstalled) return;
   canvas._lineTooltipInstalled = true;
+  canvas.style.touchAction = 'manipulation';
   canvas.addEventListener('pointermove', event => { if (event.pointerType !== 'touch') showTooltip(canvas, event); });
   canvas.addEventListener('pointerleave', event => { if (event.pointerType !== 'touch') hideTooltip(); });
   canvas.addEventListener('click', event => showTooltip(canvas, event));

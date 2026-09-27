@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.14';
+const VERSION = '0.15';
 const state = {
   snapshot: null,
   selectedListId: 'all',
@@ -857,13 +857,16 @@ function renderAll() {
   if (!state.snapshot) return;
   $('#titleScope').textContent = scopeLabel();
   $('#listFilterLabel').textContent = scopeLabel();
-  renderOverview();
-  renderTrends();
-  renderCalendar();
-  renderLists();
-  renderPatterns();
-  renderTrees();
-  Fun.render();
+  const renderers = {
+    overview: renderOverview,
+    trends: renderTrends,
+    calendar: renderCalendar,
+    lists: renderLists,
+    patterns: renderPatterns,
+    trees: renderTrees,
+    fun: () => Fun.render()
+  };
+  renderers[state.activeTab]?.();
   $('#statusLeft').textContent = `${numberFmt.format(scopedItems().length)} current items • ${scopeLabel()}`;
   $('#statusRight').textContent = `DB updated ${formatDateTime(parseDate(state.snapshot.databaseLastWriteUtc))} • Read-only`;
 }
@@ -1027,11 +1030,19 @@ function initializeNativeRetroSelects(){
     wrapper.append(arrow);
   }
 }
-document.addEventListener('DOMContentLoaded', () => {
+let appStarted = false;
+function startApp() {
+  if (appStarted) return;
+  appStarted = true;
   Fun.initialize();
   initializeNativeRetroSelects();
   initializeTouchHelp();
   loadSnapshot();
-});
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp, { once: true });
+} else {
+  startApp();
+}
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});

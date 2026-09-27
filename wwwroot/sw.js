@@ -1,4 +1,4 @@
-const CACHE = 'task-list-stats-v0-14';
+const CACHE = 'task-list-stats-v0-15';
 const STATIC = ['/', '/index.html', '/style.css', '/app.js', '/charts.js', '/fun.js', '/manifest.webmanifest', '/icons/stats.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC)));
@@ -14,5 +14,12 @@ self.addEventListener('fetch', event => {
     event.respondWith(fetch(event.request));
     return;
   }
-  event.respondWith(caches.match(event.request).then(hit => hit || fetch(event.request)));
+  if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  event.respondWith(
+    fetch(event.request).then(response => {
+      const copy = response.clone();
+      caches.open(CACHE).then(cache => cache.put(event.request, copy));
+      return response;
+    }).catch(() => caches.match(event.request).then(hit => hit || caches.match(url.pathname)))
+  );
 });

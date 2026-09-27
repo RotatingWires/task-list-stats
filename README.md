@@ -1,6 +1,6 @@
 # TaskList Stats
 
-**TaskList Stats v0.14** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.15** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
 
@@ -12,6 +12,16 @@ It intentionally stays separate from TaskList so charts, heatmaps, historical an
 - Resized the Help dropdown to fit `About TaskList Stats` without an oversized button or a truncated label.
 - Restored **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** during normal initial page load.
 - Bumped server, snapshot, assembly, UI, About dialog, and PWA cache metadata to v0.12.
+
+## v0.15
+
+- Fixed automatic database loading by making startup one-time and independent of DOMContentLoaded timing.
+- Load chart/Fun modules before the core app and render only the visible tab, preventing hidden canvases or module timing from breaking later sections.
+- Restored Backlog Over Time and line-chart tooltip initialization when the Trends tab becomes visible.
+- Restored full Fun-tab initialization instead of leaving only the static Task Roulette panel.
+- Kept TaskList task links explicitly interactive and opening in a new tab.
+- Widened the File menu so Export snapshot JSON... is not clipped.
+- Changed the service worker to network-first for current app assets to prevent stale mixed-version JavaScript/CSS after updates.
 
 ## v0.14
 
