@@ -242,10 +242,10 @@ renderAll=function(){
   renderV07();
 };
 
-document.title='Task List Stats v0.7';
-const titleNode=document.querySelector('.title-left');if(titleNode)titleNode.textContent='Task List Stats v0.7';
-const statusNode=$('#statusLeft');if(statusNode)statusNode.textContent='Task List Stats v0.7';
-const about=document.querySelector('#aboutDialog strong');if(about)about.textContent='Task List Stats v0.7';
+document.title='TaskList Stats v0.7';
+const titleNode=document.querySelector('.title-left');if(titleNode)titleNode.textContent='TaskList Stats v0.7';
+const statusNode=$('#statusLeft');if(statusNode)statusNode.textContent='TaskList Stats v0.7';
+const about=document.querySelector('#aboutDialog strong');if(about)about.textContent='TaskList Stats v0.7';
 
 renderV07();
 })();

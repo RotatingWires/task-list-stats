@@ -4,6 +4,14 @@
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
 
+## v0.10
+
+- Standardized TaskList and TaskList Stats naming directly across current source and documentation.
+- Removed bar-chart hover/tap tooltips while keeping line-chart hover and mobile tap-to-inspect tooltips.
+- Replaced native up/down select chrome in tab controls with a single-down-arrow Win95-style wrapper matching the top List picker.
+- Set the repository ListenUrl to `http://192.168.1.12:8711`.
+- Bumped server/assembly metadata and the PWA cache to v0.10.
+
 ## v0.9
 
 - Standardized current branding to **TaskList** and **TaskList Stats** across the UI, PWA metadata, product metadata, and documentation.

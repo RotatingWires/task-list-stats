@@ -93,7 +93,6 @@ function hideChartTip(){chartTip.hidden=true;}
 function chartIndex(config,x){
   const count=config.labels.length;
   if(count<=1)return 0;
-  if(config.categoryMode)return Math.max(0,Math.min(count-1,Math.floor(((x-config.left)/config.plotW)*count)));
   return Math.max(0,Math.min(count-1,Math.round(((x-config.left)/config.plotW)*(count-1))));
 }
 function showChartTip(canvas,event){
@@ -130,8 +129,6 @@ drawBarChart=function(canvas,labels,values,color='#000080',decimal=false,yLabel=
   const step=Math.max(1,Math.ceil(n/12));
   ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';
   labels.forEach((label,i)=>{if(i%step===0||i===n-1)ctx.fillText(String(label),a.left+(i+.5)*slot,height-19);});
-  canvas._tooltipConfig={labels,series:[{name:yLabel||'Value',values}],left:a.left,plotW:a.plotW,categoryMode:true};
-  installChartTap(canvas);
 };
 
 drawGroupedBarChart=function(canvas,labels,aValues,bValues,aColor,bColor,yLabel='Tasks'){
@@ -154,8 +151,6 @@ drawGroupedBarChart=function(canvas,labels,aValues,bValues,aColor,bColor,yLabel=
   const step=n>=24?2:Math.max(1,Math.ceil(n/12));
   ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';
   labels.forEach((label,i)=>{if(i%step===0||i===n-1)ctx.fillText(String(label),a.left+(i+.5)*slot,height-19);});
-  canvas._tooltipConfig={labels,series:[{name:'Created',values:aValues},{name:'Completed',values:bValues}],left:a.left,plotW:a.plotW,categoryMode:true};
-  installChartTap(canvas);
 };
 
 function v09TaskLink(item,label=`#${item.displayId}`){

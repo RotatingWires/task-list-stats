@@ -18,7 +18,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; min-height: 100%; }
 
-/* Match Task List: the application UI behaves like desktop chrome, not selectable page text. */
+/* Match TaskList: the application UI behaves like desktop chrome, not selectable page text. */
 .window,
 .retro-dialog {
   user-select: none;

@@ -67,5 +67,5 @@ function renderFun(){
 
 addFunPanels();
 const oldRenderAll=renderAll;renderAll=function(){oldRenderAll();renderFun();};
-const titleNode=document.querySelector('.title-left');if(titleNode)titleNode.textContent='Task List Stats v0.6';$('#statusLeft').textContent='Task List Stats v0.6';const about=document.querySelector('#aboutDialog strong');if(about)about.textContent='Task List Stats v0.6';
+const titleNode=document.querySelector('.title-left');if(titleNode)titleNode.textContent='TaskList Stats v0.6';$('#statusLeft').textContent='TaskList Stats v0.6';const about=document.querySelector('#aboutDialog strong');if(about)about.textContent='TaskList Stats v0.6';
 })();
