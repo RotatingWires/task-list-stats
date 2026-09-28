@@ -581,7 +581,7 @@ html,body{height:100%;min-height:0}
   }
   .chart-frame canvas{max-width:none!important}
   @media (min-width:781px){
-    .chart-frame{max-width:1000px;min-height:190px;margin-left:auto;margin-right:auto}
+    .chart-frame{width:100%;max-width:none;min-height:190px;margin-left:0;margin-right:0}
     .chart-frame.tall{min-height:200px}
     #hourChart{min-width:1050px}
     #taskTypeChart{min-width:850px}
