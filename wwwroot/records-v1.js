@@ -1,10 +1,18 @@
 'use strict';
 
-// TaskList Stats v1.0 Overview record extensions.
-// Loaded after app.js so it can extend the existing Overview renderer without
-// duplicating the rest of the statistics application.
+// TaskList Stats v1.0.1 Overview record layout and record extensions.
+// Loaded after app.js so it can replace only the Overview Records presentation.
 (() => {
+  const RELEASE = '1.0.1';
   const baseRenderOverview = renderOverview;
+
+  function applyReleaseLabel() {
+    document.title = `TaskList Stats v${RELEASE}`;
+    const title = document.querySelector('.title-left');
+    if (title) title.textContent = `TaskList Stats v${RELEASE}`;
+    const about = document.querySelector('#aboutDialog strong');
+    if (about) about.textContent = `TaskList Stats v${RELEASE}`;
+  }
 
   function busiestCompletionPeriod(items, keyFn) {
     const counts = new Map();
@@ -15,17 +23,17 @@
     return maxEntry(counts);
   }
 
-  function longestCompletionStreak(items) {
+  function longestEventStreak(items, dateField) {
     const counts = new Map();
     for (const item of items) {
-      if (item.completedDate) increment(counts, localDayKey(item.completedDate));
+      const date = item[dateField];
+      if (date) increment(counts, localDayKey(date));
     }
     const keys = [...counts.keys()].sort();
     if (!keys.length) return null;
 
     let best = null;
     let currentStart = null;
-    let currentEnd = null;
     let currentDays = 0;
     let currentTotal = 0;
     let previous = null;
@@ -38,16 +46,15 @@
         currentDays = 0;
         currentTotal = 0;
       }
-      currentEnd = date;
+
       currentDays++;
       currentTotal += counts.get(key) || 0;
-
       if (!best || currentDays > best.days || (currentDays === best.days && currentTotal > best.total)) {
         best = {
           days: currentDays,
           total: currentTotal,
           start: new Date(currentStart),
-          end: new Date(currentEnd)
+          end: new Date(date)
         };
       }
       previous = date;
@@ -77,63 +84,85 @@
     });
   }
 
-  function streakRange(streak) {
-    if (!streak) return '';
-    if (streak.days === 1) return `${formatDate(streak.start)} • ${numberFmt.format(streak.total)} tasks completed`;
-    return `${formatDate(streak.start)} – ${formatDate(streak.end)} • ${numberFmt.format(streak.total)} tasks completed`;
+  function formatRecord(value, detail = '') {
+    if (!value || value === '—') return '—';
+    return detail ? `${value} • ${detail}` : value;
   }
 
-  renderOverview = function renderOverviewV1() {
-    baseRenderOverview();
+  function formatStreak(streak, verb) {
+    if (!streak) return '—';
+    const range = streak.days === 1
+      ? formatDate(streak.start)
+      : `${formatDate(streak.start)} – ${formatDate(streak.end)}`;
+    return `${numberFmt.format(streak.days)} days • ${range} • ${numberFmt.format(streak.total)} tasks ${verb}`;
+  }
 
-    const items = scopedItems();
-    const completionDay = busiestCompletionPeriod(items, localDayKey);
-    const completionWeek = busiestCompletionPeriod(items, weekKey);
-    const completionMonth = busiestCompletionPeriod(items, monthKey);
-    const completionStreak = longestCompletionStreak(items);
+  function makeRecordGroup(title, rows) {
+    const fieldset = document.createElement('fieldset');
+    fieldset.className = 'groupbox';
+    const legend = document.createElement('legend');
+    legend.textContent = title;
+    const list = document.createElement('div');
+    list.className = 'metric-list';
+    renderMetricList(list, rows);
+    fieldset.append(legend, list);
+    return fieldset;
+  }
+
+  function renderRecordLists(items) {
+    const creationMonth = busiestPeriod(items, monthKey);
+    const creationWeek = busiestPeriod(items, weekKey);
+    const creationDay = busiestPeriod(items, localDayKey);
     const creationHour = biggestHour(items, 'createdDate', 'createdAt');
-    const completionHour = biggestHour(items, 'completedDate', 'completedAt');
+    const creationStreak = longestEventStreak(items, 'createdDate');
+    const quietStreak = longestCreationStreaks(items).quiet;
 
-    const cards = [
-      {
-        label: 'Most completions in one day',
-        value: completionDay ? formatDate(new Date(`${completionDay[0]}T12:00:00`)) : '—',
-        sub: completionDay ? `${numberFmt.format(completionDay[1])} tasks completed` : '',
-        kind: 'subject-first'
-      },
-      {
-        label: 'Most completions in one week',
-        value: completionWeek ? formatWeekKey(completionWeek[0]) : '—',
-        sub: completionWeek ? `${numberFmt.format(completionWeek[1])} tasks completed` : '',
-        kind: 'subject-first'
-      },
-      {
-        label: 'Most completions in one month',
-        value: completionMonth ? formatMonthKey(completionMonth[0]) : '—',
-        sub: completionMonth ? `${numberFmt.format(completionMonth[1])} tasks completed` : '',
-        kind: 'subject-first'
-      },
-      {
-        label: 'Longest completion streak',
-        value: completionStreak ? `${numberFmt.format(completionStreak.days)} days` : '—',
-        sub: streakRange(completionStreak),
-        kind: 'subject-first'
-      },
-      {
-        label: 'Biggest creation hour',
-        value: creationHour ? formatHourRecord(creationHour[0]) : '—',
-        sub: creationHour ? `${numberFmt.format(creationHour[1])} tasks created` : 'Only confirmed clock times',
-        kind: 'subject-first'
-      },
-      {
-        label: 'Biggest completion hour',
-        value: completionHour ? formatHourRecord(completionHour[0]) : '—',
-        sub: completionHour ? `${numberFmt.format(completionHour[1])} tasks completed` : 'Only confirmed clock times',
-        kind: 'subject-first'
-      }
+    const completionMonth = busiestCompletionPeriod(items, monthKey);
+    const completionWeek = busiestCompletionPeriod(items, weekKey);
+    const completionDay = busiestCompletionPeriod(items, localDayKey);
+    const completionHour = biggestHour(items, 'completedDate', 'completedAt');
+    const completionStreak = longestEventStreak(items, 'completedDate');
+
+    const firstCreated = items.map(x => x.createdDate).filter(Boolean).sort((a, b) => a - b)[0] || null;
+    const lastCreated = items.map(x => x.createdDate).filter(Boolean).sort((a, b) => b - a)[0] || null;
+
+    const creationRows = [
+      ['Most creations in one month', creationMonth ? formatRecord(formatMonthKey(creationMonth[0]), `${numberFmt.format(creationMonth[1])} tasks created`) : '—'],
+      ['Most creations in one week', creationWeek ? formatRecord(formatWeekKey(creationWeek[0]), `${numberFmt.format(creationWeek[1])} tasks created`) : '—'],
+      ['Most creations in one day', creationDay ? formatRecord(formatDate(new Date(`${creationDay[0]}T12:00:00`)), `${numberFmt.format(creationDay[1])} tasks created`) : '—'],
+      ['Biggest creation hour', creationHour ? formatRecord(formatHourRecord(creationHour[0]), `${numberFmt.format(creationHour[1])} tasks created`) : '—'],
+      ['Longest creation streak', formatStreak(creationStreak, 'created')],
+      ['Longest quiet streak', `${numberFmt.format(quietStreak)} days`]
+    ];
+
+    const completionRows = [
+      ['Most completions in one month', completionMonth ? formatRecord(formatMonthKey(completionMonth[0]), `${numberFmt.format(completionMonth[1])} tasks completed`) : '—'],
+      ['Most completions in one week', completionWeek ? formatRecord(formatWeekKey(completionWeek[0]), `${numberFmt.format(completionWeek[1])} tasks completed`) : '—'],
+      ['Most completions in one day', completionDay ? formatRecord(formatDate(new Date(`${completionDay[0]}T12:00:00`)), `${numberFmt.format(completionDay[1])} tasks completed`) : '—'],
+      ['Biggest completion hour', completionHour ? formatRecord(formatHourRecord(completionHour[0]), `${numberFmt.format(completionHour[1])} tasks completed`) : '—'],
+      ['Longest completion streak', formatStreak(completionStreak, 'completed')]
+    ];
+
+    const timelineRows = [
+      ['First dated task', formatDate(firstCreated)],
+      ['Latest dated task', formatDate(lastCreated)]
     ];
 
     const container = $('#recordCards');
-    container.append(...cards.map(card => makeStatCard(card.label, card.value, card.sub, card.kind)));
+    container.className = 'records-layout';
+    const columns = document.createElement('div');
+    columns.className = 'two-column';
+    columns.append(
+      makeRecordGroup('Creation Records', creationRows),
+      makeRecordGroup('Completion Records', completionRows)
+    );
+    container.replaceChildren(columns, makeRecordGroup('Timeline', timelineRows));
+  }
+
+  renderOverview = function renderOverviewV101() {
+    baseRenderOverview();
+    renderRecordLists(scopedItems());
   };
+
+  applyReleaseLabel();
 })();
