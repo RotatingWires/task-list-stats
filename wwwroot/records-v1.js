@@ -1,10 +1,11 @@
 'use strict';
 
-// TaskList Stats v1.0.1 Overview record layout and record extensions.
-// Loaded after app.js so it can replace only the Overview Records presentation.
+// TaskList Stats v1.0.2 release compatibility layer for Overview records and terminal-status semantics.
+// Loaded after app.js but before DOMContentLoaded startup.
 (() => {
-  const RELEASE = '1.0.1';
+  const RELEASE = '1.0.2';
   const baseRenderOverview = renderOverview;
+  const baseNormalizeSnapshot = normalizeSnapshot;
 
   function applyReleaseLabel() {
     document.title = `TaskList Stats v${RELEASE}`;
@@ -12,7 +13,21 @@
     if (title) title.textContent = `TaskList Stats v${RELEASE}`;
     const about = document.querySelector('#aboutDialog strong');
     if (about) about.textContent = `TaskList Stats v${RELEASE}`;
+    const status = document.querySelector('#statusLeft');
+    if (status) status.textContent = `TaskList Stats v${RELEASE}`;
   }
+
+  // TaskList preserves old completed_at/cancelled_at values when a task later
+  // changes status. Stats should treat the current terminal status as authoritative
+  // so corrected/reopened tasks do not inflate completion/cancellation metrics.
+  normalizeSnapshot = function normalizeSnapshotV102(raw) {
+    const normalized = baseNormalizeSnapshot(raw);
+    for (const item of normalized.items) {
+      if (item.status !== 'Done') item.completedDate = null;
+      if (item.status !== 'Cancelled') item.cancelledDate = null;
+    }
+    return normalized;
+  };
 
   function busiestCompletionPeriod(items, keyFn) {
     const counts = new Map();
@@ -159,7 +174,7 @@
     container.replaceChildren(columns, makeRecordGroup('Timeline', timelineRows));
   }
 
-  renderOverview = function renderOverviewV101() {
+  renderOverview = function renderOverviewV102() {
     baseRenderOverview();
     renderRecordLists(scopedItems());
   };
