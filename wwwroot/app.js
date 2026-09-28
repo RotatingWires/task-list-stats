@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.23';
+const VERSION = '0.24';
 const state = {
   snapshot: null,
   selectedListIds: new Set(),
@@ -542,18 +542,25 @@ function renderCalendar() {
 }
 
 function populateYearSelector(items) {
-  const select = $('#heatmapYear');
+  const input = $('#heatmapYear');
   const years = allValidYears(items);
-  const current = Number(select.value) || new Date().getFullYear();
-  select.replaceChildren();
-  for (const year of years.length ? years : [new Date().getFullYear()]) {
-    const option = document.createElement('option'); option.value = year; option.textContent = year; select.append(option);
-  }
-  if (years.includes(current)) select.value = current;
-  else select.value = years.includes(new Date().getFullYear()) ? new Date().getFullYear() : years.at(-1) || new Date().getFullYear();
+  const currentYear = new Date().getFullYear();
+  const current = Number(input.value) || currentYear;
+  const availableYears = years.length ? years : [currentYear];
+  const selected = availableYears.includes(current)
+    ? current
+    : availableYears.includes(currentYear)
+      ? currentYear
+      : availableYears.at(-1);
+
+  setSingleSelectOptions(
+    'heatmapYear',
+    availableYears.map(year => [String(year), String(year)]),
+    String(selected)
+  );
 
   const monthInput = $('#calendarMonth');
-  const selectedYear = Number(select.value);
+  const selectedYear = Number(input.value);
   const selectedMonth = /^(\d{4})-(\d{2})$/.exec(monthInput.value);
   if (!selectedMonth || Number(selectedMonth[1]) !== selectedYear) {
     const latest = items.map(x=>x.createdDate).filter(d=>d && d.getFullYear()===selectedYear).sort((a,b)=>b-a)[0];
@@ -955,8 +962,8 @@ function toggleMenu(button, menu) {
 }
 
 function closeMenus() {
-  for(const id of ['fileMenu','viewMenu','helpMenu','listFilterMenu']) $(id.startsWith('#')?id:`#${id}`).hidden=true;
-  for(const id of ['fileMenuButton','viewMenuButton','helpMenuButton','listFilterButton']) $(`#${id}`).setAttribute('aria-expanded','false');
+  $$('.menu-dropdown').forEach(menu => { menu.hidden = true; });
+  $$('[aria-haspopup="menu"]').forEach(button => button.setAttribute('aria-expanded', 'false'));
 }
 
 async function loadSnapshot() {
@@ -1053,26 +1060,94 @@ function initializeTouchHelp() {
   $('#workspace')?.addEventListener('scroll', hide, { passive: true });
 }
 
-function initializeNativeRetroSelects(){
-  for(const select of document.querySelectorAll('select.native-retro-select')){
-    if(select.closest('.single-arrow-select'))continue;
-    const wrapper=document.createElement('span');
-    wrapper.className='single-arrow-select';
-    select.before(wrapper);
-    wrapper.append(select);
-    const arrow=document.createElement('span');
-    arrow.className='single-arrow-select-icon';
-    arrow.setAttribute('aria-hidden','true');
-    arrow.textContent='▼';
-    wrapper.append(arrow);
+const STATIC_SINGLE_SELECT_OPTIONS = {
+  trendGroup: [['day', 'Day'], ['week', 'Week'], ['month', 'Month']],
+  heatmapMode: [['created', 'Created'], ['completed', 'Completed'], ['cancelled', 'Cancelled'], ['activity', 'All activity']],
+  hourHeatmapMode: [['created', 'Created'], ['completed', 'Completed']]
+};
+
+function singleSelectParts(id) {
+  const input = $(`#${id}`);
+  const host = document.querySelector(`[data-single-select="${id}"]`);
+  if (!input || !host) return null;
+  return {
+    input,
+    host,
+    button: host.querySelector('[data-single-select-button]'),
+    label: host.querySelector('[data-single-select-label]'),
+    menu: host.querySelector('[data-single-select-menu]')
+  };
+}
+
+function setSingleSelectOptions(id, options, preferredValue = null) {
+  const parts = singleSelectParts(id);
+  if (!parts) return;
+  const normalized = options.map(([value, label]) => ({ value: String(value), label: String(label) }));
+  parts.menu.replaceChildren();
+
+  if (!normalized.length) {
+    parts.input.value = '';
+    parts.label.textContent = '—';
+    parts.button.disabled = true;
+    return;
   }
+
+  parts.button.disabled = false;
+  const wanted = preferredValue == null ? parts.input.value : String(preferredValue);
+  const selected = normalized.find(option => option.value === wanted) ?? normalized[0];
+  parts.input.value = selected.value;
+  parts.label.textContent = selected.label;
+
+  for (const option of normalized) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.value = option.value;
+    button.setAttribute('role', 'menuitemradio');
+    button.setAttribute('aria-checked', option.value === selected.value ? 'true' : 'false');
+
+    const check = document.createElement('span');
+    check.className = 'menu-check';
+    const text = document.createElement('span');
+    text.className = 'menu-label';
+    text.textContent = option.label;
+    button.append(check, text);
+
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      const changed = parts.input.value !== option.value;
+      parts.input.value = option.value;
+      parts.label.textContent = option.label;
+      for (const choice of parts.menu.querySelectorAll('[data-value]'))
+        choice.setAttribute('aria-checked', choice.dataset.value === option.value ? 'true' : 'false');
+      parts.menu.hidden = true;
+      parts.button.setAttribute('aria-expanded', 'false');
+      parts.button.focus();
+      if (changed) parts.input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    parts.menu.append(button);
+  }
+}
+
+function initializeCustomSingleSelects() {
+  for (const [id, options] of Object.entries(STATIC_SINGLE_SELECT_OPTIONS))
+    setSingleSelectOptions(id, options, $(`#${id}`).value);
+
+  $$('[data-single-select]').forEach(host => {
+    const button = host.querySelector('[data-single-select-button]');
+    const menu = host.querySelector('[data-single-select-menu]');
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      if (button.disabled) return;
+      toggleMenu(button, menu);
+    });
+  });
 }
 let appStarted = false;
 function startApp() {
   if (appStarted) return;
   appStarted = true;
   Fun.initialize();
-  initializeNativeRetroSelects();
+  initializeCustomSingleSelects();
   initializeTouchHelp();
   loadSnapshot();
 }

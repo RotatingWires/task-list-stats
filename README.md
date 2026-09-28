@@ -1,8 +1,18 @@
 # TaskList Stats
 
-**TaskList Stats v0.23** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.24** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
+
+## v0.24
+
+- Replace every browser-native statistics dropdown with the shared Windows 95-style custom menu control.
+- Use the radio-dot indicator for all single-choice selectors, including trend grouping, year, heatmap mode, and weekday/hour event mode.
+- Keep the top multi-list selector as a checklist with checkmarks because it supports selecting more than one list at once.
+- Preserve the existing selector values and change events so all charts, heatmaps, calendar behavior, and list scoping continue to use the same filtering logic.
+- Make menu closing generic so File, View, Help, list filtering, and current/future custom dropdowns share one menu lifecycle.
+- Preserve the user-tuned iOS top offset while updating dropdown styling and release metadata.
+- Bump server, snapshot, assembly, UI, README, and PWA cache metadata to v0.24.
 
 ## v0.23
 

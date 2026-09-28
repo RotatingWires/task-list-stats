@@ -30,7 +30,7 @@ body {
   padding: 0;
   background: var(--face);
 }
-button, input, select { font: inherit; }
+button, input { font: inherit; }
 button { cursor: pointer; }
 
 .window {
@@ -150,7 +150,6 @@ button { cursor: pointer; }
 .database-status { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 button,
-.native-retro-select,
 .retro-select {
   color: #000;
   background: var(--face);
@@ -181,7 +180,6 @@ button:active,
 }
 .filter-dropdown { min-width: 100%; max-width: min(360px, calc(100vw - 35px)); max-height: min(60vh, 420px); overflow-y: auto; }
 .select-arrow { font-size: 9px; }
-.native-retro-select,
 .retro-input {
   min-height: 28px;
   padding: 3px 5px;
@@ -327,6 +325,16 @@ tr:last-child td { border-bottom: 0; }
 
 .control-row { display: flex; align-items: center; gap: 10px; margin: 4px 0 8px; }
 .control-row label { display: flex; align-items: center; gap: 6px; }
+.control-label { flex: 0 0 auto; }
+.control-field { display: flex; align-items: center; gap: 6px; }
+.inline-select-menu { min-width: 110px; }
+.compact-retro-select { min-width: 110px; padding: 4px 8px; }
+.single-select-dropdown {
+  min-width: 100%;
+  max-width: min(280px, calc(100vw - 32px));
+  max-height: min(50vh, 320px);
+  overflow-y: auto;
+}
 .wrap-row { flex-wrap: wrap; }
 .small-row { margin-bottom: 5px; }
 .month-input { min-width: 160px; }
@@ -656,17 +664,6 @@ html,body{height:100%;min-height:0}
   }
 
 
-/* Consolidated single-arrow select rules. */
-.single-arrow-select { position:relative; display:inline-block; vertical-align:middle; }
-    .single-arrow-select .native-retro-select {
-      -webkit-appearance:none; appearance:none;
-      min-width:92px; padding:4px 28px 4px 8px;
-      background:var(--face); box-shadow:1px 1px 0 #000;
-    }
-    .single-arrow-select .single-arrow-select-icon {
-      position:absolute; right:8px; top:50%; transform:translateY(-50%);
-      font-size:9px; line-height:1; pointer-events:none;
-    }
 
 
 /* Current Fun workspace and task-link presentation. */
