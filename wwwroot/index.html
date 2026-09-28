@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000080">
-  <title>TaskList Stats v0.24.1</title>
+  <title>TaskList Stats v1.0</title>
   <link rel="icon" href="/icons/stats.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
@@ -12,7 +12,7 @@
 <body>
   <main class="window" id="appWindow">
     <header class="titlebar">
-      <span class="title-left">TaskList Stats v0.24.1</span>
+      <span class="title-left">TaskList Stats v1.0</span>
       <span class="title-center" id="titleScope">All lists</span>
       <span class="title-buttons" aria-hidden="true">_ □ ×</span>
     </header>
@@ -25,113 +25,28 @@
           <button type="button" id="exportButton" role="menuitem"><span></span><span class="menu-label">Export snapshot JSON...</span></button>
         </div>
       </div>
-      <div class="menu-wrap">
-        <button id="viewMenuButton" type="button" aria-haspopup="menu" aria-expanded="false"><u>V</u>iew</button>
-        <div id="viewMenu" class="menu-dropdown" role="menu" hidden></div>
-      </div>
-      <div class="menu-wrap">
-        <button id="helpMenuButton" type="button" aria-haspopup="menu" aria-expanded="false"><u>H</u>elp</button>
-        <div id="helpMenu" class="menu-dropdown" role="menu" hidden>
-          <button type="button" id="aboutButton" role="menuitem"><span></span><span class="menu-label">About TaskList Stats</span></button>
-        </div>
-      </div>
+      <div class="menu-wrap"><button id="viewMenuButton" type="button" aria-haspopup="menu" aria-expanded="false"><u>V</u>iew</button><div id="viewMenu" class="menu-dropdown" role="menu" hidden></div></div>
+      <div class="menu-wrap"><button id="helpMenuButton" type="button" aria-haspopup="menu" aria-expanded="false"><u>H</u>elp</button><div id="helpMenu" class="menu-dropdown" role="menu" hidden><button type="button" id="aboutButton" role="menuitem"><span></span><span class="menu-label">About TaskList Stats</span></button></div></div>
     </nav>
 
-    <section class="toolbar">
-      <label class="toolbar-label" for="listFilterButton">List:</label>
-      <div class="menu-wrap toolbar-menu">
-        <button type="button" id="listFilterButton" class="retro-select" aria-haspopup="menu" aria-expanded="false">
-          <span id="listFilterLabel">All lists</span><span class="select-arrow">▼</span>
-        </button>
-        <div id="listFilterMenu" class="menu-dropdown filter-dropdown" role="menu" hidden></div>
-      </div>
-      <span class="toolbar-separator"></span>
-      <span id="databaseStatus" class="database-status">Loading database...</span>
-    </section>
+    <section class="toolbar"><label class="toolbar-label" for="listFilterButton">List:</label><div class="menu-wrap toolbar-menu"><button type="button" id="listFilterButton" class="retro-select" aria-haspopup="menu" aria-expanded="false"><span id="listFilterLabel">All lists</span><span class="select-arrow">▼</span></button><div id="listFilterMenu" class="menu-dropdown filter-dropdown" role="menu" hidden></div></div><span class="toolbar-separator"></span><span id="databaseStatus" class="database-status">Loading database...</span></section>
 
-    <section class="tabs" role="tablist" aria-label="Statistics sections">
-      <button role="tab" aria-selected="true" data-tab="overview">Overview</button>
-      <button role="tab" aria-selected="false" data-tab="trends">Trends</button>
-      <button role="tab" aria-selected="false" data-tab="calendar">Calendar</button>
-      <button role="tab" aria-selected="false" data-tab="lists">Lists</button>
-      <button role="tab" aria-selected="false" data-tab="patterns">Patterns</button>
-      <button role="tab" aria-selected="false" data-tab="trees">Trees &amp; Titles</button>
-      <button role="tab" aria-selected="false" data-tab="fun">Fun</button>
-    </section>
+    <section class="tabs" role="tablist" aria-label="Statistics sections"><button role="tab" aria-selected="true" data-tab="overview">Overview</button><button role="tab" aria-selected="false" data-tab="trends">Trends</button><button role="tab" aria-selected="false" data-tab="calendar">Calendar</button><button role="tab" aria-selected="false" data-tab="lists">Lists</button><button role="tab" aria-selected="false" data-tab="patterns">Patterns</button><button role="tab" aria-selected="false" data-tab="trees">Trees &amp; Titles</button><button role="tab" aria-selected="false" data-tab="fun">Fun</button></section>
 
     <section class="workspace" id="workspace">
-      <div id="loadingPanel" class="message-panel">Reading TaskList database...</div>
-      <div id="errorPanel" class="message-panel error-panel" hidden></div>
-
-      <section class="tab-panel" data-panel="overview">
-        <div class="section-title">Current Activity</div>
-        <div id="activityCards" class="stat-grid"></div>
-        <div class="section-title">Records</div>
-        <div id="recordCards" class="stat-grid compact"></div>
-        <div class="two-column"><fieldset class="groupbox"><legend>Completion Behavior</legend><div id="completionBehavior" class="metric-list"></div></fieldset><fieldset class="groupbox"><legend>Open-Task Aging</legend><div id="openAging" class="metric-list"></div></fieldset></div>
-        <fieldset class="groupbox"><legend>Completion-Time Distribution</legend><div class="chart-frame"><canvas id="completionBucketsChart" height="210"></canvas></div></fieldset>
-        <fieldset class="groupbox"><legend>Oldest Open Tasks</legend><div class="table-wrap"><table id="oldestOpenTable"></table></div></fieldset>
-      </section>
-
-      <section class="tab-panel" data-panel="trends" hidden>
-        <div class="control-row">
-          <span class="control-label">Group by:</span>
-          <input type="hidden" id="trendGroup" value="month">
-          <div class="menu-wrap inline-select-menu" data-single-select="trendGroup">
-            <button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Month</span><span class="select-arrow" aria-hidden="true">▼</span></button>
-            <div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div>
-          </div>
-        </div>
-        <fieldset class="groupbox"><legend>Created / Completed / Cancelled</legend><div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span><span class="legend-cancelled">■ Cancelled</span></div><div class="chart-frame"><canvas id="trendChart" height="220"></canvas></div></fieldset>
-        <fieldset class="groupbox"><legend>Approximate Backlog Over Time</legend><div class="note backlog-note"><strong>What this means:</strong> this estimates how many tasks were still in your backlog at the end of each month. A creation or reopen adds one; a completion or cancellation removes one. TaskList only stores the latest reopen timestamp, so repeated older reopen cycles cannot be reconstructed exactly.</div><div class="chart-frame"><canvas id="backlogChart" height="200"></canvas></div></fieldset>
-        <div class="two-column"><fieldset class="groupbox"><legend>Top 10 Busiest Months</legend><div class="table-wrap"><table id="topMonthsTable"></table></div></fieldset><fieldset class="groupbox"><legend>Fastest / Slowest Completion Months</legend><div class="table-wrap"><table id="monthSpeedTable"></table></div></fieldset></div>
-        <fieldset class="groupbox"><legend>Year-Over-Year Monthly Comparison — Tasks Created</legend><div class="table-wrap"><table id="yearComparisonTable"></table></div></fieldset>
-      </section>
-
-      <section class="tab-panel" data-panel="calendar" hidden>
-        <div class="control-row wrap-row">
-          <div class="control-field"><span>Year:</span><input type="hidden" id="heatmapYear" value=""><div class="menu-wrap inline-select-menu" data-single-select="heatmapYear"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Year</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div>
-          <div class="control-field"><span>Heatmap:</span><input type="hidden" id="heatmapMode" value="created"><div class="menu-wrap inline-select-menu" data-single-select="heatmapMode"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Created</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div>
-        </div>
-        <fieldset class="groupbox"><legend>Year Activity Heatmap</legend><div id="yearHeatmap" class="year-heatmap"></div><div class="heat-legend">Less <span class="heat h0"></span><span class="heat h1"></span><span class="heat h2"></span><span class="heat h3"></span><span class="heat h4"></span> More</div></fieldset>
-        <div class="control-row"><label>Month detail:<input id="calendarMonth" class="retro-input month-input" type="month"></label></div>
-        <fieldset class="groupbox"><legend>Month Calendar</legend><div id="monthCalendar" class="month-calendar"></div></fieldset>
-        <fieldset class="groupbox"><legend>Month × Year Heatmap (Created Tasks)</legend><div id="monthYearHeatmap" class="month-year-heatmap"></div></fieldset>
-        <fieldset class="groupbox"><legend>Seasonality — Average Tasks Created by Month</legend><div class="chart-frame"><canvas id="seasonalityChart" height="220"></canvas></div></fieldset>
-      </section>
-
-      <section class="tab-panel" data-panel="lists" hidden>
-        <fieldset class="groupbox"><legend>Per-List Statistics</legend><div class="table-wrap"><table id="listStatsTable"></table></div></fieldset>
-        <fieldset class="groupbox"><legend>List Share</legend><div class="chart-frame"><canvas id="listShareChart" height="250"></canvas></div></fieldset>
-        <fieldset class="groupbox"><legend>Most Active List by Month</legend><div class="table-wrap"><table id="activeListByMonthTable"></table></div></fieldset>
-      </section>
-
-      <section class="tab-panel" data-panel="patterns" hidden>
-        <div class="two-column"><fieldset class="groupbox"><legend><span class="has-tooltip" title="Groups task timestamps by weekday across all dated history available in the selected list scope. Created uses created_at; Completed uses completed_at.">Day-of-Week Patterns</span></legend><div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span></div><div class="chart-frame"><canvas id="weekdayChart" height="220"></canvas></div></fieldset><fieldset class="groupbox"><legend><span class="has-tooltip" title="Groups task timestamps by local hour of day across all dated history available in the selected list scope.">Hour-of-Day Patterns</span></legend><div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span></div><div class="chart-frame"><canvas id="hourChart" height="220"></canvas></div></fieldset></div>
-        <fieldset class="groupbox"><legend><span class="has-tooltip" title="Counts task timestamps by both weekday and local hour across all dated history available in the selected list scope.">Weekday × Hour Heatmap</span></legend><div class="control-row small-row"><span class="control-label">Event:</span><input type="hidden" id="hourHeatmapMode" value="created"><div class="menu-wrap inline-select-menu" data-single-select="hourHeatmapMode"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Created</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div><div id="weekdayHourHeatmap" class="weekday-hour-heatmap"></div></fieldset>
-        <div class="two-column"><fieldset class="groupbox"><legend>Workload Rhythm</legend><div id="rhythmMetrics" class="metric-list"></div></fieldset><fieldset class="groupbox"><legend>Exam / Test Windows</legend><div class="note exam-scope-note has-tooltip" title="School or homework lists" tabindex="0">Make sure to select the correct list for the context of these stats.</div><div id="examMetrics" class="metric-list"></div></fieldset></div>
-      </section>
-
-      <section class="tab-panel" data-panel="trees" hidden>
-        <div id="treeCards" class="stat-grid compact"></div>
-        <div class="two-column"><fieldset class="groupbox"><legend>Nesting-Depth Distribution</legend><div class="chart-frame"><canvas id="depthChart" height="220"></canvas></div></fieldset><fieldset class="groupbox"><legend>Task-Title Types</legend><div class="chart-frame"><canvas id="taskTypeChart" height="220"></canvas></div></fieldset></div>
-        <div class="two-column"><fieldset class="groupbox"><legend>Largest Task Trees</legend><div class="table-wrap"><table id="largestTreesTable"></table></div></fieldset><fieldset class="groupbox"><legend>Most Deeply Nested Tasks</legend><div class="table-wrap"><table id="deepestTasksTable"></table></div></fieldset></div>
-        <div class="two-column"><fieldset class="groupbox"><legend>Common Title Words</legend><div id="commonWords" class="word-cloud"></div></fieldset><fieldset class="groupbox"><legend>Recently Reopened</legend><div class="table-wrap"><table id="reopenedTable"></table></div></fieldset></div>
-      </section>
-
-      <section class="tab-panel" data-panel="fun" hidden>
-        <section class="subtabs" role="tablist" aria-label="Fun sections"><button type="button" role="tab" aria-selected="true" data-fun-tab="roulette">Task Roulette</button></section>
-        <section class="fun-panel" data-fun-panel="roulette"><fieldset class="groupbox"><legend>Task Roulette</legend><div class="note roulette-note">Pick a random current task from the selected list scope and inspect a stats-focused snapshot of that task and its place in the hierarchy.</div><div class="roulette-actions"><button type="button" id="rouletteButton">Pick a Random Task</button></div><div id="rouletteEmpty" class="roulette-empty">No task selected yet.</div><div id="rouletteResult" class="roulette-result" hidden><div class="roulette-body"><div id="rouletteTaskHeading" class="roulette-heading"></div><div id="rouletteTaskTitle" class="roulette-task-title"></div><div class="table-wrap roulette-table-wrap"><table id="rouletteTable"></table></div></div></div></fieldset></section>
-      </section>
+      <div id="loadingPanel" class="message-panel">Reading TaskList database...</div><div id="errorPanel" class="message-panel error-panel" hidden></div>
+      <section class="tab-panel" data-panel="overview"><div class="section-title">Current Activity</div><div id="activityCards" class="stat-grid"></div><div class="section-title">Records</div><div id="recordCards" class="stat-grid compact"></div><div class="two-column"><fieldset class="groupbox"><legend>Completion Behavior</legend><div id="completionBehavior" class="metric-list"></div></fieldset><fieldset class="groupbox"><legend>Open-Task Aging</legend><div id="openAging" class="metric-list"></div></fieldset></div><fieldset class="groupbox"><legend>Completion-Time Distribution</legend><div class="chart-frame"><canvas id="completionBucketsChart" height="210"></canvas></div></fieldset><fieldset class="groupbox"><legend>Oldest Open Tasks</legend><div class="table-wrap"><table id="oldestOpenTable"></table></div></fieldset></section>
+      <section class="tab-panel" data-panel="trends" hidden><div class="control-row"><span class="control-label">Group by:</span><input type="hidden" id="trendGroup" value="month"><div class="menu-wrap inline-select-menu" data-single-select="trendGroup"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Month</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div><fieldset class="groupbox"><legend>Created / Completed / Cancelled</legend><div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span><span class="legend-cancelled">■ Cancelled</span></div><div class="chart-frame"><canvas id="trendChart" height="220"></canvas></div></fieldset><fieldset class="groupbox"><legend>Approximate Backlog Over Time</legend><div class="note backlog-note"><strong>What this means:</strong> this estimates how many tasks were still in your backlog at the end of each month. A creation or reopen adds one; a completion or cancellation removes one. TaskList only stores the latest reopen timestamp, so repeated older reopen cycles cannot be reconstructed exactly.</div><div class="chart-frame"><canvas id="backlogChart" height="200"></canvas></div></fieldset><div class="two-column"><fieldset class="groupbox"><legend>Top 10 Busiest Months</legend><div class="table-wrap"><table id="topMonthsTable"></table></div></fieldset><fieldset class="groupbox"><legend>Fastest / Slowest Completion Months</legend><div class="table-wrap"><table id="monthSpeedTable"></table></div></fieldset></div><fieldset class="groupbox"><legend>Year-Over-Year Monthly Comparison — Tasks Created</legend><div class="table-wrap"><table id="yearComparisonTable"></table></div></fieldset></section>
+      <section class="tab-panel" data-panel="calendar" hidden><div class="control-row wrap-row"><div class="control-field"><span>Year:</span><input type="hidden" id="heatmapYear" value=""><div class="menu-wrap inline-select-menu" data-single-select="heatmapYear"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Year</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div><div class="control-field"><span>Heatmap:</span><input type="hidden" id="heatmapMode" value="created"><div class="menu-wrap inline-select-menu" data-single-select="heatmapMode"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Created</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div></div><fieldset class="groupbox"><legend>Year Activity Heatmap</legend><div id="yearHeatmap" class="year-heatmap"></div><div class="heat-legend">Less <span class="heat h0"></span><span class="heat h1"></span><span class="heat h2"></span><span class="heat h3"></span><span class="heat h4"></span> More</div></fieldset><div class="control-row"><label>Month detail:<input id="calendarMonth" class="retro-input month-input" type="month"></label></div><fieldset class="groupbox"><legend>Month Calendar</legend><div id="monthCalendar" class="month-calendar"></div></fieldset><fieldset class="groupbox"><legend>Month × Year Heatmap (Created Tasks)</legend><div id="monthYearHeatmap" class="month-year-heatmap"></div></fieldset><fieldset class="groupbox"><legend>Seasonality — Average Tasks Created by Month</legend><div class="chart-frame"><canvas id="seasonalityChart" height="220"></canvas></div></fieldset></section>
+      <section class="tab-panel" data-panel="lists" hidden><fieldset class="groupbox"><legend>Per-List Statistics</legend><div class="table-wrap"><table id="listStatsTable"></table></div></fieldset><fieldset class="groupbox"><legend>List Share</legend><div class="chart-frame"><canvas id="listShareChart" height="250"></canvas></div></fieldset><fieldset class="groupbox"><legend>Most Active List by Month</legend><div class="table-wrap"><table id="activeListByMonthTable"></table></div></fieldset></section>
+      <section class="tab-panel" data-panel="patterns" hidden><div class="two-column"><fieldset class="groupbox"><legend><span class="has-tooltip" title="Groups task timestamps by weekday across all dated history available in the selected list scope. Created uses created_at; Completed uses completed_at.">Day-of-Week Patterns</span></legend><div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span></div><div class="chart-frame"><canvas id="weekdayChart" height="220"></canvas></div></fieldset><fieldset class="groupbox"><legend><span class="has-tooltip" title="Groups task timestamps by local hour of day across all dated history available in the selected list scope.">Hour-of-Day Patterns</span></legend><div class="chart-legend"><span class="legend-created">■ Created</span><span class="legend-done">■ Completed</span></div><div class="chart-frame"><canvas id="hourChart" height="220"></canvas></div></fieldset></div><fieldset class="groupbox"><legend><span class="has-tooltip" title="Counts task timestamps by both weekday and local hour across all dated history available in the selected list scope.">Weekday × Hour Heatmap</span></legend><div class="control-row small-row"><span class="control-label">Event:</span><input type="hidden" id="hourHeatmapMode" value="created"><div class="menu-wrap inline-select-menu" data-single-select="hourHeatmapMode"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Created</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div><div id="weekdayHourHeatmap" class="weekday-hour-heatmap"></div></fieldset><div class="two-column"><fieldset class="groupbox"><legend>Workload Rhythm</legend><div id="rhythmMetrics" class="metric-list"></div></fieldset><fieldset class="groupbox"><legend>Exam / Test Windows</legend><div class="note exam-scope-note has-tooltip" title="School or homework lists" tabindex="0">Make sure to select the correct list for the context of these stats.</div><div id="examMetrics" class="metric-list"></div></fieldset></div></section>
+      <section class="tab-panel" data-panel="trees" hidden><div id="treeCards" class="stat-grid compact"></div><div class="two-column"><fieldset class="groupbox"><legend>Nesting-Depth Distribution</legend><div class="chart-frame"><canvas id="depthChart" height="220"></canvas></div></fieldset><fieldset class="groupbox"><legend>Task-Title Types</legend><div class="chart-frame"><canvas id="taskTypeChart" height="220"></canvas></div></fieldset></div><div class="two-column"><fieldset class="groupbox"><legend>Largest Task Trees</legend><div class="table-wrap"><table id="largestTreesTable"></table></div></fieldset><fieldset class="groupbox"><legend>Most Deeply Nested Tasks</legend><div class="table-wrap"><table id="deepestTasksTable"></table></div></fieldset></div><div class="two-column"><fieldset class="groupbox"><legend>Common Title Words</legend><div id="commonWords" class="word-cloud"></div></fieldset><fieldset class="groupbox"><legend>Recently Reopened</legend><div class="table-wrap"><table id="reopenedTable"></table></div></fieldset></div></section>
+      <section class="tab-panel" data-panel="fun" hidden><section class="subtabs" role="tablist" aria-label="Fun sections"><button type="button" role="tab" aria-selected="true" data-fun-tab="roulette">Task Roulette</button></section><section class="fun-panel" data-fun-panel="roulette"><fieldset class="groupbox"><legend>Task Roulette</legend><div class="note roulette-note">Pick a random current task from the selected list scope and inspect a stats-focused snapshot of that task and its place in the hierarchy.</div><div class="roulette-actions"><button type="button" id="rouletteButton">Pick a Random Task</button></div><div id="rouletteEmpty" class="roulette-empty">No task selected yet.</div><div id="rouletteResult" class="roulette-result" hidden><div class="roulette-body"><div id="rouletteTaskHeading" class="roulette-heading"></div><div id="rouletteTaskTitle" class="roulette-task-title"></div><div class="table-wrap roulette-table-wrap"><table id="rouletteTable"></table></div></div></div></fieldset></section></section>
     </section>
 
-    <footer class="statusbar"><span id="statusLeft">TaskList Stats v0.24.1</span><span id="statusRight">Read-only database access</span></footer>
+    <footer class="statusbar"><span id="statusLeft">TaskList Stats v1.0</span><span id="statusRight">Read-only database access</span></footer>
   </main>
-
-  <dialog id="aboutDialog" class="retro-dialog"><form method="dialog" class="dialog-window"><div class="dialog-title">About TaskList Stats</div><div class="dialog-body"><strong>TaskList Stats v0.24.1</strong><p>Read-only statistics and history explorer for TaskList.</p><p>No chart libraries. No ORM. No database writes.</p><p class="small-note">Historical status transitions are limited by the timestamps TaskList stores. Backlog history involving repeated reopen cycles is therefore approximate.</p></div><div class="dialog-buttons"><button type="submit">OK</button></div></form></dialog>
-
-  <script src="charts.js"></script>
-  <script src="fun.js"></script>
-  <script src="app.js"></script>
+  <dialog id="aboutDialog" class="retro-dialog"><form method="dialog" class="dialog-window"><div class="dialog-title">About TaskList Stats</div><div class="dialog-body"><strong>TaskList Stats v1.0</strong><p>Read-only statistics and history explorer for TaskList.</p><p>No chart libraries. No ORM. No database writes.</p><p class="small-note">Historical status transitions are limited by the timestamps TaskList stores. Backlog history involving repeated reopen cycles is therefore approximate.</p></div><div class="dialog-buttons"><button type="submit">OK</button></div></form></dialog>
+  <script src="charts.js"></script><script src="fun.js"></script><script src="app.js"></script><script src="records-v1.js"></script>
 </body>
 </html>
