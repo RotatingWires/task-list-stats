@@ -18,7 +18,7 @@ app.MapGet("/api/health", () =>
     return Results.Ok(new
     {
         ok = File.Exists(path),
-        version = "0.24",
+        version = "0.24.1",
         databaseFound = File.Exists(path),
         databaseFile = Path.GetFileName(path)
     });

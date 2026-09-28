@@ -246,6 +246,14 @@ button:active,
   margin-bottom: 8px;
 }
 .stat-grid.compact { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
+@media (min-width: 1100px) {
+  #activityCards {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  #activityCards .stat-card {
+    min-width: 0;
+  }
+}
 .stat-card {
   min-height: 86px;
   padding: 8px;
