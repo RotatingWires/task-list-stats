@@ -6,7 +6,16 @@ const oneDecimal = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }
 let tooltip = null;
 
 function prepareCanvas(canvas, minHeight = 220) {
-  const declaredHeight = Number(canvas.getAttribute('height')) || minHeight;
+  // canvas.width/canvas.height are backing-store dimensions. Setting them also
+  // changes the corresponding HTML attributes, so never read the height
+  // attribute again after the first render. On high-DPI displays that would
+  // feed devicePixelRatio-scaled pixels back in as a CSS height and make the
+  // chart grow on every redraw.
+  let declaredHeight = Number(canvas.dataset.logicalHeight);
+  if (!declaredHeight) {
+    declaredHeight = Number(canvas.getAttribute('height')) || minHeight;
+    canvas.dataset.logicalHeight = String(declaredHeight);
+  }
   const mobile = window.matchMedia('(max-width: 780px)').matches;
   const cssHeight = mobile ? Math.max(220, declaredHeight) : Math.min(180, declaredHeight);
   const ratio = window.devicePixelRatio || 1;
@@ -192,7 +201,7 @@ function drawLineChart(canvas, labels, values, color = '#000080', yLabel = 'Task
 }
 function drawMultiLineChart(canvas, labels, series, yLabel = 'Tasks') {
   if (!canvas || canvas.closest('[hidden]')) return;
-  const { ctx, width, height } = prepareCanvas(canvas, Number(canvas.getAttribute('height')) || 220);
+  const { ctx, width, height } = prepareCanvas(canvas, Number(canvas.dataset.logicalHeight) || Number(canvas.getAttribute('height')) || 220);
   const rawMax = Math.max(1, ...series.flatMap(s => s.values));
   const a = axes(ctx, width, height, rawMax * 1.08, yLabel);
   const n = labels.length;
