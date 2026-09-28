@@ -1,6 +1,6 @@
 'use strict';
 
-const VERSION = '0.24';
+const VERSION = '0.24.1';
 const state = {
   snapshot: null,
   selectedListIds: new Set(),

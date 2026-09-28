@@ -1,8 +1,14 @@
 # TaskList Stats
 
-**TaskList Stats v0.24** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v0.24.1** is a separate, read-only statistics app for the self-hosted **TaskList** database.
 
 It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
+
+## v0.24.1
+
+- Keep all eight Current Activity cards on one row at normal desktop/laptop widths instead of wrapping Deleted estimate by itself.
+- Preserve the existing responsive card layout on narrower screens.
+- Bump server, assembly, UI, README, and service-worker metadata to v0.24.1.
 
 ## v0.24
 
