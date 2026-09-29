@@ -1,3 +1,6 @@
+> [!WARNING]
+> This project is fully vibecoded, probably inefficient, but it does what I wanted lol
+
 # TaskList Stats
 
 **TaskList Stats v1.0.5** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
