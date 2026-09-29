@@ -1,9 +1,9 @@
 'use strict';
 
-// TaskList Stats v1.0.4 release compatibility layer for Overview records, terminal-status semantics, backlog reconstruction, and clearer contextual labeling.
+// TaskList Stats v1.0.5 release compatibility layer for Overview records, terminal-status semantics, backlog reconstruction, clearer contextual labeling, and faster tree analysis.
 // Loaded after app.js but before DOMContentLoaded startup.
 (() => {
-  const RELEASE = '1.0.4';
+  const RELEASE = '1.0.5';
   const baseRenderOverview = renderOverview;
   const baseNormalizeSnapshot = normalizeSnapshot;
   const baseGroupLabel = groupLabel;
@@ -34,7 +34,7 @@
   // TaskList preserves old completed_at/cancelled_at values when a task later
   // changes status. Stats should treat the current terminal status as authoritative
   // so corrected/reopened tasks do not inflate completion/cancellation metrics.
-  normalizeSnapshot = function normalizeSnapshotV104(raw) {
+  normalizeSnapshot = function normalizeSnapshotV105(raw) {
     const normalized = baseNormalizeSnapshot(raw);
     for (const item of normalized.items) {
       if (item.status !== 'Done') item.completedDate = null;
@@ -45,7 +45,7 @@
 
   // Month labels on Trends use a four-digit year so labels such as "Sep 26"
   // cannot be mistaken for a calendar date.
-  groupLabel = function groupLabelV104(key, mode) {
+  groupLabel = function groupLabelV105(key, mode) {
     if (mode === 'month') {
       const [year, month] = key.split('-').map(Number);
       return `${MONTHS[month - 1]} ${year}`;
@@ -57,7 +57,7 @@
   // statistic. Rebuild each task's stored transitions from the raw timestamps so
   // Reopen adds a task back only after a terminal state, while Done -> Cancelled
   // (or Cancelled -> Done) remains closed instead of subtracting twice.
-  approximateBacklog = function approximateBacklogV104(items) {
+  approximateBacklog = function approximateBacklogV105(items) {
     const deltas = new Map();
     for (const item of items) {
       const events = [];
@@ -242,7 +242,86 @@
     container.replaceChildren(columns, makeRecordGroup('Timeline', timelineRows));
   }
 
-  renderOverview = function renderOverviewV104() {
+  // The original Trees & Titles renderer repeatedly scanned the full scoped item
+  // array for every parent and every root. Build hierarchy counts once instead.
+  renderTrees = function renderTreesV105() {
+    const items = scopedItems();
+    const roots = [];
+    const rootStats = new Map();
+    const directChildCounts = new Map();
+    const existingItemKeys = new Set();
+    let deepest = 0;
+    let reopened = 0;
+
+    const itemKey = (listId, displayId) => `${listId}\u0000${displayId}`;
+
+    for (const item of items) {
+      existingItemKeys.add(itemKey(item.listId, item.displayId));
+      deepest = Math.max(deepest, item.depth);
+      if (item.reopenedDate) reopened++;
+
+      if (!item.parentDisplayId) {
+        roots.push(item);
+        rootStats.set(itemKey(item.listId, item.displayId), {
+          root: item,
+          size: 1,
+          maxDepth: item.depth
+        });
+      } else {
+        const parentKey = itemKey(item.listId, item.parentDisplayId);
+        directChildCounts.set(parentKey, (directChildCounts.get(parentKey) || 0) + 1);
+      }
+    }
+
+    for (const item of items) {
+      if (!item.parentDisplayId) continue;
+      const rootDisplayId = String(item.displayId).split('.')[0];
+      const stats = rootStats.get(itemKey(item.listId, rootDisplayId));
+      if (!stats) continue;
+      stats.size++;
+      stats.maxDepth = Math.max(stats.maxDepth, item.depth);
+    }
+
+    const rootTrees = roots.map(root => rootStats.get(itemKey(root.listId, root.displayId)));
+    const directCounts = [...directChildCounts.entries()]
+      .filter(([parentKey]) => existingItemKeys.has(parentKey))
+      .map(([, count]) => count);
+
+    renderCards($('#treeCards'), [
+      { label:'Deepest nesting level', value:String(deepest) },
+      { label:'Roots with subtasks', value:percent(rootTrees.filter(x=>x.size>1).length, roots.length) },
+      { label:'Average subtasks per root', value:roots.length?oneDecimal.format((items.length-roots.length)/roots.length):'0' },
+      { label:'Average direct children per parent', value:directCounts.length?oneDecimal.format(average(directCounts)):'0' },
+      { label:'Tasks ever reopened (known)', value:numberFmt.format(reopened) },
+      { label:'Highest Universal ID', value:numberFmt.format(state.snapshot.highestUniversalId), sub:'Lifetime counter across all lists' }
+    ]);
+
+    const depthCounts = new Map();
+    for (const item of items) increment(depthCounts, item.depth);
+    const depths = [...depthCounts.keys()].sort((a,b)=>a-b);
+    Charts.drawBarChart($('#depthChart'), depths.map(d=>d===0?'Root':`Depth ${d}`), depths.map(d=>depthCounts.get(d)), '#000080', false, 'Tasks');
+
+    const typeCounts = inferTaskTypes(items);
+    Charts.drawBarChart($('#taskTypeChart'), typeCounts.map(x=>x[0]), typeCounts.map(x=>x[1]), '#000080', false, 'Tasks');
+
+    const largest = [...rootTrees].sort((a,b)=>b.size-a.size).slice(0,12);
+    setTable($('#largestTreesTable'), ['List','Root','Title','Tree size','Max depth'], largest.map(x=>[
+      listName(x.root.listId), `#${x.root.displayId}`, x.root.title, numberFmt.format(x.size), x.maxDepth
+    ]), [3,4]);
+
+    const deepestTasks = [...items].sort((a,b)=>b.depth-a.depth || b.universalId-a.universalId).slice(0,15);
+    setTable($('#deepestTasksTable'), ['List','ID','Depth','Task'], deepestTasks.map(x=>[
+      listName(x.listId), `#${x.displayId}`, x.depth, x.title
+    ]), [2]);
+
+    renderCommonWords(items);
+    const reopenedItems = items.filter(x=>x.reopenedDate).sort((a,b)=>b.reopenedDate-a.reopenedDate).slice(0,15);
+    setTable($('#reopenedTable'), ['List','ID','Task','Reopened'], reopenedItems.map(x=>[
+      listName(x.listId), `#${x.displayId}`, x.title, formatDateTime(x.reopenedDate)
+    ]));
+  };
+
+  renderOverview = function renderOverviewV105() {
     baseRenderOverview();
     renderRecordLists(scopedItems());
   };
