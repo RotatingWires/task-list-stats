@@ -1,11 +1,12 @@
 'use strict';
 
-// TaskList Stats v1.0.3 release compatibility layer for Overview records and terminal-status semantics.
+// TaskList Stats v1.0.4 release compatibility layer for Overview records, terminal-status semantics, backlog reconstruction, and clearer contextual labeling.
 // Loaded after app.js but before DOMContentLoaded startup.
 (() => {
-  const RELEASE = '1.0.3';
+  const RELEASE = '1.0.4';
   const baseRenderOverview = renderOverview;
   const baseNormalizeSnapshot = normalizeSnapshot;
+  const baseGroupLabel = groupLabel;
 
   function applyReleaseLabel() {
     document.title = `TaskList Stats v${RELEASE}`;
@@ -17,10 +18,23 @@
     if (status) status.textContent = `TaskList Stats v${RELEASE}`;
   }
 
+  function applyTaskTypeScopeNote() {
+    const chart = document.querySelector('#taskTypeChart');
+    const frame = chart?.closest('.chart-frame');
+    if (!frame || frame.parentElement?.querySelector('.task-type-scope-note')) return;
+
+    const note = document.createElement('div');
+    note.className = 'note exam-scope-note has-tooltip task-type-scope-note';
+    note.title = 'School or homework lists';
+    note.tabIndex = 0;
+    note.textContent = 'Make sure to select the correct list for the context of these stats.';
+    frame.before(note);
+  }
+
   // TaskList preserves old completed_at/cancelled_at values when a task later
   // changes status. Stats should treat the current terminal status as authoritative
   // so corrected/reopened tasks do not inflate completion/cancellation metrics.
-  normalizeSnapshot = function normalizeSnapshotV103(raw) {
+  normalizeSnapshot = function normalizeSnapshotV104(raw) {
     const normalized = baseNormalizeSnapshot(raw);
     for (const item of normalized.items) {
       if (item.status !== 'Done') item.completedDate = null;
@@ -29,11 +43,21 @@
     return normalized;
   };
 
+  // Month labels on Trends use a four-digit year so labels such as "Sep 26"
+  // cannot be mistaken for a calendar date.
+  groupLabel = function groupLabelV104(key, mode) {
+    if (mode === 'month') {
+      const [year, month] = key.split('-').map(Number);
+      return `${MONTHS[month - 1]} ${year}`;
+    }
+    return baseGroupLabel(key, mode);
+  };
+
   // Backlog is a historical state reconstruction rather than a current-status
   // statistic. Rebuild each task's stored transitions from the raw timestamps so
   // Reopen adds a task back only after a terminal state, while Done -> Cancelled
   // (or Cancelled -> Done) remains closed instead of subtracting twice.
-  approximateBacklog = function approximateBacklogV103(items) {
+  approximateBacklog = function approximateBacklogV104(items) {
     const deltas = new Map();
     for (const item of items) {
       const events = [];
@@ -66,7 +90,7 @@
     while (cursor <= end) {
       const key = monthKey(cursor);
       running += deltas.get(key) || 0;
-      labels.push(`${MONTHS[cursor.getMonth()]} ${String(cursor.getFullYear()).slice(-2)}`);
+      labels.push(`${MONTHS[cursor.getMonth()]} ${cursor.getFullYear()}`);
       values.push(Math.max(0, running));
       cursor.setMonth(cursor.getMonth() + 1);
     }
@@ -218,10 +242,11 @@
     container.replaceChildren(columns, makeRecordGroup('Timeline', timelineRows));
   }
 
-  renderOverview = function renderOverviewV103() {
+  renderOverview = function renderOverviewV104() {
     baseRenderOverview();
     renderRecordLists(scopedItems());
   };
 
   applyReleaseLabel();
+  applyTaskTypeScopeNote();
 })();
