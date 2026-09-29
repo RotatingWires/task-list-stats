@@ -18,7 +18,7 @@ app.MapGet("/api/health", () =>
     return Results.Ok(new
     {
         ok = File.Exists(path),
-        version = "1.0.2",
+        version = "1.0.3",
         databaseFound = File.Exists(path),
         databaseFile = Path.GetFileName(path)
     });
@@ -70,7 +70,7 @@ app.MapGet("/api/snapshot", async () =>
         }
 
         var fileInfo = new FileInfo(dbPath);
-        return Results.Ok(new StatsSnapshot("1.0.2", DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items));
+        return Results.Ok(new StatsSnapshot("1.0.3", DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items));
     }
     catch (SqliteException ex)
     {
