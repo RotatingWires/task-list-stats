@@ -1,256 +1,323 @@
 # TaskList Stats
 
-**TaskList Stats v0.24.1** is a separate, read-only statistics app for the self-hosted **TaskList** database.
+**TaskList Stats v1.0.5** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
 
-It intentionally stays separate from TaskList so charts, heatmaps, historical analysis, reporting, and experimental views do not add bloat to the main task app.
+It is intentionally its own application instead of being built into TaskList. TaskList stays focused on managing tasks, while TaskList Stats can spend its UI and code budget on charts, heatmaps, records, historical analysis, hierarchy statistics, and experimental/fun views without bloating the main app.
 
-## v0.24.1
+The interface uses the same Windows 95-style visual language as TaskList and works as a normal browser app or installable PWA.
 
-- Keep all eight Current Activity cards on one row at normal desktop/laptop widths instead of wrapping Deleted estimate by itself.
-- Preserve the existing responsive card layout on narrower screens.
-- Bump server, assembly, UI, README, and service-worker metadata to v0.24.1.
+## What it does
 
-## v0.24
+TaskList Stats reads the existing TaskList SQLite database and builds a browser-side snapshot containing the current lists, task records, timestamps, status, hierarchy IDs, and lifetime Universal ID information.
 
-- Replace every browser-native statistics dropdown with the shared Windows 95-style custom menu control.
-- Use the radio-dot indicator for all single-choice selectors, including trend grouping, year, heatmap mode, and weekday/hour event mode.
-- Keep the top multi-list selector as a checklist with checkmarks because it supports selecting more than one list at once.
-- Preserve the existing selector values and change events so all charts, heatmaps, calendar behavior, and list scoping continue to use the same filtering logic.
-- Make menu closing generic so File, View, Help, list filtering, and current/future custom dropdowns share one menu lifecycle.
-- Preserve the user-tuned iOS top offset while updating dropdown styling and release metadata.
-- Bump server, snapshot, assembly, UI, README, and PWA cache metadata to v0.24.
+From that snapshot it can answer questions such as:
 
-## v0.23
+- How many tasks are Open, Done, or Cancelled?
+- What days, weeks, months, weekdays, and hours are busiest?
+- What are the creation/completion records for the selected lists?
+- How old is the current backlog?
+- How has the approximate backlog changed over time?
+- Which lists are most active?
+- How deep are task trees and which roots have the largest subtrees?
+- What task-title categories and common words appear most often?
+- When are tasks usually created or completed?
+- Which tasks were unusually fast, slow, old, forgotten, reopened, or otherwise interesting?
 
-- Turn the top List selector into a Windows 95-style checklist so any combination of TaskList lists can be analyzed together.
-- Treat **All lists** as the default scope; selecting individual lists builds a multi-list scope, and unchecking the last selected list returns to All lists.
-- Apply the selected list set consistently to charts, tables, Pattern metrics, Trees & Titles, and Fun analyses.
-- Show a compact multi-list scope label while keeping the full selected list names available from the selector.
-- Expand Exam / Test Windows tooltips with plain-language explanations and add a reminder to choose the appropriate School/homework list context.
-- Remove the old "all dated tasks" wording from the baseline active-day explanation.
-- Correct the consolidated `app.js` version constant and bump server, assembly, UI, README, and PWA cache metadata to v0.23.
+The app can analyze **All lists**, one list, or any combination of lists using the checklist at the top of the UI.
 
-## v0.22
+## Important safety property: read-only database access
 
-- Make Fun render only the currently visible Fun subtab instead of recalculating every hidden Fun analysis after each button click.
-- Time Machine, Ancient Task, Productivity Jackpot, Task Graveyard, and future Fun actions now share the same active-panel rendering path, preventing hidden expensive work from delaying interactive buttons.
-- Optimize Personal Records tree-size and direct-child calculations from repeated whole-list scans to single-pass lookup maps.
-- Keep Fun rerendering scoped to the currently selected subtab when the database snapshot or list filter changes.
-- Bump server, snapshot, assembly, UI, README, and PWA cache metadata to v0.22.
+TaskList Stats does **not** create, update, or delete TaskList rows.
 
-## v0.21
+The server opens SQLite with:
 
-- Simplified Night Owl, Early Bird, and Cleanup Day wording so the UI talks about times directly instead of repeatedly saying “confirmed times.”
-- Matched TaskList's current mobile bottom spacing: 5px minimum plus the iOS safe-area inset, with the same left/right safe-area treatment.
-- Added `--ios-top-offset` and `--ios-bottom-offset` CSS variables so the top and bottom mobile offsets can be tuned in one place.
-- Set the current top offset to 0px and bottom offset to 5px to match TaskList's present values.
-- Removed an older overridden mobile window min-height rule that no longer affected the current fullscreen layout.
+- `Mode=ReadOnly`
+- `PRAGMA query_only = ON`
 
-## v0.20
+There are no write endpoints in the Stats API. The application reads TaskList data into a snapshot and performs its analysis in the browser.
 
-- Require confirmed creation and completion clock times for all elapsed completion-duration statistics; date-only imported history remains available to date-based views without becoming fake midnight precision.
-- Require confirmed clock times for Task Roulette terminal duration and Task Graveyard age-when-closed calculations.
-- Fixed Calendar scope changes so the month picker follows the selected year instead of retaining a stale month from a different list/year.
-- Clear stale line-chart tooltip data whenever a filtered chart has no data.
-- Removed the unused `eventMaps` helper and duplicate confirmed-time/increment helpers from `fun.js`.
-- Changed the server fallback listen port from the stale 8172 value to the current Stats port, 8712.
-- Removed the obsolete teal root-page background and corrected README release ordering.
+That protects the TaskList database from intentional writes by this app, but it does **not** make the Stats web interface safe to expose publicly: anyone who can reach the site can potentially see the task snapshot returned by `/api/snapshot`.
 
-## v0.19
-
-- Fixed Hour-of-Day and Weekday-by-Hour analyses so date-only imported history is not treated as midnight.
-- Keep weekday-only counts date-aware, but only include events with confirmed timestamps in hour-of-day charts and heatmaps.
-- Updated the busiest creation hour metric to exclude date-only history.
-
-## v0.18
-
-- Preserve date-only imported values such as `2026-05-12` as that exact local calendar date instead of letting JavaScript interpret them as UTC midnight and potentially shift them to the previous day.
-- Keep date-only history available for calendar/day/month statistics while time-of-day tools continue to require confirmed timestamps.
-- Automatically shrink long vertical Y-axis labels on compact desktop charts so labels such as `Average tasks created` are not clipped.
-
-## v0.17
-
-- Made the TaskList Stats window fill the entire browser viewport so no outer page background/margin is visible.
-- Prevented the Hour-of-Day chart from crowding the final 10 PM and 11 PM x-axis labels together while retaining all 24 data groups.
-- Kept the compact desktop chart sizing and the wider horizontally scrollable mobile chart sizing from v0.16.
-
-## v0.16
-
-- Removed the regular Speedrun Fun tool completely; Same-Day Speedrun remains.
-- Made charts shorter and capped full-width chart frames on laptop/desktop screens.
-- Kept the larger horizontally scrollable chart widths on mobile, while retaining smaller desktop minimum widths only for dense Hour-of-Day and Task-Title charts.
-
-## v0.15
-
-- Fixed automatic database loading by making startup one-time and independent of DOMContentLoaded timing.
-- Load chart/Fun modules before the core app and render only the visible tab, preventing hidden canvases or module timing from breaking later sections.
-- Restored Backlog Over Time and line-chart tooltip initialization when the Trends tab becomes visible.
-- Restored full Fun-tab initialization instead of leaving only the static Task Roulette panel.
-- Kept TaskList task links explicitly interactive and opening in a new tab.
-- Widened the File menu so Export snapshot JSON... is not clipped.
-- Changed the service worker to network-first for current app assets to prevent stale mixed-version JavaScript/CSS after updates.
-
-## v0.14
-
-- Speedrun and Same-Day Speedrun now require confirmed creation and completion times; date-only imported history is excluded.
-- Added a 5-minute minimum elapsed time to Speedrun, Same-Day Speedrun, and the fastest-completion record.
-- Cleanup Day now counts and lists only creation/completion events with confirmed times.
-- Night Owl and Early Bird now ignore date-only history because time-of-day is unknown.
-
-## v0.13
-
-- Replaced the historical `v06-core.js`, `v07.js`, and `v09.js` patch chain with current-purpose `charts.js` and `fun.js` modules.
-- Removed runtime monkey-patching of `renderAll`, chart renderers, Roulette, and table rendering.
-- Kept one canonical task-link implementation in `app.js`.
-- Moved line-chart tooltip behavior into the chart module; bar charts remain tooltip-free.
-- Moved all active Fun behavior into one current Fun module, including Night Owl, Early Bird, Same-Day Speedrun, and Cleanup Day.
-- Folded dynamically injected Fun/mobile/menu styles into `style.css`; no current module injects release-specific CSS.
-- Deleted the three historical-version JavaScript files from the repository and PWA cache.
-
-## v0.12
-
-- Fixed the cleanup regression that left fresh page loads stuck on `Loading database...` until **File → Refresh** was clicked.
-- Fixed the strict-mode line-chart tooltip binding that caused `v09.js` to stop before automatic startup finished.
-- Kept line-chart hover/tap tooltips while bar charts remain tooltip-free.
-- Resized the Help dropdown to fit `About TaskList Stats` without an oversized button or a truncated label.
-- Restored **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** during normal initial page load.
-- Bumped server, snapshot, assembly, UI, About dialog, and PWA cache metadata to v0.12.
-
-## v0.11
-
-- Physically removed Random Day, Guess the Stat, and Fortune Cookie code/CSS instead of creating them and hiding/removing their UI later.
-- Removed the old task-link upgrade observer and query-string compatibility parsing; Stats now creates canonical `/task/<UniversalID>` links directly.
-- Removed the all-canvas tooltip binding left over from v0.9; only line charts install chart tooltip behavior.
-- Removed the old desktop `.chart-tooltip` implementation and the unused Roulette titlebar styles.
-- Consolidated v0.8 layout/mobile CSS and v0.10 single-arrow dropdown CSS into `style.css`.
-- Moved single-arrow select initialization into `app.js`.
-- Deleted `v06.js`, `v08.js`, and `v10.js`; active scripts now load directly and sequentially.
-- Removed stale runtime version-title setters from older feature layers.
-
-## v0.10
-
-- Standardized TaskList and TaskList Stats naming directly across current source and documentation.
-- Removed bar-chart hover/tap tooltips while keeping line-chart hover and mobile tap-to-inspect tooltips.
-- Replaced native up/down select chrome in tab controls with a single-down-arrow Win95-style wrapper matching the top List picker.
-- Set the repository ListenUrl to `http://192.168.1.12:8712`.
-- Bumped server/assembly metadata and the PWA cache to v0.10.
-
-## v0.9
-
-- Standardized current branding to **TaskList** and **TaskList Stats** across the UI, PWA metadata, product metadata, and documentation.
-- Changed the Stats page background from teal to the same gray desktop surface used by TaskList.
-- Added more bottom padding to the main tabs and Fun subtabs so labels no longer look clipped against the lower bevel.
-- Added tap/click explanations for labels that previously depended on desktop hover tooltips.
-- Added tap-to-inspect chart tooltips while retaining pointer hover behavior on desktop.
-- Widened the Hour-of-Day chart and its grouped bars so values are easier to read.
-- Fixed the Help dropdown width so `About TaskList Stats` is no longer truncated.
-- Added **Night Owl**, **Early Bird**, **Same-Day Speedrun**, and **Cleanup Day** to Fun.
-
-## v0.8
-
-- Changed the app shell to a fixed-height desktop-style window so the page itself stays fixed and only the Stats workspace scrolls.
-- Made canvas charts horizontally scrollable when their readable minimum width is wider than the viewport, preventing mobile label/value collisions.
-- Added larger minimum widths for completion, trend, weekday/hour, seasonality, list-share, nesting-depth, and task-type charts.
-- Fixed the mobile Month Calendar so its seven columns scroll inside the Calendar panel instead of forcing the whole page wider.
-- Kept year, month/year, and weekday/hour heatmaps contained inside their own horizontal scroll areas.
-- Standardized Fun result presentation so spotlight-style results use the same recessed table treatment as Time Machine.
-- Removed the extra Task Roulette Result titlebar and flattened its result shell to match the other Fun tools.
-
-## v0.7
-
-- Task-ID links open TaskList in a new tab and use clean `/task/<UniversalID>` links.
-- Removed Random Day, Guess the Stat, and Fortune Cookie from Fun.
-- Increased Fun description and Déjà Vu table text sizes.
-- Clarified Time Machine by separating the event on the selected date from each task's current status.
-- Fixed bottom-edge presentation for Task Graveyard and Slowest Task.
-- Expanded Personal Records, removed Highest Universal ID, and added additional day/month/tree/title records.
-- On This Day now shows full month/day/year event dates.
-
-## v0.6
-
-- Task IDs shown in Stats deep-link into TaskList, selecting the correct list, switching to **All**, scrolling to the task, and highlighting it.
-- Fixed high-DPI canvas charts growing taller after repeated list-filter changes.
-- Expanded **Fun** with Task Roulette, Ancient Task, Forgotten Task, Time Machine, Productivity Jackpot, Task Graveyard, Personal Records, On This Day, Déjà Vu, Slowest Task, Speedrun, Random Day, Guess the Stat, and Task Fortune Cookie.
-- Fun features remain local and use the read-only Stats snapshot.
-
-## Stack
+## Technology stack
 
 - C# / ASP.NET Core Minimal API
+- .NET 10
 - Kestrel
 - Microsoft.Data.Sqlite
-- Plain HTML/CSS/JavaScript
-- SQLite opened in **read-only** mode
+- Plain HTML, CSS, and JavaScript
+- SQLite opened read-only
 - No ORM
 - No frontend framework
 - No chart library
+- Browser Canvas API for charts
+- Service worker + web manifest for PWA support
 
-The interface follows the same Windows 95-style visual language as TaskList.
+## Project layout
 
-## Statistics
+```text
+TaskListStats.csproj      .NET project and package/version metadata
+Program.cs                Kestrel server, database reader, and API endpoints
+appsettings.json          database path and listen-address configuration
+
+wwwroot/
+  index.html              application shell and statistics panels
+  style.css               Windows 95-style UI and responsive/mobile layout
+  app.js                  core data handling and statistics rendering
+  charts.js               chart drawing and chart interactions
+  fun.js                  Fun-tab analyses
+  records-v1.js           v1.x records/status/backlog/tree compatibility layer
+  manifest.webmanifest    installable-PWA metadata
+  sw.js                   service worker and static-asset cache
+  icons/stats.svg         app/favicon icon
+```
+
+## Requirements
+
+For the server:
+
+- .NET 10 SDK/runtime
+- A TaskList `task-list.db` SQLite database
+- Read permission to the database file and its parent path
+
+For the client:
+
+- A modern desktop or mobile browser
+- JavaScript enabled
+
+The app has no Node.js/npm build step and no frontend package manager.
+
+## First-time setup
+
+Clone the repository and enter it:
+
+```bash
+git clone https://github.com/RotatingWires/task-list-stats.git
+cd task-list-stats
+```
+
+Restore the .NET dependency:
+
+```bash
+dotnet restore
+```
+
+Then configure the TaskList database path and listening address.
+
+### Option 1: edit `appsettings.json`
+
+The repository contains:
+
+```json
+{
+  "TaskListStats": {
+    "DatabasePath": "../task-list/data/task-list.db",
+    "ListenUrl": "http://192.168.1.12:8712"
+  }
+}
+```
+
+Those values reflect the original deployment and will probably need to be changed on another machine.
+
+A more generic example is:
+
+```json
+{
+  "TaskListStats": {
+    "DatabasePath": "/srv/task-list/data/task-list.db",
+    "ListenUrl": "http://0.0.0.0:8712"
+  }
+}
+```
+
+`0.0.0.0` listens on all interfaces. Use a LAN/VPN firewall and do not expose the Stats port directly to the public Internet.
+
+### Option 2: environment variables
+
+Environment variables override `appsettings.json`:
+
+```bash
+export TASKLIST_DB_PATH=/srv/task-list/data/task-list.db
+export TASKLIST_STATS_URL=http://0.0.0.0:8712
+```
+
+Supported variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `TASKLIST_DB_PATH` | Full or relative path to TaskList's SQLite database |
+| `TASKLIST_STATS_URL` | Kestrel listen URL, for example `http://0.0.0.0:8712` |
+
+If no usable database path is configured, the server also checks several common relative TaskList locations before returning an error.
+
+## Configure TaskList deep links
+
+Whenever Stats displays a task ID, it can link directly back into TaskList using the clean route:
+
+```text
+/task/<UniversalID>
+```
+
+TaskList handles that route by opening the correct list, switching to the **All** view, scrolling to the task, and highlighting it.
+
+The TaskList origin is currently defined near the top of `wwwroot/app.js`:
+
+```javascript
+const TASKLIST_ORIGIN = 'http://tasklist.lehighradio.com:8711';
+```
+
+If your TaskList instance uses a different hostname, IP, port, or HTTPS URL, change that constant to match your deployment.
+
+Task links intentionally open in a new tab and use `rel="noopener"`.
+
+## Run it
+
+Development/direct run:
+
+```bash
+dotnet run
+```
+
+Then open the configured Stats URL in a browser, for example:
+
+```text
+http://server-ip:8712/
+```
+
+The status bar shows how many current TaskList items were loaded and when the database file was last modified.
+
+## API endpoints
+
+TaskList Stats exposes only a very small API.
+
+### `GET /api/health`
+
+Reports whether the configured database can be found and returns the server version.
+
+Example use:
+
+```bash
+curl http://127.0.0.1:8712/api/health
+```
+
+### `GET /api/snapshot`
+
+Opens the TaskList database read-only and returns the data used by the browser:
+
+- lists
+- items
+- Universal IDs
+- task titles/descriptions
+- current status
+- creation/update/completion/cancellation/reopen timestamps
+- database last-write time
+- snapshot generation time
+
+The browser performs the statistics calculations from this snapshot.
+
+## Statistics sections
 
 ### Overview
 
-- Current total / Open / Done / Cancelled counts
-- Root tasks vs subtasks
-- Highest Universal ID / lifetime-entry count
-- Approximate deleted-entry count
-- Busiest month, week, and day
-- Longest quiet streak
-- Longest active streak
-- First and latest dated task
-- Completion percentage and cancellation percentage
-- Average / median / fastest / slowest observed completion time from confirmed timestamp pairs
-- Completion-time buckets
-- Average / median open-task age
-- Open for 7 / 30 / 90+ days
-- Oldest currently open tasks
+Overview summarizes the current scope and the most useful headline records.
+
+**Current Activity** includes current total, Open, Done, Cancelled, root/subtask counts, lifetime Universal ID information, and a deleted-entry estimate.
+
+**Creation Records** include:
+
+- most creations in one day
+- most creations in one week
+- most creations in one month
+- biggest creation hour
+- longest creation streak
+- longest quiet streak
+
+**Completion Records** include:
+
+- most completions in one day
+- most completions in one week
+- most completions in one month
+- biggest completion hour
+- longest completion streak
+
+The Timeline group shows the first and latest dated task in the selected scope.
+
+Overview also includes:
+
+- completion and cancellation percentages
+- average/median/fastest/slowest observed completion duration
+- completion-time distribution buckets
+- average and median open-task age
+- counts open for 7, 30, and 90+ days
+- oldest currently open tasks
 
 ### Trends
 
-- Created / completed / cancelled trends grouped by day, week, or month, with pointer/tap values
-- Approximate historical backlog curve
-- Top 10 busiest months with created and completed counts
-- Fastest and slowest completion months
-- Year-over-year monthly creation comparison
-- Axis labels and exact bar values on charts
+Trends can group events by **day**, **week**, or **month**.
 
-### Calendar & heatmaps
+It includes:
 
-- Year activity heatmap for created, completed, cancelled, or all activity
-- Month calendar with daily creation/completion/cancellation counts
-- Month × year heatmap for seasonality
-- Average creation volume by month of year
+- Created / Completed / Cancelled trends
+- approximate historical backlog
+- top 10 busiest months
+- fastest and slowest completion months
+- year-over-year monthly creation comparison
+
+Monthly chart labels use four-digit years to avoid ambiguous labels such as `Sep 26`.
+
+### Calendar
+
+Calendar contains several date-oriented views:
+
+- year activity heatmap
+- Created / Completed / Cancelled / All activity modes
+- detailed month calendar
+- Month × Year creation heatmap
+- seasonality chart showing average creation volume by month of year
+
+Date-only imported history remains valid here because these views do not require a known clock time.
 
 ### Lists
 
-- Per-list total / Open / Done / Cancelled
-- Completion percentage
-- Average completion time from confirmed timestamp pairs
-- Share of all current entries
-- Most active list by month
+The Lists tab compares TaskList lists using:
 
-### Time patterns
+- Total / Open / Done / Cancelled counts
+- completion percentage
+- average completion duration when confirmed timestamps exist
+- share of all current entries
+- most active list by month
 
-- Day-of-week creation and completion patterns
-- Hour-of-day creation and completion patterns
-- Weekday × hour heatmap
-- Average tasks per active week / month
-- Exam/test workload comparison using titles containing `exam`, `test`, `midterm`, or `final`
+### Patterns
 
-### Trees & titles
+Patterns looks for recurring timing behavior:
 
-- Deepest nesting level
-- Percentage of root tasks with subtasks
-- Average subtasks per root
-- Average direct children per parent
-- Largest task trees
-- Deepest individual tasks
-- Nesting-depth distribution
-- Common title words
-- Simple task-type inference (quiz, exam/test, reading, discussion, assignment, project, paper/essay, lab)
-- Known reopened-task count and recently reopened tasks
+- day-of-week creation/completion patterns
+- hour-of-day creation/completion patterns
+- weekday × hour heatmap
+- average workload per active week/month
+- exam/test-window statistics
+
+Exam/test detection uses task titles containing terms such as `exam`, `test`, `midterm`, or `final`. These are contextual heuristics, so select the correct school/homework list scope before interpreting them.
+
+### Trees & Titles
+
+This tab analyzes hierarchy and task naming:
+
+- deepest nesting level
+- percentage of roots with subtasks
+- average subtasks per root
+- average direct children per parent
+- largest task trees
+- deepest individual tasks
+- nesting-depth distribution
+- common task-title words
+- inferred title categories such as quiz, exam/test, reading, discussion, assignment, project, paper/essay, and lab
+- reopened-task counts and recently reopened tasks
+
+As of v1.0.5, hierarchy indexes are built in linear passes instead of repeatedly rescanning the full selected list, which substantially reduces the expensive part of rendering this tab on large datasets.
 
 ### Fun
+
+The Fun area turns the same read-only snapshot into exploratory views. Depending on the selected subtab it includes tools such as:
 
 - Task Roulette
 - Ancient Task
@@ -267,38 +334,56 @@ The interface follows the same Windows 95-style visual language as TaskList.
 - Same-Day Speedrun
 - Cleanup Day
 
-## Earlier interface refinements
+These tools do not modify tasks. They only analyze the current Stats snapshot.
 
-### v0.5
+## List filtering
 
-- Added a tooltip to the Weekday × Hour Heatmap explaining its event timestamps, scope, and full-history behavior.
-- Renamed the month/year panel to `Month × Year Heatmap (Created Tasks)` and standardized section headings to title case.
-- Fixed canvas sizing so repeatedly changing the list filter no longer causes graphs to grow.
-- Enlarged the Weekday × Hour Heatmap cells and labels.
-- Added the Fun tab and Task Roulette.
+The list selector is a multi-select Windows-style checklist.
 
-### v0.4
+- **All lists** is the default.
+- Select one list to analyze only that list.
+- Select several lists to analyze their combined scope.
+- Unchecking the final selected list returns to **All lists**.
 
-- Made the statistics UI non-selectable to behave more like desktop application chrome.
-- Increased month-calendar typography and day-cell height.
-- Increased and bolded canvas chart labels, axis titles, ticks, and bar values.
-- Added explanatory hover text to day-of-week and hour-of-day pattern headings.
-- Enlarged the weekday × hour heatmap cells and labels.
-- Added the Stats bar-chart favicon.
+The same scope is shared across Overview, Trends, Calendar, Lists, Patterns, Trees & Titles, and Fun.
 
-### v0.3
+## Timestamp precision rules
 
-- Removed the duplicate custom metric tooltip.
-- Added a single chart tooltip that follows hovered data.
-- Improved month labels, chart label/value size, axis margins, and grouped-bar spacing.
-- Enlarged heatmaps and printed counts inside heatmap cells.
-- Fixed the `Trees & Titles` menu label.
+TaskList data may contain either full timestamps or imported date-only values.
 
-### v0.2
+TaskList Stats deliberately does **not** invent a midnight time for date-only history.
 
-- Refined overview cards, chart axes/values, trend/backlog presentation, busiest-month reporting, heatmaps, legends, and 12-hour time labels.
+Date-only values can participate in statistics that only need a calendar date, including:
 
-## Historical-data limitation
+- daily/monthly trends
+- calendars
+- year heatmaps
+- seasonality
+- weekday statistics
+
+Statistics that need an actual clock time require a confirmed timestamp containing a time component, including:
+
+- hour-of-day charts
+- weekday × hour heatmaps
+- biggest creation/completion hour
+- completion-duration statistics
+- Same-Day Speedrun and other elapsed-time Fun calculations
+
+This prevents imported history from creating false `12:00 AM` records.
+
+## Current-status semantics
+
+TaskList can preserve an old `completed_at` or `cancelled_at` value even after a task later changes state.
+
+Starting with v1.0.2, TaskList Stats treats the **current task status as authoritative** for completion/cancellation analytics:
+
+- a task contributes to completion statistics only when its current status is `Done`
+- a task contributes to cancellation statistics only when its current status is `Cancelled`
+- creation statistics remain based on valid creation dates regardless of current status
+
+This avoids stale terminal timestamps inflating completion/cancellation counts after a reopen or status correction.
+
+## Why backlog history is approximate
 
 TaskList stores useful current timestamps:
 
@@ -308,50 +393,171 @@ TaskList stores useful current timestamps:
 - `cancelled_at`
 - `reopened_at`
 
-It does **not** store a complete event log of every status transition. If a task is completed, reopened, completed again, reopened again, etc., older transitions cannot all be reconstructed.
+It does **not** keep a complete append-only log of every historical status transition.
 
-Therefore:
+For example, if a task was completed, reopened, completed again, reopened again, and completed a third time, the database does not necessarily contain every older transition needed to perfectly rebuild that history.
 
-- Current counts are exact.
-- Creation statistics are exact for records with valid creation dates.
-- Current stored completion/cancellation/reopen timestamps are exact.
-- The historical backlog graph is explicitly **approximate** when repeated reopen cycles occurred.
-- Imported records whose creation date is `Unknown` are excluded from date-based statistics.
+TaskList Stats therefore reconstructs the best available state sequence from the stored timestamps. Done and Cancelled are treated as the same closed state for backlog accounting, and a reopen adds the task back only after a stored closed state.
 
-## Database configuration
+The result is useful for long-term trends but is explicitly labeled **Approximate Backlog Over Time**.
 
-TaskList Stats never creates or modifies TaskList tables. SQLite is opened with `Mode=ReadOnly` and `PRAGMA query_only=ON`.
+Current counts are not approximate.
 
-Edit `appsettings.json` for your local database path and listening address. You can also override the database path with `TASKLIST_DB_PATH` and the listening URL with `TASKLIST_STATS_URL`.
+## Exporting a snapshot
 
-## Run
+Use:
 
-Requires .NET 10.
+**File → Export snapshot JSON...**
 
-```bash
-dotnet restore
-dotnet run
+The browser downloads the exact normalized snapshot currently loaded by Stats.
+
+This is useful for debugging or offline inspection, but treat the file as private. It can contain task titles, descriptions, list names, IDs, statuses, and timestamps.
+
+## PWA behavior
+
+`manifest.webmanifest` allows TaskList Stats to be installed as a standalone web app on supported browsers/devices.
+
+The service worker:
+
+- caches the application shell/static assets
+- uses network-first behavior for current static assets
+- removes old versioned caches during activation
+- always fetches `/api/*` from the network rather than serving database snapshots from cache
+
+This means an installed PWA can retain its interface shell, but live statistics still require access to the Stats server.
+
+## Optional Linux systemd service
+
+A simple service might look like:
+
+```ini
+[Unit]
+Description=TaskList Stats
+After=network.target
+
+[Service]
+Type=simple
+User=taskliststats
+WorkingDirectory=/opt/task-list-stats
+Environment=TASKLIST_DB_PATH=/srv/task-list/data/task-list.db
+Environment=TASKLIST_STATS_URL=http://0.0.0.0:8712
+ExecStart=/usr/bin/dotnet run --configuration Release
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-The server and client are cross-platform. They can run on Windows, Linux, or macOS; the browser/PWA works on normal desktop and mobile browsers.
+Adjust paths and the service user for your machine. The service account needs read access to the TaskList database but does not need write access.
 
-## Security
+For a more production-like deployment, `dotnet publish` and run the published DLL instead of compiling on each service start.
 
-TaskList Stats does not add a second login system. Treat it like the rest of the local TaskList deployment: keep it on your LAN/VPN and do not publicly forward the port.
+## Security and privacy
 
-The database connection itself is read-only, so the Stats app cannot intentionally edit TaskList data.
+TaskList Stats does not have its own authentication layer.
+
+Recommended deployment model:
+
+- keep it on your LAN, private reverse proxy, or VPN
+- do not publicly port-forward the Stats service
+- firewall access to trusted networks/devices
+- give the service account only the filesystem permissions it needs
+- keep TaskList's database and exported snapshots private
+- use HTTPS when accessing it across an untrusted network
+
+Important distinctions:
+
+- **Database writes:** blocked by the app's read-only SQLite connection.
+- **Data disclosure:** still possible if an unauthorized person can reach the web/API service.
+- **Snapshot exports:** contain personal task data and should be treated like a database export.
+- **Task deep links:** reveal the configured TaskList hostname to anyone who can inspect the client source.
+
+## Troubleshooting
+
+### `TaskList database not found`
+
+Check `TaskListStats:DatabasePath` or `TASKLIST_DB_PATH` and make sure the process has filesystem read access.
+
+The `/api/health` endpoint is the quickest way to confirm which server is running and whether the database file can be found.
+
+### The page loads but shows `Database unavailable`
+
+Open `/api/health` and `/api/snapshot` directly. A 503 response usually includes the underlying database/path error.
+
+### Another computer cannot open Stats
+
+Check:
+
+- `ListenUrl` / `TASKLIST_STATS_URL`
+- host firewall rules
+- whether Kestrel is bound to `127.0.0.1` versus `0.0.0.0` or the LAN IP
+- routing/VPN connectivity
+
+### Task-ID links open the wrong TaskList server
+
+Change `TASKLIST_ORIGIN` near the top of `wwwroot/app.js` to your TaskList base URL.
+
+### Statistics differ from what you expected
+
+Check whether:
+
+- the correct list scope is selected
+- the data is date-only rather than a confirmed timestamp
+- a task has a stale historical completion/cancellation timestamp but a different current status
+- you are looking at the approximate backlog rather than a current count
+
+### The installed PWA looks stale after an update
+
+Reload while connected to the server. The service worker is network-first and versioned releases use a new cache name, but a browser that has been offline may temporarily continue displaying its previously cached shell until it reconnects.
+
+## Current release: v1.0.5
+
+Recent v1.x changes:
+
+### v1.0.5
+
+- optimized Trees & Titles hierarchy calculations using prebuilt lookup indexes
+- preserved all existing hierarchy/title statistics while avoiding repeated whole-scope rescans
+
+### v1.0.4
+
+- changed monthly Trends labels to full four-digit years
+- added list-context guidance to Task-Title Types
+
+### v1.0.3
+
+- fixed approximate backlog reconstruction using stored raw state-transition timestamps
+- avoided double-subtracting Done ↔ Cancelled status changes
+- handled reopen transitions more carefully
+
+### v1.0.2
+
+- made current terminal status authoritative for completion/cancellation analytics
+- prevented stale completion/cancellation timestamps from inflating statistics
+
+### v1.0.1
+
+- reorganized Overview records into Creation Records, Completion Records, and Timeline groups
+- renamed creation records for clearer wording
+
+### v1.0
+
+- added completion records for day/week/month
+- added longest completion streak
+- added biggest creation and completion hour
+- promoted the project to the 1.0 release line
+
+Earlier 0.x releases built the core charts, heatmaps, Fun analyses, deep linking, multi-list filtering, mobile layout, custom Windows-style controls, high-DPI chart fixes, date-only timestamp handling, and performance improvements. The Git commit history contains the detailed release-by-release change notes.
 
 ## Development philosophy
 
-The same philosophy as TaskList:
+TaskList Stats follows the same general philosophy as TaskList:
 
-- boring technology
+- boring, understandable technology
 - small source tree
-- no frameworks where plain browser APIs work
-- no chart dependency for simple graphs
+- no framework where browser APIs are enough
+- no chart dependency for straightforward graphs
 - database remains authoritative
-- statistics app cannot mutate the task database
-
-## Version
-
-TaskList Stats v0.17
+- Stats cannot mutate TaskList data
+- preserve date precision instead of inventing information
+- make approximate historical reconstructions clearly labeled
