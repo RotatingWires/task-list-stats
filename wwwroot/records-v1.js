@@ -1,9 +1,9 @@
 'use strict';
 
-// TaskList Stats v1.0.2 release compatibility layer for Overview records and terminal-status semantics.
+// TaskList Stats v1.0.3 release compatibility layer for Overview records and terminal-status semantics.
 // Loaded after app.js but before DOMContentLoaded startup.
 (() => {
-  const RELEASE = '1.0.2';
+  const RELEASE = '1.0.3';
   const baseRenderOverview = renderOverview;
   const baseNormalizeSnapshot = normalizeSnapshot;
 
@@ -20,13 +20,57 @@
   // TaskList preserves old completed_at/cancelled_at values when a task later
   // changes status. Stats should treat the current terminal status as authoritative
   // so corrected/reopened tasks do not inflate completion/cancellation metrics.
-  normalizeSnapshot = function normalizeSnapshotV102(raw) {
+  normalizeSnapshot = function normalizeSnapshotV103(raw) {
     const normalized = baseNormalizeSnapshot(raw);
     for (const item of normalized.items) {
       if (item.status !== 'Done') item.completedDate = null;
       if (item.status !== 'Cancelled') item.cancelledDate = null;
     }
     return normalized;
+  };
+
+  // Backlog is a historical state reconstruction rather than a current-status
+  // statistic. Rebuild each task's stored transitions from the raw timestamps so
+  // Reopen adds a task back only after a terminal state, while Done -> Cancelled
+  // (or Cancelled -> Done) remains closed instead of subtracting twice.
+  approximateBacklog = function approximateBacklogV103(items) {
+    const deltas = new Map();
+    for (const item of items) {
+      const events = [];
+      if (item.createdDate) events.push({ date: item.createdDate, state: 'open', priority: 0 });
+
+      const completed = parseDate(item.completedAt);
+      const cancelled = parseDate(item.cancelledAt);
+      const reopened = parseDate(item.reopenedAt);
+      if (completed) events.push({ date: completed, state: 'closed', priority: 1 });
+      if (cancelled) events.push({ date: cancelled, state: 'closed', priority: 1 });
+      if (reopened) events.push({ date: reopened, state: 'open', priority: 2 });
+
+      events.sort((a, b) => a.date - b.date || a.priority - b.priority);
+      let state = null;
+      for (const event of events) {
+        if (event.state === state) continue;
+        increment(deltas, monthKey(event.date), event.state === 'open' ? 1 : -1);
+        state = event.state;
+      }
+    }
+
+    const keys = [...deltas.keys()].sort();
+    if (!keys.length) return { labels: [], values: [] };
+    const [sy, sm] = keys[0].split('-').map(Number);
+    const [ey, em] = keys.at(-1).split('-').map(Number);
+    const labels = [], values = [];
+    let running = 0;
+    const cursor = new Date(sy, sm - 1, 1);
+    const end = new Date(ey, em - 1, 1);
+    while (cursor <= end) {
+      const key = monthKey(cursor);
+      running += deltas.get(key) || 0;
+      labels.push(`${MONTHS[cursor.getMonth()]} ${String(cursor.getFullYear()).slice(-2)}`);
+      values.push(Math.max(0, running));
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    return { labels, values };
   };
 
   function busiestCompletionPeriod(items, keyFn) {
@@ -174,7 +218,7 @@
     container.replaceChildren(columns, makeRecordGroup('Timeline', timelineRows));
   }
 
-  renderOverview = function renderOverviewV102() {
+  renderOverview = function renderOverviewV103() {
     baseRenderOverview();
     renderRecordLists(scopedItems());
   };
