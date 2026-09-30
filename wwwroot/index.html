@@ -7,6 +7,7 @@
   <title>TaskList Stats</title>
   <link rel="icon" href="/icons/stats.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="calendar-details.css">
   <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
@@ -48,7 +49,8 @@
 
     <footer class="statusbar"><span id="statusLeft">TaskList Stats</span><span id="statusRight">Read-only database access</span></footer>
   </main>
+  <dialog id="calendarDayDialog" class="retro-dialog calendar-detail-dialog"><form method="dialog" class="dialog-window"><div class="dialog-title" id="calendarDayTitle">Calendar Day</div><div class="dialog-body calendar-day-detail-body" id="calendarDayBody"></div><div class="dialog-buttons"><button type="submit">OK</button></div></form></dialog>
   <dialog id="aboutDialog" class="retro-dialog"><form method="dialog" class="dialog-window"><div class="dialog-title">About TaskList Stats</div><div class="dialog-body"><strong>TaskList Stats</strong><p>Read-only statistics and history explorer for TaskList.</p><p>No chart libraries. No ORM. No database writes.</p><p class="small-note">Historical status transitions are limited by the timestamps TaskList stores. Backlog history involving repeated reopen cycles is therefore approximate.</p></div><div class="dialog-buttons"><button type="submit">OK</button></div></form></dialog>
-  <script src="charts.js"></script><script src="fun.js"></script><script src="app.js"></script><script src="overview.js"></script><script src="history.js"></script><script src="patterns.js"></script><script src="ui.js"></script>
+  <script src="charts.js"></script><script src="fun.js"></script><script src="app.js"></script><script src="overview.js"></script><script src="history.js"></script><script src="calendar-details.js"></script><script src="patterns.js"></script><script src="ui.js"></script>
 </body>
 </html>

@@ -13,6 +13,20 @@ const oneDecimal = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const STATISTIC_TOOLTIPS = new Map([
+  ['Universal ID', 'The permanent global ID assigned across every TaskList list. Universal IDs are never reused, even after deletion.'],
+  ['Type', 'Whether this item is a top-level root task or a subtask nested under another item.'],
+  ['Nesting depth', 'How many levels below a root task this item sits. Root tasks are depth 0, their direct subtasks are depth 1, and so on.'],
+  ['Parent', 'The immediate task that directly contains this subtask. Root tasks do not have a parent.'],
+  ['Direct children', 'The number of immediate subtasks directly under this item. Deeper nested subtasks are not included.'],
+  ['Descendants', 'The total number of subtasks nested anywhere below this item, across every deeper level.'],
+  ['Siblings', 'Other items with the same immediate parent. For a root task, this means the other root tasks in the same list.'],
+  ['Root tree size', "The total size of this item's top-level task tree: the root task plus every descendant beneath that root."],
+  ['Current age', 'For an Open item, the elapsed time since it was created. Closed items show a dash.'],
+  ['Terminal time', 'For a currently Done or Cancelled item, the elapsed time from creation to its current terminal event. This requires confirmed clock times; date-only imports show a dash.']
+]);
+
 const STOPWORDS = new Set([
   'the','a','an','and','or','to','of','for','in','on','at','with','from','by','is','it','this','that','these','those',
   'my','your','our','their','be','do','does','did','done','task','tasks','homework','assignment','assignments','class',
@@ -143,7 +157,6 @@ function listName(id) {
   return state.snapshot?.lists.find(x => x.id === id)?.name ?? `List ${id}`;
 }
 
-
 const TASKLIST_ORIGIN = 'http://tasklist.lehighradio.com:8711';
 function taskUrl(item) {
   return `${TASKLIST_ORIGIN}/task/${encodeURIComponent(item.universalId)}`;
@@ -260,7 +273,17 @@ function setTable(table, headers, rows, numericColumns = []) {
             linked = true;
           }
         }
-        if (!linked) td.textContent = value == null ? '—' : String(value);
+        if (!linked) {
+          td.textContent = value == null ? '—' : String(value);
+          if (headers[i] === 'Statistic') {
+            const tooltip = STATISTIC_TOOLTIPS.get(String(value));
+            if (tooltip) {
+              td.classList.add('has-tooltip');
+              td.title = tooltip;
+              td.tabIndex = 0;
+            }
+          }
+        }
       }
       tr.append(td);
     });
@@ -276,4 +299,3 @@ function setTable(table, headers, rows, numericColumns = []) {
   }
   table.append(thead, tbody);
 }
-
