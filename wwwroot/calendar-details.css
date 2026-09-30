@@ -1,0 +1,61 @@
+/* Calendar day drill-down. */
+.calendar-day:not(.empty) {
+  cursor: pointer;
+}
+
+.calendar-day:not(.empty):hover,
+.calendar-day:not(.empty):focus-within {
+  outline: 2px dotted #000080;
+  outline-offset: -3px;
+}
+
+.calendar-detail-dialog {
+  width: min(780px, calc(100vw - 24px));
+  max-width: min(780px, calc(100vw - 24px));
+}
+
+.calendar-detail-dialog .dialog-window {
+  max-height: calc(100dvh - 24px);
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-day-detail-body {
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+}
+
+.calendar-detail-scope {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.calendar-detail-group {
+  margin: 0;
+}
+
+.calendar-detail-empty {
+  padding: 10px;
+  background: #fff;
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  color: #555;
+}
+
+.calendar-detail-dialog table {
+  min-width: 520px;
+}
+
+@media (max-width: 780px) {
+  .calendar-detail-dialog {
+    width: calc(100vw - 16px);
+    max-width: calc(100vw - 16px);
+  }
+  .calendar-detail-dialog .dialog-window {
+    max-height: calc(100dvh - 16px);
+  }
+}

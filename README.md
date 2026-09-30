@@ -3,7 +3,7 @@
 
 # TaskList Stats
 
-**TaskList Stats v1.0.9** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
+**TaskList Stats v1.0.10** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
 
 TaskList stays focused on creating and managing tasks. TaskList Stats reads the same SQLite database and provides charts, records, calendars, hierarchy analysis, pattern analysis, and experimental/fun views without adding that weight to the main TaskList app.
 
@@ -25,6 +25,7 @@ It can answer questions such as:
 - How deep are task trees and which roots have the largest subtrees?
 - What title categories and common words appear most often?
 - Which tasks were unusually fast, slow, old, reopened, or otherwise interesting?
+- Which exact tasks were created, completed, or cancelled on a calendar day?
 
 ## Read-only TaskList database access
 
@@ -49,66 +50,18 @@ That file stores the Stats password hash. It is not part of the TaskList databas
 
 TaskList Stats uses the same basic authentication design as TaskList.
 
-### First-run setup
+On first run, if `data/auth.json` does not exist, the server prints a setup token. Open Stats, enter that token, choose a password of at least 8 characters, and confirm it.
 
-If `data/auth.json` does not exist when Stats starts, the server prints a setup token:
+The plaintext password is never stored. `data/auth.json` contains a random salt and PBKDF2-HMAC-SHA256 derived hash using 210,000 iterations.
 
-```text
-============================================================
-TASKLIST STATS FIRST-RUN SETUP TOKEN
+Successful login creates the `TaskListStats.Auth` cookie. It is HttpOnly, SameSite=Strict, persistent for up to 30 days, sliding while active, and marked Secure when the request itself uses HTTPS.
 
-  1234-ABCD-5678-EF90
-
-Enter this token on the Create Password screen.
-It changes each time TaskList Stats restarts until setup is complete.
-============================================================
-```
-
-Open TaskList Stats and enter:
-
-1. the setup token from the server console
-2. a password of at least 8 characters
-3. the same password again for confirmation
-
-After setup, Stats creates `data/auth.json`, signs the browser in, and no longer creates setup tokens on later starts.
-
-### Password storage
-
-Plaintext passwords are never stored. `data/auth.json` contains a format version, iteration count, random salt, and derived password hash.
-
-The current implementation uses:
-
-- PBKDF2-HMAC-SHA256
-- 210,000 iterations
-- 16-byte random salt
-- 32-byte derived hash
-- constant-time comparison during login
-
-### Login session
-
-Successful login creates the cookie:
-
-```text
-TaskListStats.Auth
-```
-
-The cookie is:
-
-- `HttpOnly`
-- `SameSite=Strict`
-- `Secure` when the request uses HTTPS
-- persistent for up to 30 days
-- sliding, so active sessions renew
-
-Use **File → Log Out** to clear the Stats session.
-
-Setup and login are rate-limited to 5 attempts per source IP per minute.
+Use **File → Log Out** to clear the session. Setup and login are rate-limited to 5 attempts per source IP per minute.
 
 ## Technology stack
 
 - C# / ASP.NET Core Minimal API
 - .NET 10
-- ASP.NET Core cookie authentication and rate limiting
 - Kestrel
 - Microsoft.Data.Sqlite
 - Plain HTML, CSS, and JavaScript
@@ -121,7 +74,7 @@ Setup and login are rate-limited to 5 attempts per source IP per minute.
 
 ## Project layout
 
-The project intentionally keeps a small source tree instead of accumulating release-specific patch files.
+The project intentionally keeps a small source tree and avoids release-specific compatibility/override files.
 
 ```text
 TaskListStats.csproj      .NET project, dependency, and authoritative release version
@@ -133,14 +86,16 @@ data/                     runtime-created private Stats data (ignored by Git)
   auth.json               salted password hash after first-run setup
 
 wwwroot/
-  index.html              main application shell and statistics panels
-  app.js                  shared state, date/data helpers, and table/card helpers
+  index.html              main application shell and statistics panels/dialogs
+  app.js                  shared state, date/data helpers, table/card helpers
   overview.js             Overview records, completion behavior, and aging stats
   history.js              Trends, backlog reconstruction, Calendar, and Lists
+  calendar-details.js     Calendar day drill-down dialog and task/event lists
+  calendar-details.css    Calendar drill-down interaction/dialog styling
   patterns.js             Patterns plus Trees & Titles analysis
   ui.js                   navigation, filtering, session handling, and startup
   charts.js               shared Canvas chart drawing and interactions
-  fun.js                  Fun-tab analyses
+  fun.js                  Fun-tab analyses such as Task Roulette
   style.css               main Windows 95-style UI and responsive layout
   login.html              login / first-run setup page
   login.js                login, setup-token, and return-URL behavior
@@ -150,31 +105,26 @@ wwwroot/
   icons/stats.svg         app/favicon icon
 ```
 
-Starting with **v1.0.9**, the old `records-v1.js` compatibility/override layer is gone. Its behavior was consolidated into the normal application files instead of continuing a version-patch chain.
+There are no release-specific JavaScript monkey-patch files. New behavior belongs in the normal source module that owns it.
 
 ## Version handling
 
 `TaskListStats.csproj` is the authoritative application version.
 
-At runtime the server reads its own assembly version and returns it through the auth-status and snapshot APIs. The login page and main UI use that returned version for their visible labels. This avoids maintaining a second stale JavaScript release constant.
+At runtime the server reads its assembly version and returns it through the auth-status and snapshot APIs. Login and the main UI use that returned version, so release labels do not drift independently.
 
-The service worker uses a stable shell-cache name and network-first requests for current static assets, so releases no longer require another duplicated version string just to rename the cache.
+The service worker uses a stable network-first shell cache instead of embedding the release number in the cache name.
 
-## Requirements
+## Requirements and running
 
-For the server:
+Server requirements:
 
 - .NET 10 SDK/runtime
 - a TaskList `task-list.db` SQLite database
 - read permission to the TaskList database and its parent path
-- write permission to the TaskList Stats working directory for `data/auth.json`
+- write permission to the Stats working directory for `data/auth.json`
 
-For the client:
-
-- a modern desktop or mobile browser
-- JavaScript enabled
-
-## First-time installation
+Run:
 
 ```bash
 git clone https://github.com/RotatingWires/task-list-stats.git
@@ -183,11 +133,7 @@ dotnet restore
 dotnet run
 ```
 
-On first run, copy the setup token printed in the server console, open the Stats URL, and create your password.
-
-## Configuration
-
-A typical `appsettings.json` looks like:
+A typical `appsettings.json` is:
 
 ```json
 {
@@ -198,29 +144,22 @@ A typical `appsettings.json` looks like:
 }
 ```
 
-Environment variables override the JSON configuration:
+Environment variables can override it:
 
 ```bash
 export TASKLIST_DB_PATH=/srv/task-list/data/task-list.db
 export TASKLIST_STATS_URL=http://0.0.0.0:8712
 ```
 
-| Variable | Purpose |
-| --- | --- |
-| `TASKLIST_DB_PATH` | Full or relative path to TaskList's SQLite database |
-| `TASKLIST_STATS_URL` | Kestrel listen URL, for example `http://0.0.0.0:8712` |
-
-If no usable database path is configured, the server checks several common relative TaskList locations before returning an error.
-
 ## TaskList deep links
 
-Task IDs displayed by Stats can open the matching TaskList task using:
+Task IDs shown in Stats link back to the main TaskList app using the task's Universal ID:
 
 ```text
 /task/<UniversalID>
 ```
 
-TaskList then opens the correct list, switches to **All**, scrolls to the task, and highlights it.
+TaskList opens the correct list, switches to **All**, scrolls to the task, and highlights it.
 
 The TaskList origin is defined near the top of `wwwroot/app.js`:
 
@@ -228,69 +167,15 @@ The TaskList origin is defined near the top of `wwwroot/app.js`:
 const TASKLIST_ORIGIN = 'http://tasklist.lehighradio.com:8711';
 ```
 
-Change that value if your TaskList instance uses a different host, port, or protocol.
-
-## API endpoints
-
-### `GET /api/auth/status`
-
-Available before login. Returns:
-
-- runtime application version
-- whether a password has been configured
-- whether the current request is authenticated
-
-### `POST /api/auth/setup`
-
-First-run only. Accepts the setup token, password, and confirmation. A successful request writes `data/auth.json` and signs the browser in.
-
-### `POST /api/auth/login`
-
-Accepts a password and creates the Stats authentication cookie on success.
-
-### `POST /api/auth/logout`
-
-Requires authentication and clears the authentication cookie.
-
-### `GET /api/health`
-
-Requires authentication. Reports the runtime version and whether the configured TaskList database exists.
-
-### `GET /api/snapshot`
-
-Requires authentication. Opens TaskList read-only and returns the data used by the browser, including:
-
-- lists
-- tasks/subtasks
-- Universal IDs
-- titles and descriptions
-- current status
-- creation/update/completion/cancellation/reopen timestamps
-- database last-write time
-- snapshot generation time
-
-Unauthenticated data API requests return HTTP `401` rather than an HTML login page.
+Change it if your TaskList instance uses another host, port, or protocol.
 
 ## Statistics sections
 
 ### Overview
 
-Overview contains current counts, creation/completion records, completion behavior, open-task aging, completion-time buckets, and oldest open tasks.
+Overview contains current counts, Creation Records, Completion Records, timeline records, completion behavior, open-task aging, completion-time buckets, and oldest open tasks.
 
-Creation Records include:
-
-- most creations in one month/week/day
-- biggest creation hour
-- longest creation streak
-- longest quiet streak
-
-Completion Records include:
-
-- most completions in one month/week/day
-- biggest completion hour
-- longest completion streak
-
-On narrow mobile screens, record labels and values use balanced columns; on very narrow screens they stack vertically.
+Creation Records include most creations in a month/week/day, biggest creation hour, longest creation streak, and longest quiet streak. Completion Records include the matching completion records and longest completion streak.
 
 ### Trends
 
@@ -300,11 +185,19 @@ Monthly labels use full years such as `Sep 2026`.
 
 ### Calendar
 
-Calendar contains year activity heatmaps, Created/Completed/Cancelled/All-activity modes, a month calendar, Month × Year creation heatmap, and seasonality chart.
+Calendar includes:
+
+- year activity heatmap with Created/Completed/Cancelled/All-activity modes
+- month calendar
+- Month × Year creation heatmap
+- seasonality chart
+- clickable month-calendar days that open a dialog showing the exact tasks created, completed, and cancelled on that day
+
+The day-details dialog uses the same current list scope as the Calendar itself. Its counts therefore match the day cell.
 
 ### Lists
 
-Lists compares the currently selected lists using current counts, completion percentage, completion duration, share of current entries, and most-active-list-by-month history.
+Lists compares the selected lists using current counts, completion percentage, completion duration, share of current entries, and most-active-list-by-month history.
 
 ### Patterns
 
@@ -322,7 +215,9 @@ Hierarchy counts are built from lookup indexes rather than repeatedly rescanning
 
 ### Fun
 
-The Fun area uses the same read-only snapshot for exploratory history/record tools. These analyses never mutate TaskList data.
+The Fun area uses the same read-only snapshot for exploratory history/record tools. Task Roulette includes hierarchy and timing details for a randomly selected task.
+
+The non-obvious Roulette statistics have explanatory hover/tap tooltips, including Universal ID, Type, Nesting depth, Parent, Direct children, Descendants, Siblings, Root tree size, Current age, and Terminal time.
 
 ## List filtering
 
@@ -355,9 +250,11 @@ For normal completion/cancellation analytics, **current status is authoritative*
 
 This prevents something accidentally marked Done and then changed to Cancelled from still inflating completion statistics.
 
+The Calendar day dialog uses these same normalized dates, so its task lists match the counts displayed in the Calendar cells.
+
 ## Why backlog history is approximate
 
-Backlog is different from ordinary completion statistics because it is trying to reconstruct historical state.
+Backlog is different from ordinary completion statistics because it reconstructs historical state.
 
 Stats uses the stored raw creation/completion/cancellation/reopen timestamps to build state transitions in timestamp order:
 
@@ -366,7 +263,7 @@ Stats uses the stored raw creation/completion/cancellation/reopen timestamps to 
 - switching Done ↔ Cancelled remains closed and does not subtract twice
 - Reopen adds it back after a closed state
 
-TaskList does not keep a complete append-only status-event log, so repeated older reopen cycles cannot always be reconstructed exactly. That is why the graph is named **Approximate Backlog Over Time**.
+TaskList does not keep a complete append-only status-event log, so repeated older reopen cycles cannot always be reconstructed exactly.
 
 ## Exporting a snapshot
 
@@ -376,36 +273,9 @@ Treat exports as private because they can contain task titles, descriptions, lis
 
 ## PWA behavior
 
-The service worker:
-
-- caches the application shell and login/setup assets
-- uses network-first behavior for current static assets
-- always fetches `/api/*` from the network
-- removes older differently named shell caches during activation
+The service worker caches the application shell and login/setup assets, uses network-first behavior for current same-origin static assets, always fetches `/api/*` from the network, and uses cached files only as an offline fallback.
 
 The shell cache does not contain the live TaskList snapshot. Live task data still requires an authenticated request to the Stats server.
-
-## Optional Linux systemd service
-
-```ini
-[Unit]
-Description=TaskList Stats
-After=network.target
-
-[Service]
-Type=simple
-User=taskliststats
-WorkingDirectory=/opt/task-list-stats
-Environment=TASKLIST_DB_PATH=/srv/task-list/data/task-list.db
-Environment=TASKLIST_STATS_URL=http://0.0.0.0:8712
-ExecStart=/usr/bin/dotnet run --configuration Release
-Restart=on-failure
-
-[Install]
-WantedBy=multi-user.target
-```
-
-The service account needs read access to TaskList's database and write access to the Stats working directory for `data/auth.json`.
 
 ## Security and privacy
 
@@ -429,15 +299,11 @@ Important distinctions:
 
 ### I only see Create Password
 
-That is expected on first run. Look at the TaskList Stats server console for the current setup token. Restarting Stats before setup finishes invalidates the previous token and prints a new one.
+That is expected on first run. Look at the TaskList Stats server console for the current setup token.
 
 ### Login says "Too many attempts"
 
 Setup/login allows 5 attempts per source IP per minute. Wait for the minute window to expire before retrying.
-
-### `/api/health` or `/api/snapshot` returns 401
-
-Log in through `/login.html` first. Data-bearing API endpoints require an authenticated Stats session.
 
 ### `TaskList database not found`
 
@@ -445,11 +311,7 @@ Check `TaskListStats:DatabasePath` or `TASKLIST_DB_PATH` and verify filesystem r
 
 ### The page shows `Database unavailable`
 
-An expired session should send you back to Login. Otherwise inspect `/api/health` and `/api/snapshot` after logging in; a 503 response normally includes the database/path error.
-
-### Another computer cannot open Stats
-
-Check the listen URL, host firewall, Kestrel bind address, routing/VPN connectivity, and reverse-proxy/HTTPS configuration.
+An expired session should send you back to Login. Otherwise inspect `/api/health` and `/api/snapshot` after logging in.
 
 ### Task-ID links open the wrong TaskList server
 
@@ -457,37 +319,35 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 ### Statistics differ from what you expected
 
-Check:
+Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from approximate backlog reconstruction.
 
-- selected list scope
-- task vs subtask expectations
-- date-only vs full timestamp history
-- current status vs preserved old terminal timestamps
-- whether the value comes from approximate backlog reconstruction
+## Current release: v1.0.10
 
-### The installed PWA looks stale after an update
+### v1.0.10
 
-Reload while connected to the server. Static files are network-first, so successful network responses refresh the stable shell cache.
-
-## Current release: v1.0.9
+- Added explanatory hover/tap tooltips to the non-obvious Task Roulette hierarchy/time statistics while leaving obvious date/status/description fields uncluttered.
+- Reused the existing Stats touch-help system for Roulette tooltips instead of adding a separate interaction model.
+- Added clickable Calendar month-day drill-down that opens a Windows-style dialog for the selected date.
+- Show Created, Completed, and Cancelled groups with counts plus List, clickable Task ID, title, and current status for every matching task.
+- Keep Calendar drill-down aligned with the active multi-list scope and the existing current-status completion/cancellation semantics.
+- Added dedicated `calendar-details.js` and `calendar-details.css` purpose-based files; no release-specific override or monkey-patch layer was introduced.
+- Added the Calendar drill-down assets to the stable network-first PWA shell cache.
+- Bumped TaskList Stats project/assembly metadata to v1.0.10.
 
 ### v1.0.9
 
 - removed the release-specific `records-v1.js` compatibility/override layer
-- split the browser application into purpose-based `app.js`, `overview.js`, `history.js`, `patterns.js`, and `ui.js` modules instead of one large file plus a release shim
-- moved Overview records, current-status normalization, historical backlog reconstruction, and optimized Trees & Titles logic into their normal purpose-based modules
-- made **File → Log Out** and the Task-Title Types context note normal static UI instead of runtime-injected markup
-- moved File-menu and mobile-record fixes into `style.css` instead of injecting `<style>` elements from JavaScript
-- removed the stale `const VERSION = '0.24.1'` frontend version
-- made the .NET assembly/project version the runtime source used by the login and main UI labels
-- changed the service worker to a stable network-first shell cache so releases no longer duplicate a version in the cache name
-- removed `records-v1.js` from the page and PWA shell cache
-- preserved v1.0.8 behavior and statistics while reducing patch-layer technical debt
+- split the browser application into purpose-based `app.js`, `overview.js`, `history.js`, `patterns.js`, and `ui.js` modules
+- moved Overview records, current-status normalization, historical backlog reconstruction, and optimized Trees & Titles logic into their normal modules
+- made File → Log Out and the Task-Title Types context note normal static UI
+- moved File-menu and mobile-record fixes into `style.css`
+- removed the stale frontend version constant and made the .NET assembly/project version the runtime source for login/main labels
+- changed the service worker to a stable network-first shell cache
 
 ### v1.0.8
 
 - removed the extra mobile top gap above the main and login title bars
-- restored the centered mobile **Log In / Create Password** title
+- restored the centered mobile Log In / Create Password title
 - fixed cramped Overview record text on mobile
 
 ### v1.0.7
@@ -533,6 +393,7 @@ Earlier 0.x releases built the core charts, heatmaps, Fun analyses, deep linking
 
 - keep the source tree small
 - prefer normal source edits over version-specific patch files
+- do not monkey-patch or reassign existing functions to bolt on release behavior
 - keep the TaskList database authoritative and read-only from Stats
 - preserve timestamp precision instead of inventing data
 - label approximate historical reconstructions clearly
