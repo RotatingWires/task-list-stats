@@ -1,9 +1,9 @@
 'use strict';
 
-// TaskList Stats v1.0.6 release compatibility layer for Overview records, terminal-status semantics, backlog reconstruction, clearer contextual labeling, faster tree analysis, and TaskList-style authentication.
+// TaskList Stats v1.0.7 release compatibility layer for Overview records, terminal-status semantics, backlog reconstruction, clearer contextual labeling, faster tree analysis, TaskList-style authentication, and File-menu presentation fixes.
 // Loaded after app.js but before DOMContentLoaded startup.
 (() => {
-  const RELEASE = '1.0.6';
+  const RELEASE = '1.0.7';
   const baseRenderOverview = renderOverview;
   const baseNormalizeSnapshot = normalizeSnapshot;
   const baseGroupLabel = groupLabel;
@@ -29,6 +29,14 @@
     note.tabIndex = 0;
     note.textContent = 'Make sure to select the correct list for the context of these stats.';
     frame.before(note);
+  }
+
+  function applyFileMenuFullWidthHighlight() {
+    if (document.querySelector('#fileMenuFullWidthHighlight')) return;
+    const style = document.createElement('style');
+    style.id = 'fileMenuFullWidthHighlight';
+    style.textContent = '#fileMenu button { width: 100%; }';
+    document.head.append(style);
   }
 
   function loginUrl() {
@@ -412,4 +420,5 @@
   applyReleaseLabel();
   applyTaskTypeScopeNote();
   addLogoutCommand();
+  applyFileMenuFullWidthHighlight();
 })();
