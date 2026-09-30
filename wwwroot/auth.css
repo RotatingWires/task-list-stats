@@ -94,6 +94,18 @@ body.login-page {
     box-shadow: 1px 1px 0 var(--shadow);
   }
 
+  /* The shared mobile app chrome adds top spacing and hides the centered title.
+     The login window is a floating dialog, so keep its titlebar flush and complete. */
+  .login-page .titlebar {
+    margin: 0;
+    grid-template-columns: 1fr minmax(0, auto) 1fr;
+  }
+
+  .login-page .title-center {
+    display: block;
+    max-width: 42vw;
+  }
+
   .login-page .login-form {
     height: auto;
     min-height: 0;

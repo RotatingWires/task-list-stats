@@ -1,4 +1,4 @@
-const RELEASE = '1.0.7';
+const RELEASE = '1.0.8';
 const authForm = document.querySelector('#authForm');
 const password = document.querySelector('#password');
 const setupTokenGroup = document.querySelector('#setupTokenGroup');

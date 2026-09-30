@@ -1,4 +1,4 @@
-const CACHE = 'task-list-stats-v1-0-7';
+const CACHE = 'task-list-stats-v1-0-8';
 const STATIC = ['/', '/index.html', '/login.html', '/login.js', '/auth.css', '/style.css', '/app.js', '/charts.js', '/fun.js', '/records-v1.js', '/manifest.webmanifest', '/icons/stats.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC)));
