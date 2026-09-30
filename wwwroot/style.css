@@ -12,7 +12,6 @@
   --green: #008000;
   --red: #800000;
   --teal: #008080;
-  --ios-top-offset: 15px;
   --ios-bottom-offset: 5px;
 }
 
@@ -134,6 +133,12 @@ button { cursor: pointer; }
   line-height: 1;
 }
 .menu-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-separator {
+  height: 0;
+  margin: 3px 2px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #fff;
+}
 
 .toolbar {
   padding: 6px 7px;
@@ -479,7 +484,7 @@ tr:last-child td { border-bottom: 0; }
 
 @media (max-width: 780px) {
   body { padding: 0; }
-  .titlebar { margin: var(--ios-top-offset) 0 0; grid-template-columns: 1fr auto; }
+  .titlebar { margin: 0; grid-template-columns: 1fr auto; }
   .title-center { display: none; }
   .title-buttons { font-size: 11px; }
   .toolbar { flex-wrap: wrap; }
@@ -680,8 +685,30 @@ html,body{height:100%;min-height:0}
 .tap-help-tooltip,.chart-tap-tooltip{position:fixed;z-index:1000;max-width:min(360px,calc(100vw - 20px));padding:7px 9px;border-top:2px solid #fff;border-left:2px solid #fff;border-right:2px solid #404040;border-bottom:2px solid #404040;box-shadow:1px 1px 0 #000;font:13px Tahoma,"MS Sans Serif",Arial,sans-serif;line-height:1.4;white-space:pre-line;pointer-events:none}.tap-help-tooltip{background:#ffffe1;color:#000}.chart-tap-tooltip{background:#111;color:#fff;border-top-color:#555;border-left-color:#555;border-right-color:#000;border-bottom-color:#000}.has-tooltip{touch-action:manipulation}
 
 
-/* v0.15 menu/link fixes */
+/* Content-sized menus with full-row command highlighting. */
 #fileMenu{width:max-content;min-width:0;max-width:calc(100vw - 20px)}
-#fileMenu button{grid-template-columns:18px max-content;width:auto;min-width:0}
+#fileMenu button{grid-template-columns:18px 1fr;width:100%;min-width:0}
 #fileMenu .menu-label{overflow:visible;text-overflow:clip;white-space:nowrap}
 .task-id-link{pointer-events:auto;touch-action:manipulation;cursor:pointer}
+
+/* Overview record layout on narrow screens. */
+@media (max-width:780px){
+  .records-layout .metric-list{
+    grid-template-columns:minmax(130px,.9fr) minmax(0,1.1fr);
+    column-gap:10px;
+  }
+  .records-layout .metric-value{
+    min-width:0;
+    overflow-wrap:anywhere;
+  }
+}
+@media (max-width:360px){
+  .records-layout .metric-list{
+    grid-template-columns:1fr;
+    row-gap:2px;
+  }
+  .records-layout .metric-value{
+    text-align:left;
+    margin-bottom:8px;
+  }
+}

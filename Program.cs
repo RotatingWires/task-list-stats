@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Data.Sqlite;
 using System.Globalization;
+using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -61,6 +62,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
 
 var dataDir = Path.Combine(app.Environment.ContentRootPath, "data");
 Directory.CreateDirectory(dataDir);
@@ -111,6 +113,7 @@ app.UseStaticFiles();
 
 app.MapGet("/api/auth/status", (HttpContext context) => Results.Ok(new
 {
+    version = appVersion,
     configured = PasswordConfigured(authPath),
     authenticated = context.User.Identity?.IsAuthenticated == true
 }));
@@ -161,7 +164,7 @@ api.MapGet("/health", () =>
     return Results.Ok(new
     {
         ok = File.Exists(path),
-        version = "1.0.8",
+        version = appVersion,
         databaseFound = File.Exists(path),
         databaseFile = Path.GetFileName(path)
     });
@@ -213,7 +216,7 @@ api.MapGet("/snapshot", async () =>
         }
 
         var fileInfo = new FileInfo(dbPath);
-        return Results.Ok(new StatsSnapshot("1.0.8", DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items));
+        return Results.Ok(new StatsSnapshot(appVersion, DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items));
     }
     catch (SqliteException ex)
     {
