@@ -1,5 +1,13 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Data.Sqlite;
 using System.Globalization;
+using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,23 +16,158 @@ var configuredUrl = Environment.GetEnvironmentVariable("TASKLIST_STATS_URL")
     ?? "http://0.0.0.0:8712";
 builder.WebHost.UseUrls(configuredUrl);
 
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "TaskListStats.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.SlidingExpiration = true;
+        options.LoginPath = "/login.html";
+        options.Events.OnRedirectToLogin = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            else
+                context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api"))
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            else
+                context.Response.Redirect(context.RedirectUri);
+            return Task.CompletedTask;
+        };
+    });
+builder.Services.AddAuthorization();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("auth", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+});
+
 var app = builder.Build();
+
+var dataDir = Path.Combine(app.Environment.ContentRootPath, "data");
+Directory.CreateDirectory(dataDir);
+var authPath = Path.Combine(dataDir, "auth.json");
+
+string? setupToken = PasswordConfigured(authPath) ? null : GenerateSetupToken();
+if (setupToken is not null)
+{
+    Console.WriteLine();
+    Console.WriteLine("============================================================");
+    Console.WriteLine("TASKLIST STATS FIRST-RUN SETUP TOKEN");
+    Console.WriteLine();
+    Console.WriteLine($"  {setupToken}");
+    Console.WriteLine();
+    Console.WriteLine("Enter this token on the Create Password screen.");
+    Console.WriteLine("It changes each time TaskList Stats restarts until setup is complete.");
+    Console.WriteLine("============================================================");
+    Console.WriteLine();
+}
+
+app.UseRouting();
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path;
+    var authenticated = context.User.Identity?.IsAuthenticated == true;
+
+    if ((path == "/" || path == "/index.html") && !authenticated)
+    {
+        context.Response.Redirect("/login.html");
+        return;
+    }
+
+    if (path == "/login.html" && authenticated)
+    {
+        context.Response.Redirect("/");
+        return;
+    }
+
+    await next();
+});
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapGet("/api/health", () =>
+app.MapGet("/api/auth/status", (HttpContext context) => Results.Ok(new
+{
+    configured = PasswordConfigured(authPath),
+    authenticated = context.User.Identity?.IsAuthenticated == true
+}));
+
+app.MapPost("/api/auth/setup", async (SetupRequest request, HttpContext context) =>
+{
+    if (PasswordConfigured(authPath))
+        return Results.Conflict(new { error = "A password has already been configured." });
+
+    if (setupToken is null)
+        return Results.Conflict(new { error = "No setup token is active. Restart TaskList Stats to generate a new one." });
+
+    if (!SetupTokenMatches(setupToken, request.SetupToken))
+        return Results.Json(new { error = "Invalid setup token." }, statusCode: StatusCodes.Status401Unauthorized);
+
+    var passwordError = ValidateNewPassword(request.Password, request.ConfirmPassword);
+    if (passwordError is not null)
+        return Results.BadRequest(new { error = passwordError });
+
+    SavePassword(authPath, request.Password!);
+    setupToken = null;
+    await SignInOwner(context);
+    return Results.Ok(new { authenticated = true });
+}).RequireRateLimiting("auth");
+
+app.MapPost("/api/auth/login", async (LoginRequest request, HttpContext context) =>
+{
+    if (!PasswordConfigured(authPath))
+        return Results.Conflict(new { error = "No password has been configured yet." });
+    if (string.IsNullOrEmpty(request.Password) || !VerifyPassword(authPath, request.Password))
+        return Results.Unauthorized();
+
+    await SignInOwner(context);
+    return Results.Ok(new { authenticated = true });
+}).RequireRateLimiting("auth");
+
+app.MapPost("/api/auth/logout", async (HttpContext context) =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.NoContent();
+}).RequireAuthorization();
+
+var api = app.MapGroup("/api").RequireAuthorization();
+
+api.MapGet("/health", () =>
 {
     var path = ResolveDatabasePath(builder.Configuration);
     return Results.Ok(new
     {
         ok = File.Exists(path),
-        version = "1.0.5",
+        version = "1.0.6",
         databaseFound = File.Exists(path),
         databaseFile = Path.GetFileName(path)
     });
 });
 
-app.MapGet("/api/snapshot", async () =>
+api.MapGet("/snapshot", async () =>
 {
     var dbPath = ResolveDatabasePath(builder.Configuration);
     if (!File.Exists(dbPath))
@@ -70,7 +213,7 @@ app.MapGet("/api/snapshot", async () =>
         }
 
         var fileInfo = new FileInfo(dbPath);
-        return Results.Ok(new StatsSnapshot("1.0.5", DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items));
+        return Results.Ok(new StatsSnapshot("1.0.6", DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items));
     }
     catch (SqliteException ex)
     {
@@ -78,7 +221,7 @@ app.MapGet("/api/snapshot", async () =>
     }
 });
 
-app.MapFallbackToFile("index.html");
+app.MapFallbackToFile("index.html").RequireAuthorization();
 app.Run();
 
 static string ResolveDatabasePath(IConfiguration configuration)
@@ -96,6 +239,77 @@ static string ResolveDatabasePath(IConfiguration configuration)
     return Path.GetFullPath(Path.Combine(basePath, configuredPath));
 }
 
+static string GenerateSetupToken()
+{
+    var raw = Convert.ToHexString(RandomNumberGenerator.GetBytes(8));
+    return $"{raw[..4]}-{raw[4..8]}-{raw[8..12]}-{raw[12..16]}";
+}
+
+static bool SetupTokenMatches(string expected, string? supplied)
+{
+    if (string.IsNullOrWhiteSpace(supplied)) return false;
+    var expectedValue = expected.Replace("-", string.Empty, StringComparison.Ordinal);
+    var suppliedValue = Regex.Replace(supplied, @"[\s-]", string.Empty);
+    return string.Equals(expectedValue, suppliedValue, StringComparison.OrdinalIgnoreCase);
+}
+
+static bool PasswordConfigured(string authPath) => File.Exists(authPath);
+
+static string? ValidateNewPassword(string? password, string? confirmation)
+{
+    if (string.IsNullOrEmpty(password) || password.Length < 8)
+        return "Password must be at least 8 characters long.";
+    if (password != confirmation)
+        return "Passwords do not match.";
+    return null;
+}
+
+static void SavePassword(string authPath, string password)
+{
+    const int iterations = 210_000;
+    var salt = RandomNumberGenerator.GetBytes(16);
+    var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, 32);
+    var auth = new PasswordFile(1, iterations, Convert.ToBase64String(salt), Convert.ToBase64String(hash));
+    File.WriteAllText(authPath, JsonSerializer.Serialize(auth));
+}
+
+static bool VerifyPassword(string authPath, string password)
+{
+    try
+    {
+        var auth = JsonSerializer.Deserialize<PasswordFile>(File.ReadAllText(authPath));
+        if (auth is null || auth.Version != 1 || auth.Iterations < 1) return false;
+        var salt = Convert.FromBase64String(auth.Salt);
+        var expected = Convert.FromBase64String(auth.Hash);
+        var actual = Rfc2898DeriveBytes.Pbkdf2(password, salt, auth.Iterations, HashAlgorithmName.SHA256, expected.Length);
+        return CryptographicOperations.FixedTimeEquals(actual, expected);
+    }
+    catch
+    {
+        return false;
+    }
+}
+
+static async Task SignInOwner(HttpContext context)
+{
+    var identity = new ClaimsIdentity(
+        [new Claim(ClaimTypes.NameIdentifier, "owner"), new Claim(ClaimTypes.Name, "Owner")],
+        CookieAuthenticationDefaults.AuthenticationScheme);
+    var principal = new ClaimsPrincipal(identity);
+    await context.SignInAsync(
+        CookieAuthenticationDefaults.AuthenticationScheme,
+        principal,
+        new AuthenticationProperties
+        {
+            IsPersistent = true,
+            AllowRefresh = true,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
+        });
+}
+
+record LoginRequest(string? Password);
+record SetupRequest(string? SetupToken, string? Password, string? ConfirmPassword);
+record PasswordFile(int Version, int Iterations, string Salt, string Hash);
 record ListSnapshot(long Id, string Name, string CreatedAt);
 record ItemSnapshot(long UniversalId, long ListId, string DisplayId, string? ParentDisplayId, string Title, string Description, string Status, string CreatedAt, string? UpdatedAt, string? CompletedAt, string? CancelledAt, string? ReopenedAt);
 record StatsSnapshot(string Version, string GeneratedAtUtc, string DatabaseLastWriteUtc, long HighestUniversalId, List<ListSnapshot> Lists, List<ItemSnapshot> Items);
