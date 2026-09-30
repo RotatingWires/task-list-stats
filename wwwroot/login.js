@@ -1,3 +1,4 @@
+const RELEASE = '1.0.7';
 const authForm = document.querySelector('#authForm');
 const password = document.querySelector('#password');
 const setupTokenGroup = document.querySelector('#setupTokenGroup');
@@ -8,6 +9,8 @@ const loginButton = document.querySelector('#loginButton');
 const loginError = document.querySelector('#loginError');
 const loginWindowTitle = document.querySelector('#loginWindowTitle');
 const loginIntro = document.querySelector('#loginIntro');
+const releaseLabel = document.querySelector('.title-left');
+if (releaseLabel) releaseLabel.textContent = `TaskList Stats v${RELEASE}`;
 
 let setupMode = false;
 
