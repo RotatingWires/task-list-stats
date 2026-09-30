@@ -3,7 +3,7 @@
 
 # TaskList Stats
 
-**TaskList Stats v1.0.6** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
+**TaskList Stats v1.0.8** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
 
 It is intentionally its own application instead of being built into TaskList. TaskList stays focused on managing tasks, while TaskList Stats can spend its UI and code budget on charts, heatmaps, records, historical analysis, hierarchy statistics, and experimental/fun views without bloating the main app.
 
@@ -284,6 +284,8 @@ Creation Records include most creations in one day/week/month, biggest creation 
 
 Completion Records include most completions in one day/week/month, biggest completion hour, and longest completion streak.
 
+On narrow mobile screens, record labels and values use balanced columns instead of allowing long record values to collapse the label column; on very narrow screens they stack vertically.
+
 ### Trends
 
 Trends can group events by **day**, **week**, or **month** and includes Created / Completed / Cancelled trends, Approximate Backlog Over Time, busiest months, completion-speed months, and year-over-year monthly creation comparison.
@@ -432,7 +434,7 @@ Check `TaskListStats:DatabasePath` or `TASKLIST_DB_PATH` and ensure the process 
 
 ### The page shows `Database unavailable`
 
-If the session expired, v1.0.6 should return you to Login automatically. Otherwise, check `/api/health` and `/api/snapshot` after logging in; a 503 response normally includes the database/path error.
+If the session expired, v1.0.6 and later return you to Login automatically. Otherwise, check `/api/health` and `/api/snapshot` after logging in; a 503 response normally includes the database/path error.
 
 ### Another computer cannot open Stats
 
@@ -450,7 +452,21 @@ Check the selected list scope, date-only versus full timestamps, current status 
 
 Reload while connected to the server. The service worker is network-first and each release uses a new cache name.
 
-## Current release: v1.0.6
+## Current release: v1.0.8
+
+### v1.0.8
+
+- removed the extra mobile top gap above the main blue title bar
+- removed the same inherited top gap from the mobile login/setup window
+- restored the centered **Log In / Create Password** title on mobile login/setup screens
+- prevented long Overview record values from crushing labels into extremely narrow columns on mobile
+- stack Overview record labels/values on very narrow screens for readability
+- bumped UI, login, server/snapshot, assembly, README, and PWA cache metadata to v1.0.8
+
+### v1.0.7
+
+- fixed File-menu hover/focus highlighting so Refresh, Export snapshot JSON..., and Log Out fill the full menu row
+- preserved the content-sized File menu width and existing command behavior
 
 ### v1.0.6
 

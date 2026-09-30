@@ -1,9 +1,9 @@
 'use strict';
 
-// TaskList Stats v1.0.7 release compatibility layer for Overview records, terminal-status semantics, backlog reconstruction, clearer contextual labeling, faster tree analysis, TaskList-style authentication, and File-menu presentation fixes.
+// TaskList Stats v1.0.8 release compatibility layer for Overview records, terminal-status semantics, backlog reconstruction, clearer contextual labeling, faster tree analysis, TaskList-style authentication, File-menu presentation fixes, and mobile layout fixes.
 // Loaded after app.js but before DOMContentLoaded startup.
 (() => {
-  const RELEASE = '1.0.7';
+  const RELEASE = '1.0.8';
   const baseRenderOverview = renderOverview;
   const baseNormalizeSnapshot = normalizeSnapshot;
   const baseGroupLabel = groupLabel;
@@ -36,6 +36,42 @@
     const style = document.createElement('style');
     style.id = 'fileMenuFullWidthHighlight';
     style.textContent = '#fileMenu button { width: 100%; }';
+    document.head.append(style);
+  }
+
+  function applyMobileLayoutFixes() {
+    if (document.querySelector('#mobileLayoutFixesV108')) return;
+    const style = document.createElement('style');
+    style.id = 'mobileLayoutFixesV108';
+    style.textContent = `
+      @media (max-width: 780px) {
+        #appWindow > .titlebar {
+          margin-top: 0;
+        }
+
+        .records-layout .metric-list {
+          grid-template-columns: minmax(130px, 0.9fr) minmax(0, 1.1fr);
+          column-gap: 10px;
+        }
+
+        .records-layout .metric-value {
+          min-width: 0;
+          overflow-wrap: anywhere;
+        }
+      }
+
+      @media (max-width: 360px) {
+        .records-layout .metric-list {
+          grid-template-columns: 1fr;
+          row-gap: 2px;
+        }
+
+        .records-layout .metric-value {
+          text-align: left;
+          margin-bottom: 8px;
+        }
+      }
+    `;
     document.head.append(style);
   }
 
@@ -421,4 +457,5 @@
   applyTaskTypeScopeNote();
   addLogoutCommand();
   applyFileMenuFullWidthHighlight();
+  applyMobileLayoutFixes();
 })();
