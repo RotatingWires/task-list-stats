@@ -18,6 +18,17 @@ function applyReleaseLabel(version) {
   if (label) label.textContent = `TaskList Stats v${version}`;
 }
 
+async function frontendReleaseVersion(fallback = '') {
+  try {
+    const response = await fetch('/version.json', { cache: 'no-store', credentials: 'same-origin' });
+    if (!response.ok) return fallback;
+    const body = await response.json();
+    return body.version || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 function loginReturnUrl() {
   const params = new URLSearchParams(location.search);
   const value = params.get('returnUrl') || params.get('ReturnUrl');
@@ -49,7 +60,7 @@ async function request(url, options = {}) {
 async function initialize() {
   try {
     const status = await request('/api/auth/status');
-    applyReleaseLabel(status.version);
+    applyReleaseLabel(await frontendReleaseVersion(status.version));
     if (status.authenticated) {
       window.location.replace(loginReturnUrl());
       return;

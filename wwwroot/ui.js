@@ -94,6 +94,17 @@ async function logout() {
   }
 }
 
+async function frontendReleaseVersion(fallback = '') {
+  try {
+    const response = await fetch('/version.json', { cache: 'no-store', credentials: 'same-origin' });
+    if (!response.ok) return fallback;
+    const body = await response.json();
+    return body.version || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 async function loadSnapshot() {
   $('#loadingPanel').hidden = false;
   $('#errorPanel').hidden = true;
@@ -116,7 +127,7 @@ async function loadSnapshot() {
       throw new Error(message);
     }
     state.snapshot = normalizeSnapshot(await response.json());
-    applyReleaseLabel(state.snapshot.version);
+    applyReleaseLabel(await frontendReleaseVersion(state.snapshot.version));
     const validListIds = new Set(state.snapshot.lists.map(list => list.id));
     state.selectedListIds = new Set([...state.selectedListIds].filter(id => validListIds.has(id)));
     populateListFilter();
@@ -158,8 +169,6 @@ $('#hourHeatmapMode').addEventListener('change',()=>renderWeekdayHourHeatmap(sco
 document.addEventListener('click',closeMenus);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenus();});
 let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>renderAll(),120);});
-
-
 
 function initializeTouchHelp() {
   const popup = document.createElement('div');
