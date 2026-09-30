@@ -7,6 +7,12 @@ obj/
 Thumbs.db
 *.user
 *.suo
+
+# Runtime/private Stats data
+data/
+auth.json
+
+# SQLite/database files
 *.db
 *.db-shm
 *.db-wal

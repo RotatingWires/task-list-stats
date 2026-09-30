@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000080">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="TaskList Stats">
+  <title>TaskList Stats Login</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/stats.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/auth.css">
+</head>
+<body class="login-page">
+  <main class="window login-window">
+    <header class="titlebar">
+      <span class="title-left">TaskList Stats v1.0.6</span>
+      <span class="title-center" id="loginWindowTitle">Log In</span>
+      <span class="title-buttons" aria-hidden="true">_ □ ×</span>
+    </header>
+
+    <form id="authForm" class="login-form" autocomplete="on">
+      <div class="login-intro" id="loginIntro">Enter your password to open TaskList Stats.</div>
+      <input class="password-autofill-username" id="username" name="username" type="text" value="taskliststats" autocomplete="username" tabindex="-1" aria-hidden="true">
+
+      <div id="setupTokenGroup" class="login-confirm" hidden>
+        <label for="setupToken">Setup token</label>
+        <input id="setupToken" name="setupToken" type="text" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="next">
+      </div>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go" required autofocus>
+
+      <div id="confirmGroup" class="login-confirm" hidden>
+        <label for="confirmPassword">Confirm password</label>
+        <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false">
+      </div>
+
+      <div id="loginError" class="login-error" role="alert" aria-live="polite"></div>
+      <div class="login-actions"><button id="loginButton" type="submit">Log In</button></div>
+    </form>
+  </main>
+  <script src="/login.js" defer></script>
+</body>
+</html>

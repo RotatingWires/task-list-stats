@@ -1,9 +1,9 @@
 'use strict';
 
-// TaskList Stats v1.0.5 release compatibility layer for Overview records, terminal-status semantics, backlog reconstruction, clearer contextual labeling, and faster tree analysis.
+// TaskList Stats v1.0.6 release compatibility layer for Overview records, terminal-status semantics, backlog reconstruction, clearer contextual labeling, faster tree analysis, and TaskList-style authentication.
 // Loaded after app.js but before DOMContentLoaded startup.
 (() => {
-  const RELEASE = '1.0.5';
+  const RELEASE = '1.0.6';
   const baseRenderOverview = renderOverview;
   const baseNormalizeSnapshot = normalizeSnapshot;
   const baseGroupLabel = groupLabel;
@@ -30,6 +30,89 @@
     note.textContent = 'Make sure to select the correct list for the context of these stats.';
     frame.before(note);
   }
+
+  function loginUrl() {
+    const returnUrl = `${location.pathname}${location.search}${location.hash}`;
+    return `/login.html?returnUrl=${encodeURIComponent(returnUrl || '/')}`;
+  }
+
+  async function logout() {
+    closeMenus();
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        cache: 'no-store'
+      });
+    } finally {
+      window.location.replace('/login.html');
+    }
+  }
+
+  function addLogoutCommand() {
+    const menu = document.querySelector('#fileMenu');
+    if (!menu || document.querySelector('#logoutButton')) return;
+
+    const separator = document.createElement('div');
+    separator.setAttribute('role', 'separator');
+    separator.style.height = '0';
+    separator.style.margin = '3px 2px';
+    separator.style.borderTop = '1px solid #808080';
+    separator.style.borderBottom = '1px solid #fff';
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'logoutButton';
+    button.setAttribute('role', 'menuitem');
+    const spacer = document.createElement('span');
+    const label = document.createElement('span');
+    label.className = 'menu-label';
+    label.textContent = 'Log Out';
+    button.append(spacer, label);
+    button.addEventListener('click', logout);
+
+    menu.append(separator, button);
+  }
+
+  // Match TaskList's expired-session behavior: API authentication failures return
+  // to Login instead of being presented as a database outage.
+  loadSnapshot = async function loadAuthenticatedSnapshot() {
+    $('#loadingPanel').hidden = false;
+    $('#errorPanel').hidden = true;
+    $('#databaseStatus').textContent = 'Loading database...';
+    try {
+      const response = await fetch('/api/snapshot', {
+        cache: 'no-store',
+        credentials: 'same-origin'
+      });
+      if (response.status === 401) {
+        window.location.replace(loginUrl());
+        return;
+      }
+      if (!response.ok) {
+        let message = `Server returned ${response.status}`;
+        try {
+          const body = await response.json();
+          message = body.detail || body.title || message;
+        } catch {}
+        throw new Error(message);
+      }
+      state.snapshot = normalizeSnapshot(await response.json());
+      const validListIds = new Set(state.snapshot.lists.map(list => list.id));
+      state.selectedListIds = new Set([...state.selectedListIds].filter(id => validListIds.has(id)));
+      populateListFilter();
+      populateViewMenu();
+      $('#databaseStatus').textContent = `${numberFmt.format(state.snapshot.items.length)} current items`;
+      $('#loadingPanel').hidden = true;
+      renderAll();
+    } catch (error) {
+      $('#loadingPanel').hidden = true;
+      const panel = $('#errorPanel');
+      panel.hidden = false;
+      panel.textContent = error.message;
+      $('#databaseStatus').textContent = 'Database unavailable';
+    }
+  };
 
   // TaskList preserves old completed_at/cancelled_at values when a task later
   // changes status. Stats should treat the current terminal status as authoritative
@@ -328,4 +411,5 @@
 
   applyReleaseLabel();
   applyTaskTypeScopeNote();
+  addLogoutCommand();
 })();
