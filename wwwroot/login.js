@@ -1,4 +1,3 @@
-const RELEASE = '1.0.8';
 const authForm = document.querySelector('#authForm');
 const password = document.querySelector('#password');
 const setupTokenGroup = document.querySelector('#setupTokenGroup');
@@ -9,10 +8,15 @@ const loginButton = document.querySelector('#loginButton');
 const loginError = document.querySelector('#loginError');
 const loginWindowTitle = document.querySelector('#loginWindowTitle');
 const loginIntro = document.querySelector('#loginIntro');
-const releaseLabel = document.querySelector('.title-left');
-if (releaseLabel) releaseLabel.textContent = `TaskList Stats v${RELEASE}`;
 
 let setupMode = false;
+
+function applyReleaseLabel(version) {
+  if (!version) return;
+  document.title = `TaskList Stats v${version} Login`;
+  const label = document.querySelector('.title-left');
+  if (label) label.textContent = `TaskList Stats v${version}`;
+}
 
 function loginReturnUrl() {
   const params = new URLSearchParams(location.search);
@@ -45,6 +49,7 @@ async function request(url, options = {}) {
 async function initialize() {
   try {
     const status = await request('/api/auth/status');
+    applyReleaseLabel(status.version);
     if (status.authenticated) {
       window.location.replace(loginReturnUrl());
       return;

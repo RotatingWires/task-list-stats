@@ -1,4 +1,4 @@
-/* v1.0.6: TaskList-style login/setup screen for TaskList Stats. */
+/* TaskList-style login/setup screen for TaskList Stats. */
 body.login-page {
   display: grid;
   place-items: center;
@@ -94,8 +94,6 @@ body.login-page {
     box-shadow: 1px 1px 0 var(--shadow);
   }
 
-  /* The shared mobile app chrome adds top spacing and hides the centered title.
-     The login window is a floating dialog, so keep its titlebar flush and complete. */
   .login-page .titlebar {
     margin: 0;
     grid-template-columns: 1fr minmax(0, auto) 1fr;
