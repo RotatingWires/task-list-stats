@@ -43,6 +43,10 @@
   background: var(--face);
 }
 
+.calendar-detail-dialog .dialog-buttons button {
+  transform: translateY(6px);
+}
+
 .calendar-detail-scope {
   font-size: 12px;
   font-weight: 700;
