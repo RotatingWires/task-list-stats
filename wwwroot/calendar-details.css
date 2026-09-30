@@ -12,16 +12,18 @@
 .calendar-detail-dialog {
   width: min(780px, calc(100vw - 24px));
   max-width: min(780px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
   overflow: hidden;
 }
 
 .calendar-detail-dialog .dialog-window {
   width: 100%;
-  height: min(760px, calc(100dvh - 24px));
-  max-height: calc(100dvh - 24px);
+  height: auto;
+  max-height: min(760px, calc(100dvh - 32px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .calendar-day-detail-body {
@@ -74,9 +76,11 @@
   .calendar-detail-dialog {
     width: calc(100vw - 16px);
     max-width: calc(100vw - 16px);
-  }
-  .calendar-detail-dialog .dialog-window {
-    height: calc(100dvh - 16px);
     max-height: calc(100dvh - 16px);
+  }
+
+  .calendar-detail-dialog .dialog-window {
+    height: auto;
+    max-height: calc(100dvh - 24px);
   }
 }
