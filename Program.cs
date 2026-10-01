@@ -208,6 +208,33 @@ api.MapGet("/snapshot", async () =>
             }
         }
 
+        var events = new List<EventSnapshot>();
+        var eventLogAvailable = false;
+        await using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'task_events');";
+            eventLogAvailable = Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture) != 0;
+        }
+        if (eventLogAvailable)
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                SELECT id, universal_id, event_type, event_at, from_status, to_status,
+                       list_id, display_id, parent_display_id, title, source
+                FROM task_events
+                ORDER BY event_at, id;
+                """;
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                events.Add(new EventSnapshot(
+                    reader.GetInt64(0), reader.GetInt64(1), reader.GetString(2), reader.GetString(3),
+                    reader.IsDBNull(4) ? null : reader.GetString(4), reader.IsDBNull(5) ? null : reader.GetString(5),
+                    reader.GetInt64(6), reader.GetString(7), reader.IsDBNull(8) ? null : reader.GetString(8),
+                    reader.GetString(9), reader.GetString(10)));
+            }
+        }
+
         long highestUniversalId = 0;
         await using (var command = connection.CreateCommand())
         {
@@ -216,7 +243,7 @@ api.MapGet("/snapshot", async () =>
         }
 
         var fileInfo = new FileInfo(dbPath);
-        return Results.Ok(new StatsSnapshot(appVersion, DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items));
+        return Results.Ok(new StatsSnapshot(appVersion, DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items, eventLogAvailable, events));
     }
     catch (SqliteException ex)
     {
@@ -315,4 +342,5 @@ record SetupRequest(string? SetupToken, string? Password, string? ConfirmPasswor
 record PasswordFile(int Version, int Iterations, string Salt, string Hash);
 record ListSnapshot(long Id, string Name, string CreatedAt);
 record ItemSnapshot(long UniversalId, long ListId, string DisplayId, string? ParentDisplayId, string Title, string Description, string Status, string CreatedAt, string? UpdatedAt, string? CompletedAt, string? CancelledAt, string? ReopenedAt);
-record StatsSnapshot(string Version, string GeneratedAtUtc, string DatabaseLastWriteUtc, long HighestUniversalId, List<ListSnapshot> Lists, List<ItemSnapshot> Items);
+record EventSnapshot(long Id, long UniversalId, string EventType, string EventAt, string? FromStatus, string? ToStatus, long ListId, string DisplayId, string? ParentDisplayId, string Title, string Source);
+record StatsSnapshot(string Version, string GeneratedAtUtc, string DatabaseLastWriteUtc, long HighestUniversalId, List<ListSnapshot> Lists, List<ItemSnapshot> Items, bool EventLogAvailable, List<EventSnapshot> Events);
