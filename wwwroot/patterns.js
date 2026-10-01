@@ -16,16 +16,23 @@ function renderPatterns() {
   Charts.drawGroupedBarChart($('#hourChart'), Array.from({length:24},(_,h)=>formatHour(h)), createHour, doneHour, '#000080', '#008000', 'Tasks');
   renderWeekdayHourHeatmap(items);
 
-  const bestWeek = createWeek.indexOf(Math.max(...createWeek));
-  const bestHourCount = Math.max(...createHour);
-  const bestHour = bestHourCount > 0 ? createHour.indexOf(bestHourCount) : null;
+  const bestCreationWeekCount = Math.max(...createWeek);
+  const bestCreationWeek = bestCreationWeekCount > 0 ? createWeek.indexOf(bestCreationWeekCount) : null;
+  const bestCreationHourCount = Math.max(...createHour);
+  const bestCreationHour = bestCreationHourCount > 0 ? createHour.indexOf(bestCreationHourCount) : null;
+  const bestCompletionWeekCount = Math.max(...doneWeek);
+  const bestCompletionWeek = bestCompletionWeekCount > 0 ? doneWeek.indexOf(bestCompletionWeekCount) : null;
+  const bestCompletionHourCount = Math.max(...doneHour);
+  const bestCompletionHour = bestCompletionHourCount > 0 ? doneHour.indexOf(bestCompletionHourCount) : null;
   const activeWeeks = new Set(items.map(x=>x.createdDate && weekKey(x.createdDate)).filter(Boolean));
   const activeMonths = new Set(items.map(x=>x.createdDate && monthKey(x.createdDate)).filter(Boolean));
   const datedCount = items.filter(x=>x.createdDate).length;
   const streaks = longestCreationStreaks(items);
   renderMetricList($('#rhythmMetrics'), [
-    ['Busiest creation weekday', `${WEEKDAYS[bestWeek]} (${createWeek[bestWeek] || 0})`, 'The weekday with the highest total number of task creation timestamps in the selected scope.'],
-    ['Busiest creation hour', bestHour == null ? '—' : `${formatHour(bestHour)} (${createHour[bestHour]})`, "The hour of the day in which the most tasks with confirmed creation times were created, using your browser\'s local time. Date-only history is excluded."],
+    ['Busiest creation weekday', bestCreationWeek == null ? '—' : `${WEEKDAYS[bestCreationWeek]} (${createWeek[bestCreationWeek]})`, 'The weekday with the highest total number of task creation timestamps in the selected scope.'],
+    ['Busiest creation hour', bestCreationHour == null ? '—' : `${formatHour(bestCreationHour)} (${createHour[bestCreationHour]})`, "The hour of the day in which the most tasks with confirmed creation times were created, using your browser's local time. Date-only history is excluded."],
+    ['Busiest completion weekday', bestCompletionWeek == null ? '—' : `${WEEKDAYS[bestCompletionWeek]} (${doneWeek[bestCompletionWeek]})`, 'The weekday with the highest total number of completion timestamps for tasks that are currently Done in the selected scope. This uses the same completion population as the Day-of-Week Patterns chart.'],
+    ['Busiest completion hour', bestCompletionHour == null ? '—' : `${formatHour(bestCompletionHour)} (${doneHour[bestCompletionHour]})`, "The hour of the day with the most confirmed completion times for tasks that are currently Done in the selected scope, using your browser's local time. Date-only history is excluded. This uses the same completion population as the Hour-of-Day Patterns chart."],
     ['Average per active week', activeWeeks.size ? oneDecimal.format(datedCount / activeWeeks.size) : '—', 'Dated task creations divided by the number of calendar weeks that contain at least one creation. Weeks with no creations are not included.'],
     ['Average per active month', activeMonths.size ? oneDecimal.format(datedCount / activeMonths.size) : '—', 'Dated task creations divided by the number of months that contain at least one creation. Months with no creations are not included.'],
     ['Longest quiet streak', `${streaks.quiet} days`, 'The longest run of consecutive days with zero task creations between the first and latest dated task creation.'],
@@ -187,4 +194,3 @@ function renderCommonWords(items) {
   });
   $('#commonWords').replaceChildren(...nodes);
 }
-

@@ -1,20 +1,33 @@
-/* TaskList Stats 2.0 analytical workspaces. */
+/* TaskList Stats analytical workspaces. */
+.analysis-panel {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+}
 .analysis-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
   align-items: end;
   margin: 4px 0 10px;
+  min-width: 0;
+  max-width: 100%;
 }
+.analysis-control,
+.analysis-controls label,
+.compare-control-group {
+  min-width: 0;
+}
+.analysis-control,
 .analysis-controls label {
   display: grid;
   gap: 3px;
   font-size: 12px;
   font-weight: 700;
 }
-.analysis-controls input,
-.analysis-controls select {
+.analysis-controls input[type="text"] {
   min-height: 28px;
+  min-width: 0;
   padding: 3px 5px;
   font: inherit;
   background: #fff;
@@ -23,12 +36,25 @@
   border-left: 2px solid #404040;
   border-right: 2px solid #fff;
   border-bottom: 2px solid #fff;
+  border-radius: 0;
 }
+.analysis-date-input { width: 145px; }
 .analysis-controls .wide-control { min-width: min(280px, 70vw); }
+.analysis-select-menu { min-width: 150px; max-width: 100%; }
+.analysis-select-menu .retro-select {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+.analysis-select-menu .single-select-dropdown {
+  min-width: 100%;
+  max-width: min(320px, calc(100vw - 24px));
+}
 .analysis-summary {
   margin: 4px 0 8px;
   font-size: 12px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 .analysis-note {
   margin: 4px 0 10px;
@@ -37,24 +63,65 @@
   border: 1px solid #808080;
   line-height: 1.35;
   font-size: 12px;
+  overflow-wrap: anywhere;
 }
 .compare-control-group {
   display: contents;
 }
-.insight-list {
-  display: grid;
-  gap: 7px;
+.analysis-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  max-height: min(62vh, 620px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
-.insight-row {
+.analysis-table-wrap table { min-width: 680px; }
+.compare-panels {
   display: grid;
-  grid-template-columns: minmax(180px, 30%) 1fr;
-  gap: 10px;
-  padding: 7px 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+.compare-panels .groupbox { min-width: 0; }
+.compare-panels .metric-list { grid-template-columns: minmax(0, 1fr) auto; }
+.compare-difference-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.compare-difference-wrap table { min-width: 320px; }
+.milestone-timeline {
+  display: grid;
+  gap: 0;
   background: #fff;
-  border-bottom: 1px solid #c8c8c8;
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  min-width: 0;
 }
-.insight-row strong { color: #000080; }
-.analysis-table-wrap { max-height: min(62vh, 620px); }
+.milestone-row {
+  padding: 8px 10px;
+  border-bottom: 1px solid #c8c8c8;
+  min-width: 0;
+}
+.milestone-row:last-child { border-bottom: 0; }
+.milestone-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+.milestone-heading strong { color: #000080; }
+.milestone-when { flex: 0 0 auto; font-weight: 700; }
+.milestone-detail {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #333;
+  overflow-wrap: anywhere;
+}
+.milestone-empty { padding: 12px; color: #555; }
 
 @media (max-width: 780px) {
   .analysis-controls {
@@ -62,11 +129,18 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .analysis-controls label,
-  .analysis-controls .wide-control { min-width: 0; width: 100%; }
-  .analysis-controls input,
-  .analysis-controls select { width: 100%; min-width: 0; }
-  .insight-row { grid-template-columns: 1fr; gap: 3px; }
+  .analysis-control,
+  .analysis-controls .wide-control,
+  .analysis-select-menu,
+  .analysis-date-input {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
   .analysis-table-wrap { max-height: 55vh; }
+  .compare-panels { grid-template-columns: 1fr; }
+  .milestone-heading { display: grid; gap: 2px; }
+  .milestone-when { font-weight: 400; }
 }
 
 @media (max-width: 460px) {

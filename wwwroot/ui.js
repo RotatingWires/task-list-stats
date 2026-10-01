@@ -13,10 +13,7 @@ function renderAll() {
     trees: renderTrees,
     history: renderHistoryExplorer,
     compare: renderCompare,
-    explorer: renderSearchExplorer,
     sessions: renderActivitySessions,
-    flow: renderFlow,
-    insights: renderInsights,
     milestones: renderMilestones,
     fun: () => Fun.render()
   };
@@ -64,7 +61,7 @@ function populateListFilter() {
 function populateViewMenu() {
   const labels = [
     ['overview','Overview'],['trends','Trends'],['calendar','Calendar'],['lists','Lists'],['patterns','Patterns'],['trees','Trees & Titles'],
-    ['history','History Explorer'],['compare','Compare'],['explorer','Search / Explorer'],['sessions','Activity Sessions'],['flow','Flow'],['insights','Insights'],['milestones','Milestones'],['fun','Fun']
+    ['history','History Explorer'],['compare','Compare'],['sessions','Activity Sessions'],['milestones','Milestones'],['fun','Fun']
   ];
   const menu=$('#viewMenu'); menu.replaceChildren();
   for(const [value,label] of labels){
@@ -181,7 +178,11 @@ function initializeTouchHelp() {
 const STATIC_SINGLE_SELECT_OPTIONS = {
   trendGroup: [['day', 'Day'], ['week', 'Week'], ['month', 'Month']],
   heatmapMode: [['created', 'Created'], ['completed', 'Completed'], ['cancelled', 'Cancelled'], ['activity', 'All activity']],
-  hourHeatmapMode: [['created', 'Created'], ['completed', 'Completed']]
+  hourHeatmapMode: [['created', 'Created'], ['completed', 'Completed']],
+  historyEventType: [['all', 'All events'], ['Created', 'Created'], ['Completed', 'Completed'], ['Cancelled', 'Cancelled'], ['Reopened', 'Reopened']],
+  historyOrder: [['newest', 'Newest first'], ['oldest', 'Oldest first']],
+  compareMode: [['lists', 'Lists'], ['periods', 'Time periods']],
+  sessionGap: [['15', '15 minutes'], ['30', '30 minutes'], ['60', '60 minutes']]
 };
 
 function singleSelectParts(id) {
