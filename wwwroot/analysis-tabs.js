@@ -288,6 +288,153 @@ function inferSessions(events, gapMinutes) {
   return sessions;
 }
 
+function formatSessionTime(date) {
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function formatSessionDate(date) {
+  return date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function ensureSessionEventsDialog() {
+  let dialog = $('#sessionEventsDialog');
+  if (dialog) return dialog;
+
+  dialog = document.createElement('dialog');
+  dialog.id = 'sessionEventsDialog';
+  dialog.className = 'retro-dialog session-events-dialog';
+
+  const form = document.createElement('form');
+  form.method = 'dialog';
+  form.className = 'dialog-window session-events-window';
+
+  const title = document.createElement('div');
+  title.id = 'sessionEventsTitle';
+  title.className = 'dialog-title';
+  title.textContent = 'Activity Session';
+
+  const body = document.createElement('div');
+  body.id = 'sessionEventsBody';
+  body.className = 'dialog-body session-events-body';
+
+  const buttons = document.createElement('div');
+  buttons.className = 'dialog-buttons';
+  const close = document.createElement('button');
+  close.type = 'submit';
+  close.textContent = 'OK';
+  buttons.append(close);
+
+  form.append(title, body, buttons);
+  dialog.append(form);
+  document.body.append(dialog);
+  return dialog;
+}
+
+function makeSessionEventRow(event) {
+  const row = document.createElement('div');
+  row.className = 'session-event-row';
+
+  const heading = document.createElement('div');
+  heading.className = 'session-event-heading';
+
+  const type = document.createElement('strong');
+  type.textContent = event.eventType;
+
+  const when = document.createElement('span');
+  when.className = 'session-event-when';
+  when.textContent = formatSessionTime(event.eventDate);
+
+  heading.append(type, when);
+
+  const task = document.createElement('div');
+  task.className = 'session-event-task';
+
+  const list = document.createElement('span');
+  list.textContent = `${listName(event.listId)} • `;
+  task.append(list, eventTaskNode(event));
+
+  const title = document.createElement('span');
+  title.textContent = ` • ${event.title}`;
+  task.append(title);
+
+  const meta = document.createElement('div');
+  meta.className = 'session-event-meta';
+  const transition = eventTransition(event);
+  meta.textContent = `${transition !== '—' ? `${transition} • ` : ''}${eventSourceLabel(event)}`;
+
+  row.append(heading, task, meta);
+  return row;
+}
+
+function openSessionEvents(session) {
+  const dialog = ensureSessionEventsDialog();
+  const title = $('#sessionEventsTitle');
+  const body = $('#sessionEventsBody');
+
+  title.textContent = `Activity Session — ${formatSessionDate(session.start)}`;
+
+  const summary = document.createElement('div');
+  summary.className = 'session-dialog-summary';
+  summary.textContent = `${formatSessionTime(session.start)} – ${formatSessionTime(session.end)} • ${formatDuration(session.end - session.start)} • ${numberFmt.format(session.events.length)} event${session.events.length === 1 ? '' : 's'}`;
+
+  const list = document.createElement('div');
+  list.className = 'session-event-list';
+  const ordered = [...session.events].sort((a, b) => a.eventDate - b.eventDate || a.id - b.id);
+  list.replaceChildren(...ordered.map(makeSessionEventRow));
+
+  body.replaceChildren(summary, list);
+  dialog.showModal();
+}
+
+function makeSessionRow(session) {
+  const created = session.events.filter(event => event.eventType === 'Created').length;
+  const completed = session.events.filter(event => event.eventType === 'Completed').length;
+  const cancelled = session.events.filter(event => event.eventType === 'Cancelled').length;
+  const reopened = session.events.filter(event => event.eventType === 'Reopened').length;
+
+  const row = document.createElement('div');
+  row.className = 'session-row';
+
+  const heading = document.createElement('div');
+  heading.className = 'session-heading';
+
+  const date = document.createElement('strong');
+  date.textContent = formatSessionDate(session.start);
+
+  const times = document.createElement('span');
+  times.className = 'session-when';
+  times.textContent = `${formatSessionTime(session.start)} – ${formatSessionTime(session.end)}`;
+
+  heading.append(date, times);
+
+  const detail = document.createElement('div');
+  detail.className = 'session-detail';
+
+  const span = document.createElement('span');
+  span.textContent = `${formatDuration(session.end - session.start)} • `;
+  detail.append(span);
+
+  const eventButton = document.createElement('button');
+  eventButton.type = 'button';
+  eventButton.className = 'session-event-count';
+  eventButton.textContent = `${numberFmt.format(session.events.length)} event${session.events.length === 1 ? '' : 's'}`;
+  eventButton.title = 'Open this session and view its recorded events in chronological order.';
+  eventButton.addEventListener('click', () => openSessionEvents(session));
+  detail.append(eventButton);
+
+  const counts = document.createElement('span');
+  counts.textContent = ` • ${created} created • ${completed} completed • ${cancelled} cancelled • ${reopened} reopened`;
+  detail.append(counts);
+
+  row.append(heading, detail);
+  return row;
+}
+
 function renderActivitySessions() {
   const table = $('#sessionsTable');
   if (!eventLogReady()) {
@@ -295,25 +442,25 @@ function renderActivitySessions() {
     setAnalysisEmpty(table, 'TaskList 1.5 event log is required for Activity Sessions.');
     return;
   }
+
   const gap = Number($('#sessionGap').value) || 30;
   const sessions = inferSessions(scopedRecordedEvents(), gap);
   const durations = sessions.map(session => session.end - session.start);
   const multi = sessions.filter(session => session.events.length > 1);
+
   renderCards($('#sessionCards'), [
     { label: 'Inferred sessions', value: numberFmt.format(sessions.length), sub: `${gap}-minute gap threshold` },
     { label: 'Multi-event sessions', value: numberFmt.format(multi.length), sub: percent(multi.length, sessions.length) },
-    { label: 'Average events / session', value: oneDecimal.format(average(sessions.map(s => s.events.length)) || 0) },
+    { label: 'Average events / session', value: oneDecimal.format(average(sessions.map(session => session.events.length)) || 0) },
     { label: 'Median session span', value: formatDuration(median(durations) || 0) },
     { label: 'Longest session span', value: formatDuration(Math.max(0, ...durations)) }
   ]);
 
-  const rows = [...sessions].sort((a, b) => b.start - a.start).slice(0, 100).map(session => {
-    const created = session.events.filter(e => e.eventType === 'Created').length;
-    const closed = session.events.filter(e => e.eventType === 'Completed' || e.eventType === 'Cancelled').length;
-    const reopened = session.events.filter(e => e.eventType === 'Reopened').length;
-    return [formatDateTime(session.start), formatDateTime(session.end), formatDuration(session.end - session.start), session.events.length, created, closed, reopened];
-  });
-  setTable(table, ['Start', 'End', 'Span', 'Events', 'Created', 'Closed', 'Reopened'], rows, [3,4,5,6]);
+  const recent = [...sessions]
+    .sort((a, b) => b.start - a.start)
+    .slice(0, 100);
+
+  setTable(table, ['Session'], recent.map(session => [makeSessionRow(session)]));
 }
 
 function ordinal(value) {
