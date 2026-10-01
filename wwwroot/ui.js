@@ -11,11 +11,19 @@ function renderAll() {
     lists: renderLists,
     patterns: renderPatterns,
     trees: renderTrees,
+    history: renderHistoryExplorer,
+    compare: renderCompare,
+    explorer: renderSearchExplorer,
+    sessions: renderActivitySessions,
+    flow: renderFlow,
+    insights: renderInsights,
+    milestones: renderMilestones,
     fun: () => Fun.render()
   };
   renderers[state.activeTab]?.();
   $('#statusLeft').textContent = `${numberFmt.format(scopedItems().length)} current items • ${scopeLabel()}`;
-  $('#statusRight').textContent = `DB updated ${formatDateTime(parseDate(state.snapshot.databaseLastWriteUtc))} • Read-only`;
+  const eventText = state.snapshot.eventLogAvailable ? ` • ${numberFmt.format(state.snapshot.events?.length || 0)} recorded events` : '';
+  $('#statusRight').textContent = `DB updated ${formatDateTime(parseDate(state.snapshot.databaseLastWriteUtc))} • Read-only${eventText}`;
 }
 
 function switchTab(name) {
@@ -23,7 +31,6 @@ function switchTab(name) {
   $$('.tabs [role="tab"]').forEach(btn => btn.setAttribute('aria-selected', btn.dataset.tab === name ? 'true' : 'false'));
   $$('.tab-panel').forEach(panel => panel.hidden = panel.dataset.panel !== name);
   closeMenus();
-  // Redraw canvases after their hidden panel becomes visible.
   requestAnimationFrame(() => renderAll());
 }
 
@@ -55,7 +62,10 @@ function populateListFilter() {
 }
 
 function populateViewMenu() {
-  const labels = [['overview','Overview'],['trends','Trends'],['calendar','Calendar'],['lists','Lists'],['patterns','Patterns'],['trees','Trees & Titles'],['fun','Fun']];
+  const labels = [
+    ['overview','Overview'],['trends','Trends'],['calendar','Calendar'],['lists','Lists'],['patterns','Patterns'],['trees','Trees & Titles'],
+    ['history','History Explorer'],['compare','Compare'],['explorer','Search / Explorer'],['sessions','Activity Sessions'],['flow','Flow'],['insights','Insights'],['milestones','Milestones'],['fun','Fun']
+  ];
   const menu=$('#viewMenu'); menu.replaceChildren();
   for(const [value,label] of labels){
     const button=document.createElement('button'); button.type='button'; button.setAttribute('role','menuitemradio'); button.setAttribute('aria-checked',value===state.activeTab?'true':'false');
@@ -84,11 +94,7 @@ function loginUrl() {
 async function logout() {
   closeMenus();
   try {
-    await fetch('/api/auth/logout', {
-      method: 'POST',
-      credentials: 'same-origin',
-      cache: 'no-store'
-    });
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
   } finally {
     window.location.replace('/login.html');
   }
@@ -100,9 +106,7 @@ async function frontendReleaseVersion(fallback = '') {
     if (!response.ok) return fallback;
     const body = await response.json();
     return body.version || fallback;
-  } catch {
-    return fallback;
-  }
+  } catch { return fallback; }
 }
 
 async function loadSnapshot() {
@@ -110,20 +114,11 @@ async function loadSnapshot() {
   $('#errorPanel').hidden = true;
   $('#databaseStatus').textContent = 'Loading database...';
   try {
-    const response = await fetch('/api/snapshot', {
-      cache: 'no-store',
-      credentials: 'same-origin'
-    });
-    if (response.status === 401) {
-      window.location.replace(loginUrl());
-      return;
-    }
+    const response = await fetch('/api/snapshot', { cache: 'no-store', credentials: 'same-origin' });
+    if (response.status === 401) { window.location.replace(loginUrl()); return; }
     if (!response.ok) {
       let message = `Server returned ${response.status}`;
-      try {
-        const body = await response.json();
-        message = body.detail || body.title || message;
-      } catch {}
+      try { const body = await response.json(); message = body.detail || body.title || message; } catch {}
       throw new Error(message);
     }
     state.snapshot = normalizeSnapshot(await response.json());
@@ -132,14 +127,12 @@ async function loadSnapshot() {
     state.selectedListIds = new Set([...state.selectedListIds].filter(id => validListIds.has(id)));
     populateListFilter();
     populateViewMenu();
-    $('#databaseStatus').textContent = `${numberFmt.format(state.snapshot.items.length)} current items`;
+    $('#databaseStatus').textContent = `${numberFmt.format(state.snapshot.items.length)} current items${state.snapshot.eventLogAvailable ? ` • ${numberFmt.format(state.snapshot.events?.length || 0)} events` : ' • event log unavailable'}`;
     $('#loadingPanel').hidden = true;
     renderAll();
   } catch (error) {
     $('#loadingPanel').hidden = true;
-    const panel = $('#errorPanel');
-    panel.hidden = false;
-    panel.textContent = error.message;
+    const panel = $('#errorPanel'); panel.hidden = false; panel.textContent = error.message;
     $('#databaseStatus').textContent = 'Database unavailable';
   }
 }
@@ -151,7 +144,6 @@ function downloadSnapshot() {
   a.href=url; a.download=`task-list-stats-snapshot-${localDayKey(new Date())}.json`; a.click(); URL.revokeObjectURL(url);
 }
 
-// ---------- events ----------
 $('#fileMenuButton').addEventListener('click',e=>{e.stopPropagation();toggleMenu($('#fileMenuButton'),$('#fileMenu'));});
 $('#viewMenuButton').addEventListener('click',e=>{e.stopPropagation();populateViewMenu();toggleMenu($('#viewMenuButton'),$('#viewMenu'));});
 $('#helpMenuButton').addEventListener('click',e=>{e.stopPropagation();toggleMenu($('#helpMenuButton'),$('#helpMenu'));});
@@ -171,45 +163,18 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenus();});
 let resizeTimer;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>renderAll(),120);});
 
 function initializeTouchHelp() {
-  const popup = document.createElement('div');
-  popup.className = 'tap-help-tooltip';
-  popup.hidden = true;
-  document.body.append(popup);
-
+  const popup = document.createElement('div'); popup.className = 'tap-help-tooltip'; popup.hidden = true; document.body.append(popup);
   function hide() { popup.hidden = true; }
   function showFor(element) {
-    const text = element.getAttribute('title');
-    if (!text) return;
-    popup.textContent = text;
-    popup.hidden = false;
-    const rect = element.getBoundingClientRect();
-    const margin = 10;
-    const width = popup.offsetWidth || 260;
-    const height = popup.offsetHeight || 60;
-    const x = rect.left + rect.width / 2;
-    const left = Math.max(margin, Math.min(window.innerWidth - width - margin, x - width / 2));
-    let top = rect.bottom + 12;
-    if (top + height + margin > window.innerHeight) top = Math.max(margin, rect.top - height - 12);
-    popup.style.left = `${left}px`;
-    popup.style.top = `${top}px`;
+    const text = element.getAttribute('title'); if (!text) return;
+    popup.textContent = text; popup.hidden = false;
+    const rect = element.getBoundingClientRect(); const margin = 10; const width = popup.offsetWidth || 260; const height = popup.offsetHeight || 60;
+    const x = rect.left + rect.width / 2; const left = Math.max(margin, Math.min(window.innerWidth - width - margin, x - width / 2));
+    let top = rect.bottom + 12; if (top + height + margin > window.innerHeight) top = Math.max(margin, rect.top - height - 12);
+    popup.style.left = `${left}px`; popup.style.top = `${top}px`;
   }
-
-  document.addEventListener('click', event => {
-    const target = event.target.closest?.('.has-tooltip[title], .word-chip[title]');
-    if (target) {
-      showFor(target);
-      return;
-    }
-    hide();
-  }, true);
-  document.addEventListener('keydown', event => {
-    if ((event.key === 'Enter' || event.key === ' ') && event.target.matches?.('.has-tooltip[title], .word-chip[title]')) {
-      event.preventDefault();
-      showFor(event.target);
-    } else if (event.key === 'Escape') {
-      hide();
-    }
-  });
+  document.addEventListener('click', event => { const target = event.target.closest?.('.has-tooltip[title], .word-chip[title]'); if (target) { showFor(target); return; } hide(); }, true);
+  document.addEventListener('keydown', event => { if ((event.key === 'Enter' || event.key === ' ') && event.target.matches?.('.has-tooltip[title], .word-chip[title]')) { event.preventDefault(); showFor(event.target); } else if (event.key === 'Escape') hide(); });
   $('#workspace')?.addEventListener('scroll', hide, { passive: true });
 }
 
@@ -220,81 +185,29 @@ const STATIC_SINGLE_SELECT_OPTIONS = {
 };
 
 function singleSelectParts(id) {
-  const input = $(`#${id}`);
-  const host = document.querySelector(`[data-single-select="${id}"]`);
-  if (!input || !host) return null;
-  return {
-    input,
-    host,
-    button: host.querySelector('[data-single-select-button]'),
-    label: host.querySelector('[data-single-select-label]'),
-    menu: host.querySelector('[data-single-select-menu]')
-  };
+  const input = $(`#${id}`); const host = document.querySelector(`[data-single-select="${id}"]`); if (!input || !host) return null;
+  return { input, host, button: host.querySelector('[data-single-select-button]'), label: host.querySelector('[data-single-select-label]'), menu: host.querySelector('[data-single-select-menu]') };
 }
 
 function setSingleSelectOptions(id, options, preferredValue = null) {
-  const parts = singleSelectParts(id);
-  if (!parts) return;
-  const normalized = options.map(([value, label]) => ({ value: String(value), label: String(label) }));
-  parts.menu.replaceChildren();
-
-  if (!normalized.length) {
-    parts.input.value = '';
-    parts.label.textContent = '—';
-    parts.button.disabled = true;
-    return;
-  }
-
-  parts.button.disabled = false;
-  const wanted = preferredValue == null ? parts.input.value : String(preferredValue);
-  const selected = normalized.find(option => option.value === wanted) ?? normalized[0];
-  parts.input.value = selected.value;
-  parts.label.textContent = selected.label;
-
+  const parts = singleSelectParts(id); if (!parts) return;
+  const normalized = options.map(([value, label]) => ({ value: String(value), label: String(label) })); parts.menu.replaceChildren();
+  if (!normalized.length) { parts.input.value = ''; parts.label.textContent = '—'; parts.button.disabled = true; return; }
+  parts.button.disabled = false; const wanted = preferredValue == null ? parts.input.value : String(preferredValue); const selected = normalized.find(option => option.value === wanted) ?? normalized[0];
+  parts.input.value = selected.value; parts.label.textContent = selected.label;
   for (const option of normalized) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.dataset.value = option.value;
-    button.setAttribute('role', 'menuitemradio');
-    button.setAttribute('aria-checked', option.value === selected.value ? 'true' : 'false');
-
-    const check = document.createElement('span');
-    check.className = 'menu-check';
-    const text = document.createElement('span');
-    text.className = 'menu-label';
-    text.textContent = option.label;
-    button.append(check, text);
-
-    button.addEventListener('click', event => {
-      event.stopPropagation();
-      const changed = parts.input.value !== option.value;
-      parts.input.value = option.value;
-      parts.label.textContent = option.label;
-      for (const choice of parts.menu.querySelectorAll('[data-value]'))
-        choice.setAttribute('aria-checked', choice.dataset.value === option.value ? 'true' : 'false');
-      parts.menu.hidden = true;
-      parts.button.setAttribute('aria-expanded', 'false');
-      parts.button.focus();
-      if (changed) parts.input.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    const button = document.createElement('button'); button.type = 'button'; button.dataset.value = option.value; button.setAttribute('role', 'menuitemradio'); button.setAttribute('aria-checked', option.value === selected.value ? 'true' : 'false');
+    const check = document.createElement('span'); check.className = 'menu-check'; const text = document.createElement('span'); text.className = 'menu-label'; text.textContent = option.label; button.append(check, text);
+    button.addEventListener('click', event => { event.stopPropagation(); const changed = parts.input.value !== option.value; parts.input.value = option.value; parts.label.textContent = option.label; for (const choice of parts.menu.querySelectorAll('[data-value]')) choice.setAttribute('aria-checked', choice.dataset.value === option.value ? 'true' : 'false'); parts.menu.hidden = true; parts.button.setAttribute('aria-expanded', 'false'); parts.button.focus(); if (changed) parts.input.dispatchEvent(new Event('change', { bubbles: true })); });
     parts.menu.append(button);
   }
 }
 
 function initializeCustomSingleSelects() {
-  for (const [id, options] of Object.entries(STATIC_SINGLE_SELECT_OPTIONS))
-    setSingleSelectOptions(id, options, $(`#${id}`).value);
-
-  $$('[data-single-select]').forEach(host => {
-    const button = host.querySelector('[data-single-select-button]');
-    const menu = host.querySelector('[data-single-select-menu]');
-    button.addEventListener('click', event => {
-      event.stopPropagation();
-      if (button.disabled) return;
-      toggleMenu(button, menu);
-    });
-  });
+  for (const [id, options] of Object.entries(STATIC_SINGLE_SELECT_OPTIONS)) setSingleSelectOptions(id, options, $(`#${id}`).value);
+  $$('[data-single-select]').forEach(host => { const button = host.querySelector('[data-single-select-button]'); const menu = host.querySelector('[data-single-select-menu]'); button.addEventListener('click', event => { event.stopPropagation(); if (button.disabled) return; toggleMenu(button, menu); }); });
 }
+
 let appStarted = false;
 function startApp() {
   if (appStarted) return;
@@ -302,12 +215,8 @@ function startApp() {
   Fun.initialize();
   initializeCustomSingleSelects();
   initializeTouchHelp();
+  initializeAnalysisTabs();
   loadSnapshot();
 }
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', startApp, { once: true });
-} else {
-  startApp();
-}
-
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp, { once: true }); else startApp();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
