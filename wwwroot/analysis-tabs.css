@@ -1,0 +1,74 @@
+/* TaskList Stats 2.0 analytical workspaces. */
+.analysis-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: end;
+  margin: 4px 0 10px;
+}
+.analysis-controls label {
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.analysis-controls input,
+.analysis-controls select {
+  min-height: 28px;
+  padding: 3px 5px;
+  font: inherit;
+  background: #fff;
+  color: #000;
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+}
+.analysis-controls .wide-control { min-width: min(280px, 70vw); }
+.analysis-summary {
+  margin: 4px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.analysis-note {
+  margin: 4px 0 10px;
+  padding: 7px 8px;
+  background: #ffffe1;
+  border: 1px solid #808080;
+  line-height: 1.35;
+  font-size: 12px;
+}
+.compare-control-group {
+  display: contents;
+}
+.insight-list {
+  display: grid;
+  gap: 7px;
+}
+.insight-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 30%) 1fr;
+  gap: 10px;
+  padding: 7px 8px;
+  background: #fff;
+  border-bottom: 1px solid #c8c8c8;
+}
+.insight-row strong { color: #000080; }
+.analysis-table-wrap { max-height: min(62vh, 620px); }
+
+@media (max-width: 780px) {
+  .analysis-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .analysis-controls label,
+  .analysis-controls .wide-control { min-width: 0; width: 100%; }
+  .analysis-controls input,
+  .analysis-controls select { width: 100%; min-width: 0; }
+  .insight-row { grid-template-columns: 1fr; gap: 3px; }
+  .analysis-table-wrap { max-height: 55vh; }
+}
+
+@media (max-width: 460px) {
+  .analysis-controls { grid-template-columns: 1fr; }
+}
