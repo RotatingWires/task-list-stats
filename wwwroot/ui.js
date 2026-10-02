@@ -152,17 +152,10 @@ $('#logoutButton').addEventListener('click', logout);
 $('#aboutButton').addEventListener('click',()=>{closeMenus();$('#aboutDialog').showModal();});
 $$('.tabs [role="tab"]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
 $('#trendGroup').addEventListener('change',renderTrends);
-$('#heatmapYear').addEventListener('change',()=>{
-  renderYearHeatmap(scopedItems());
-  const year = Number($('#heatmapYear').value);
-  const selected = parseCalendarMonth($('#calendarMonth').value);
-  const month = selected?.month || 1;
-  $('#calendarMonth').value = formatCalendarMonthValue(year, month);
-  renderMonthCalendar(scopedItems());
-});
+$('#heatmapYear').addEventListener('change',()=>renderYearHeatmap(scopedItems()));
 $('#heatmapMode').addEventListener('change',()=>renderYearHeatmap(scopedItems()));
-$('#calendarMonth').addEventListener('input',()=>renderMonthCalendar(scopedItems()));
-$('#calendarMonth').addEventListener('change',()=>renderMonthCalendar(scopedItems()));
+$('#calendarDetailMonth').addEventListener('change',()=>renderMonthCalendar(scopedItems()));
+$('#calendarDetailYear').addEventListener('change',()=>renderMonthCalendar(scopedItems()));
 $('#hourHeatmapMode').addEventListener('change',()=>renderWeekdayHourHeatmap(scopedItems()));
 document.addEventListener('click',closeMenus);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenus();});
@@ -187,6 +180,7 @@ function initializeTouchHelp() {
 const STATIC_SINGLE_SELECT_OPTIONS = {
   trendGroup: [['day', 'Day'], ['week', 'Week'], ['month', 'Month']],
   heatmapMode: [['created', 'Created'], ['completed', 'Completed'], ['cancelled', 'Cancelled'], ['reopened', 'Reopened'], ['activity', 'All activity']],
+  calendarDetailMonth: MONTHS.map((label, index) => [String(index + 1), label]),
   hourHeatmapMode: [['created', 'Created'], ['completed', 'Completed']],
   historyEventType: [['all', 'All events'], ['Created', 'Created'], ['Completed', 'Completed'], ['Cancelled', 'Cancelled'], ['Reopened', 'Reopened']],
   historyOrder: [['newest', 'Newest first'], ['oldest', 'Oldest first']],
@@ -207,7 +201,7 @@ function setSingleSelectOptions(id, options, preferredValue = null) {
   parts.input.value = selected.value; parts.label.textContent = selected.label;
   for (const option of normalized) {
     const button = document.createElement('button'); button.type = 'button'; button.dataset.value = option.value; button.setAttribute('role', 'menuitemradio'); button.setAttribute('aria-checked', option.value === selected.value ? 'true' : 'false');
-    const check = document.createElement('span'); check.className = 'menu-check'; const text=document.createElement('span'); text.className='menu-label'; text.textContent=option.label; button.append(check,text);
+    const check=document.createElement('span'); check.className='menu-check'; const text=document.createElement('span'); text.className='menu-label'; text.textContent=option.label; button.append(check,text);
     button.addEventListener('click', event => { event.stopPropagation(); const changed = parts.input.value !== option.value; parts.input.value = option.value; parts.label.textContent = option.label; for (const choice of parts.menu.querySelectorAll('[data-value]')) choice.setAttribute('aria-checked', choice.dataset.value === option.value ? 'true' : 'false'); parts.menu.hidden = true; parts.button.setAttribute('aria-expanded','false'); parts.button.focus(); if (changed) parts.input.dispatchEvent(new Event('change',{bubbles:true})); });
     parts.menu.append(button);
   }
