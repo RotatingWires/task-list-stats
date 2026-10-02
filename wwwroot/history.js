@@ -126,6 +126,20 @@ function renderYearComparison(items) {
   setTable($('#yearComparisonTable'), ['Year', ...MONTHS], rows, Array.from({length:12}, (_,i)=>i+1));
 }
 
+function parseCalendarMonth(value) {
+  const match = /^\s*(\d{1,2})\/(\d{2}|\d{4})\s*$/.exec(value || '');
+  if (!match) return null;
+  const month = Number(match[1]);
+  let year = Number(match[2]);
+  if (match[2].length === 2) year += 2000;
+  if (month < 1 || month > 12 || year < 1) return null;
+  return { year, month };
+}
+
+function formatCalendarMonthValue(year, month) {
+  return `${month}/${year}`;
+}
+
 function renderCalendar() {
   const items = scopedItems();
   populateYearSelector(items);
@@ -155,11 +169,11 @@ function populateYearSelector(items) {
 
   const monthInput = $('#calendarMonth');
   const selectedYear = Number(input.value);
-  const selectedMonth = /^(\d{4})-(\d{2})$/.exec(monthInput.value);
-  if (!selectedMonth || Number(selectedMonth[1]) !== selectedYear) {
+  const selectedMonth = parseCalendarMonth(monthInput.value);
+  if (!selectedMonth || selectedMonth.year !== selectedYear) {
     const latest = items.map(x=>x.createdDate).filter(d=>d && d.getFullYear()===selectedYear).sort((a,b)=>b-a)[0];
     const d = latest || new Date(selectedYear, new Date().getMonth(), 1);
-    monthInput.value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    monthInput.value = formatCalendarMonthValue(d.getFullYear(), d.getMonth()+1);
   }
 }
 
@@ -169,7 +183,7 @@ function dailyMap(items, mode) {
     if ((mode === 'created' || mode === 'activity') && item.createdDate) increment(map, localDayKey(item.createdDate));
     if ((mode === 'completed' || mode === 'activity') && item.completedDate) increment(map, localDayKey(item.completedDate));
     if ((mode === 'cancelled' || mode === 'activity') && item.cancelledDate) increment(map, localDayKey(item.cancelledDate));
-    if (mode === 'activity' && item.reopenedDate) increment(map, localDayKey(item.reopenedDate));
+    if ((mode === 'reopened' || mode === 'activity') && item.reopenedDate) increment(map, localDayKey(item.reopenedDate));
   }
   return map;
 }
@@ -197,7 +211,7 @@ function renderYearHeatmap(items) {
 
   const grid = document.createElement('div');
   grid.className = 'heatmap-grid';
-  grid.style.gridTemplateColumns = `32px repeat(${weeks}, 24px)`;
+  grid.style.gridTemplateColumns = `42px repeat(${weeks}, 24px)`;
   grid.style.gridTemplateRows = '20px repeat(7, 24px)';
   grid.style.gridAutoFlow = 'row';
 
@@ -210,7 +224,7 @@ function renderYearHeatmap(items) {
   }
   for (let dow=0; dow<7; dow++) {
     const label = document.createElement('div'); label.className = 'heat-label';
-    label.textContent = dow % 2 ? WEEKDAYS[dow].slice(0,1) : '';
+    label.textContent = WEEKDAYS[dow];
     grid.append(label);
     for (let w=0; w<weeks; w++) {
       const d = new Date(start); d.setDate(start.getDate() + w*7 + dow);
@@ -227,16 +241,19 @@ function renderYearHeatmap(items) {
 }
 
 function renderMonthCalendar(items) {
-  const value = $('#calendarMonth').value;
-  if (!value) return;
-  const [year, month] = value.split('-').map(Number);
+  const selected = parseCalendarMonth($('#calendarMonth').value);
+  if (!selected) {
+    $('#monthCalendar').replaceChildren();
+    return;
+  }
+  const { year, month } = selected;
   const created = dailyMap(items, 'created');
   const completed = dailyMap(items, 'completed');
   const cancelled = dailyMap(items, 'cancelled');
   const grid = $('#monthCalendar');
   grid.replaceChildren();
   for (const day of WEEKDAYS) {
-    const head = document.createElement('div'); head.className = 'calendar-head'; head.textContent = day; grid.append(head);
+    const head = document.createElement('div'); head.className = 'calendar-head'; head.textContent = day.slice(0, 3); grid.append(head);
   }
   const first = new Date(year, month - 1, 1);
   const days = new Date(year, month, 0).getDate();
@@ -322,4 +339,3 @@ function renderLists() {
   });
   setTable($('#activeListByMonthTable'), ['Month','Most active list','Created'], activeRows, [2]);
 }
-

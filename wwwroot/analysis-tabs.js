@@ -39,10 +39,6 @@ function eventTransition(event) {
   return `${event.fromStatus ?? '—'} → ${event.toStatus ?? '—'}`;
 }
 
-function eventSourceLabel(event) {
-  return event.source === 'live' ? 'Recorded live' : 'Legacy backfill';
-}
-
 function parseAnalysisDate(value) {
   const match = /^\s*(\d{1,2})\/(\d{1,2})(?:\/(\d{2}|\d{4}))?\s*$/.exec(value);
   if (!match) return null;
@@ -99,8 +95,8 @@ function renderHistoryExplorer() {
   const table = $('#historyExplorerTable');
   const summary = $('#historyExplorerSummary');
   if (!eventLogReady()) {
-    summary.textContent = 'TaskList 1.5 event log is not available in this database yet.';
-    setAnalysisEmpty(table, 'Run the TaskList 1.5 server once to create and backfill the event log.');
+    summary.textContent = 'Event history is not available in this database.';
+    setAnalysisEmpty(table, 'Event history is not available in this database.');
     return;
   }
 
@@ -129,14 +125,13 @@ function renderHistoryExplorer() {
   const total = events.length;
   const shown = events.slice(0, 500);
   summary.textContent = `${numberFmt.format(total)} matching recorded events${total > shown.length ? ` • showing first ${numberFmt.format(shown.length)}` : ''}`;
-  setTable(table, ['When', 'Event', 'List', 'ID', 'Task', 'Transition', 'Source'], shown.map(event => [
+  setTable(table, ['When', 'Event', 'List', 'ID', 'Task', 'Transition'], shown.map(event => [
     hasConfirmedClockTime(event.eventAt) ? formatDateTime(event.eventDate) : formatDate(event.eventDate),
     event.eventType,
     listName(event.listId),
     eventTaskNode(event),
     event.title,
-    eventTransition(event),
-    eventSourceLabel(event)
+    eventTransition(event)
   ]));
 }
 
@@ -198,10 +193,10 @@ function renderCompare() {
   const table = $('#compareTable');
   const summary = $('#compareSummary');
   if (!eventLogReady()) {
-    summary.textContent = 'TaskList 1.5 event log is required for Compare.';
+    summary.textContent = 'Event history is not available for comparison.';
     renderMetricList($('#compareAMetrics'), []);
     renderMetricList($('#compareBMetrics'), []);
-    setAnalysisEmpty(table, 'Run TaskList 1.5 once to enable recorded comparisons.');
+    setAnalysisEmpty(table, 'Event history is not available for comparison.');
     return;
   }
 
@@ -365,7 +360,7 @@ function makeSessionEventRow(event) {
   const meta = document.createElement('div');
   meta.className = 'session-event-meta';
   const transition = eventTransition(event);
-  meta.textContent = `${transition !== '—' ? `${transition} • ` : ''}${eventSourceLabel(event)}`;
+  meta.textContent = transition;
 
   row.append(heading, task, meta);
   return row;
@@ -439,7 +434,7 @@ function renderActivitySessions() {
   const table = $('#sessionsTable');
   if (!eventLogReady()) {
     renderCards($('#sessionCards'), []);
-    setAnalysisEmpty(table, 'TaskList 1.5 event log is required for Activity Sessions.');
+    setAnalysisEmpty(table, 'Event history is not available for Activity Sessions.');
     return;
   }
 
@@ -513,7 +508,7 @@ function makeMilestoneRow(record) {
   list.textContent = `${listName(record.event.listId)} • `;
   detail.append(list, eventTaskNode(record.event));
   const tail = document.createElement('span');
-  tail.textContent = ` • ${record.event.eventType}: ${record.event.title} • ${eventSourceLabel(record.event)}`;
+  tail.textContent = ` • ${record.event.eventType}: ${record.event.title}`;
   detail.append(tail);
   row.append(heading, detail);
   return row;
@@ -525,13 +520,13 @@ function renderMilestones() {
   renderCards($('#milestoneCards'), [
     { label: 'Highest Universal ID', value: numberFmt.format(state.snapshot?.highestUniversalId || 0) },
     { label: 'Recorded events in scope', value: numberFmt.format(events.length) },
-    { label: 'Live events', value: numberFmt.format(events.filter(e => e.source === 'live').length) },
-    { label: 'Legacy-backfilled events', value: numberFmt.format(events.filter(e => e.source !== 'live').length) }
+    { label: 'Created events', value: numberFmt.format(events.filter(e => e.eventType === 'Created').length) },
+    { label: 'Completed events', value: numberFmt.format(events.filter(e => e.eventType === 'Completed').length) }
   ]);
   if (!eventLogReady()) {
     const empty = document.createElement('div');
     empty.className = 'milestone-empty';
-    empty.textContent = 'TaskList 1.5 event log is required for recorded milestones.';
+    empty.textContent = 'Event history is not available for recorded milestones.';
     timeline.replaceChildren(empty);
     return;
   }

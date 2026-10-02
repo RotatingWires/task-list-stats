@@ -4,6 +4,8 @@
 const numberFmt = new Intl.NumberFormat();
 const oneDecimal = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 let tooltip = null;
+let tooltipCanvas = null;
+let tooltipIndexValue = -1;
 
 function prepareCanvas(canvas, minHeight = 220) {
   // canvas.width/canvas.height are backing-store dimensions. Setting them also
@@ -96,6 +98,7 @@ function drawBarChart(canvas, labels, values, color = '#000080', decimal = false
   if (!values.length) {
     ctx.fillStyle = '#333';
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     ctx.fillText('No data', width / 2, height / 2);
     return;
   }
@@ -164,60 +167,118 @@ function getTooltip() {
   document.body.append(tooltip);
   return tooltip;
 }
-function hideTooltip() { if (tooltip) tooltip.hidden = true; }
+
+function hideTooltip() {
+  if (tooltip) tooltip.hidden = true;
+  tooltipCanvas = null;
+  tooltipIndexValue = -1;
+}
+
 function tooltipIndex(config, x) {
   const count = config.labels.length;
   if (count <= 1) return 0;
   return Math.max(0, Math.min(count - 1, Math.round(((x - config.left) / config.plotW) * (count - 1))));
 }
+
 function showTooltip(canvas, event) {
   const config = canvas._tooltipConfig;
-  if (!config || !config.labels?.length) return;
+  if (!config || !config.labels?.length) return null;
   const rect = canvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
-  if (x < config.left - 10 || x > config.left + config.plotW + 10) { hideTooltip(); return; }
+  if (x < config.left - 10 || x > config.left + config.plotW + 10) {
+    hideTooltip();
+    return null;
+  }
   const index = tooltipIndex(config, x);
   const tip = getTooltip();
   tip.textContent = [String(config.labels[index]), ...config.series.map(series => `${series.name}: ${numberFmt.format(series.values[index] ?? 0)}`)].join('\n');
   tip.hidden = false;
+  tooltipCanvas = canvas;
+  tooltipIndexValue = index;
   const margin = 10, width = tip.offsetWidth || 220, height = tip.offsetHeight || 60;
   const left = Math.max(margin, Math.min(window.innerWidth - width - margin, event.clientX - width / 2));
   let top = event.clientY + 12;
   if (top + height + margin > window.innerHeight) top = Math.max(margin, event.clientY - height - 12);
   tip.style.left = `${left}px`;
   tip.style.top = `${top}px`;
+  return index;
 }
+
 function installLineTooltip(canvas) {
   if (!canvas || canvas._lineTooltipInstalled) return;
   canvas._lineTooltipInstalled = true;
   canvas.style.touchAction = 'manipulation';
-  canvas.addEventListener('pointermove', event => { if (event.pointerType !== 'touch') showTooltip(canvas, event); });
-  canvas.addEventListener('pointerleave', event => { if (event.pointerType !== 'touch') hideTooltip(); });
-  canvas.addEventListener('click', event => showTooltip(canvas, event));
+  canvas.addEventListener('pointermove', event => {
+    if (event.pointerType !== 'touch') showTooltip(canvas, event);
+  });
+  canvas.addEventListener('pointerleave', event => {
+    if (event.pointerType !== 'touch') hideTooltip();
+  });
+  canvas.addEventListener('click', event => {
+    const config = canvas._tooltipConfig;
+    if (!config || !config.labels?.length) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const index = tooltipIndex(config, x);
+    const touchLike = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    if (touchLike && tooltip && !tooltip.hidden && tooltipCanvas === canvas && tooltipIndexValue === index) {
+      hideTooltip();
+      return;
+    }
+    showTooltip(canvas, event);
+  });
 }
 
 function drawLineChart(canvas, labels, values, color = '#000080', yLabel = 'Tasks', seriesName = 'Series') {
   drawMultiLineChart(canvas, labels, [{ name: seriesName, values, color }], yLabel);
 }
+
 function drawMultiLineChart(canvas, labels, series, yLabel = 'Tasks') {
   if (!canvas || canvas.closest('[hidden]')) return;
   const { ctx, width, height } = prepareCanvas(canvas, Number(canvas.dataset.logicalHeight) || Number(canvas.getAttribute('height')) || 220);
   const rawMax = Math.max(1, ...series.flatMap(s => s.values));
   const a = axes(ctx, width, height, rawMax * 1.08, yLabel);
   const n = labels.length;
-  if (!n) { delete canvas._tooltipConfig; hideTooltip(); ctx.fillStyle = '#333'; ctx.textAlign = 'center'; ctx.fillText('No data', width / 2, height / 2); return; }
+  if (!n) {
+    delete canvas._tooltipConfig;
+    hideTooltip();
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'center';
+    ctx.fillText('No data', width / 2, height / 2);
+    return;
+  }
   const xAt = i => a.left + (n === 1 ? a.plotW / 2 : a.plotW * i / (n - 1));
   for (const item of series) {
-    ctx.strokeStyle = item.color; ctx.lineWidth = 2; ctx.beginPath();
-    item.values.forEach((value, i) => { const x = xAt(i), y = a.top + a.plotH - a.plotH * value / a.max; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+    ctx.strokeStyle = item.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    item.values.forEach((value, i) => {
+      const x = xAt(i), y = a.top + a.plotH - a.plotH * value / a.max;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
     ctx.stroke();
   }
   const step = Math.max(1, Math.ceil(n / 10));
-  ctx.fillStyle = '#222'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  labels.forEach((label, i) => { if (i % step === 0 || i === n - 1) ctx.fillText(String(label), xAt(i), height - 19); });
+  ctx.fillStyle = '#222';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  labels.forEach((label, i) => {
+    if (i % step === 0 || i === n - 1) ctx.fillText(String(label), xAt(i), height - 19);
+  });
   canvas._tooltipConfig = { labels, series, left: a.left, plotW: a.plotW };
   installLineTooltip(canvas);
 }
+
+document.addEventListener('pointerdown', event => {
+  if (!tooltip || tooltip.hidden) return;
+  if (tooltip.contains(event.target)) return;
+  const canvas = event.target.closest?.('canvas');
+  if (canvas?._tooltipConfig) return;
+  hideTooltip();
+}, true);
+window.addEventListener('scroll', hideTooltip, { capture: true, passive: true });
+document.addEventListener('keydown', event => { if (event.key === 'Escape') hideTooltip(); });
 
 window.Charts = { drawBarChart, drawGroupedBarChart, drawLineChart, drawMultiLineChart };
 })();

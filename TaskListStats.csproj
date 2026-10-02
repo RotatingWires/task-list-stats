@@ -5,10 +5,10 @@
     <RootNamespace>TaskListStats</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>2.0.4</Version>
-    <AssemblyVersion>2.0.4.0</AssemblyVersion>
-    <FileVersion>2.0.4.0</FileVersion>
-    <InformationalVersion>2.0.4</InformationalVersion>
+    <Version>2.0.5</Version>
+    <AssemblyVersion>2.0.5.0</AssemblyVersion>
+    <FileVersion>2.0.5.0</FileVersion>
+    <InformationalVersion>2.0.5</InformationalVersion>
     <Product>TaskList Stats</Product>
   </PropertyGroup>
   <ItemGroup>

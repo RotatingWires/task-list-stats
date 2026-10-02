@@ -1,7 +1,7 @@
 (() => {
 'use strict';
 
-const funState = { activeTab:'roulette', rouletteUniversalId:null, ancient:null, timeMachine:null, jackpot:null, graveyard:null };
+const funState = { activeTab:'roulette', rouletteUniversalId:null, timeMachine:null, jackpot:null };
 let initialized = false;
 
 function random(values){ return values.length ? values[Math.floor(Math.random()*values.length)] : null; }
@@ -10,6 +10,14 @@ function empty(text){ const div=document.createElement('div'); div.className='fu
 function dayLabel(key){ return key ? formatDate(new Date(`${key}T12:00:00`)) : '—'; }
 function fullDate(date){ return date ? formatDate(date) : 'Unknown'; }
 function maxEntryOf(map){ return [...map.entries()].sort((a,b)=>b[1]-a[1]||String(a[0]).localeCompare(String(b[0])))[0]||null; }
+function storedTimestamp(date, raw){ return !date ? '—' : hasConfirmedClockTime(raw) ? formatDateTime(date) : formatDate(date); }
+function itemTimestamp(item, name){ return storedTimestamp(item[`${name}Date`], item[`${name}At`]); }
+function lastKnownActivity(item){
+  if(item.updatedDate)return {date:item.updatedDate,raw:item.updatedAt};
+  if(item.reopenedDate)return {date:item.reopenedDate,raw:item.reopenedAt};
+  if(item.createdDate)return {date:item.createdDate,raw:item.createdAt};
+  return null;
+}
 const MIN_SPEEDRUN_MS = 5 * 60_000;
 function hasConfirmedCompletionPair(item){ return !!(item.createdDate&&item.completedDate&&hasConfirmedClockTime(item.createdAt)&&hasConfirmedClockTime(item.completedAt)); }
 function wrapperTable(headers,rows,numeric=[]){ const wrap=document.createElement('div'); wrap.className='table-wrap'; const table=document.createElement('table'); setTable(table,headers,rows,numeric); wrap.append(table); return wrap; }
@@ -22,12 +30,10 @@ function completionDays(){ const map=new Map(); for(const item of scopedItems())
 function switchTab(name){ funState.activeTab=name; $$('.subtabs [role="tab"]').forEach(button=>button.setAttribute('aria-selected',button.dataset.funTab===name?'true':'false')); $$('.fun-panel').forEach(panel=>panel.hidden=panel.dataset.funPanel!==name); render(); }
 function addPanel(key,label,note,actionLabel=null,action=null){ const tabs=$('.subtabs'),root=tabs?.parentElement;if(!tabs||!root||document.querySelector(`[data-fun-tab="${key}"]`))return;const button=document.createElement('button');button.type='button';button.setAttribute('role','tab');button.setAttribute('aria-selected','false');button.dataset.funTab=key;button.textContent=label;tabs.append(button);const panel=document.createElement('section');panel.className='fun-panel';panel.dataset.funPanel=key;panel.hidden=true;const fieldset=document.createElement('fieldset');fieldset.className='groupbox';const legend=document.createElement('legend');legend.textContent=label;const description=document.createElement('div');description.className='note';description.textContent=note;const actions=document.createElement('div');actions.className='fun-actions';const result=document.createElement('div');result.className='fun-content';result.id=`${key}Result`;if(actionLabel){const actionButton=document.createElement('button');actionButton.type='button';actionButton.textContent=actionLabel;actionButton.addEventListener('click',action);actions.append(actionButton);}fieldset.append(legend,description,actions,result);panel.append(fieldset);root.append(panel); }
 
-function renderRoulette(){ const result=$('#rouletteResult'),none=$('#rouletteEmpty'),item=findItem(funState.rouletteUniversalId);if(!item||!scopedItems().some(x=>x.universalId===item.universalId)){funState.rouletteUniversalId=null;result.hidden=true;none.hidden=false;none.textContent=scopedItems().length?'No task selected yet.':'No current tasks are available in this list scope.';return;}const h=hierarchy(item),heading=$('#rouletteTaskHeading');heading.replaceChildren(document.createTextNode(`${listName(item.listId)} — `),taskLink(item));$('#rouletteTaskTitle').textContent=item.title||'(Untitled task)';setTable($('#rouletteTable'),['Statistic','Value'],[['Universal ID',taskLink(item,numberFmt.format(item.universalId))],['Status',item.status],['Type',item.parentDisplayId?'Subtask':'Root task'],['Nesting depth',item.depth],['Parent',h.parent?taskLink(h.parent,`#${h.parent.displayId} — ${h.parent.title}`):'—'],['Direct children',h.children.length],['Descendants',h.descendants.length],['Siblings',h.siblings.length],['Root tree size',h.tree.length],['Created',formatDateTime(item.createdDate)],['Current age',item.status==='Open'&&item.createdDate?formatDuration(new Date()-item.createdDate):'—'],['Terminal time',formatDuration(terminalDurationMs(item))],['Updated',formatDateTime(item.updatedDate)],['Completed',formatDateTime(item.completedDate)],['Cancelled',formatDateTime(item.cancelledDate)],['Reopened',formatDateTime(item.reopenedDate)],['Description',item.description||'—']]);none.hidden=true;result.hidden=false; }
+function renderRoulette(){ const result=$('#rouletteResult'),none=$('#rouletteEmpty'),item=findItem(funState.rouletteUniversalId);if(!item||!scopedItems().some(x=>x.universalId===item.universalId)){funState.rouletteUniversalId=null;result.hidden=true;none.hidden=false;none.textContent=scopedItems().length?'No task selected yet.':'No current tasks are available in this list scope.';return;}const h=hierarchy(item),heading=$('#rouletteTaskHeading');heading.replaceChildren(document.createTextNode(`${listName(item.listId)} — `),taskLink(item));$('#rouletteTaskTitle').textContent=item.title||'(Untitled task)';setTable($('#rouletteTable'),['Statistic','Value'],[['Universal ID',taskLink(item,numberFmt.format(item.universalId))],['Status',item.status],['Type',item.parentDisplayId?'Subtask':'Root task'],['Nesting depth',item.depth],['Parent',h.parent?taskLink(h.parent,`#${h.parent.displayId} — ${h.parent.title}`):'—'],['Direct children',h.children.length],['Descendants',h.descendants.length],['Siblings',h.siblings.length],['Root tree size',h.tree.length],['Created',itemTimestamp(item,'created')],['Current age',item.status==='Open'&&item.createdDate?formatDuration(new Date()-item.createdDate):'—'],['Terminal time',formatDuration(terminalDurationMs(item))],['Updated',itemTimestamp(item,'updated')],['Completed',itemTimestamp(item,'completed')],['Cancelled',itemTimestamp(item,'cancelled')],['Reopened',itemTimestamp(item,'reopened')],['Description',item.description||'—']]);none.hidden=true;result.hidden=false; }
 function pickRoulette(){const item=random(scopedItems());funState.rouletteUniversalId=item?.universalId??null;renderRoulette();}
-function pickAncient(){const items=scopedItems().filter(x=>x.status==='Open'&&x.createdDate).sort((a,b)=>a.createdDate-b.createdDate).slice(0,10);funState.ancient=random(items)?.universalId??null;render();}
 function pickTimeMachine(){funState.timeMachine=random(eventDays(scopedItems()));render();}
 function pickJackpot(){funState.jackpot=random(completionDays().slice(0,10))?.[0]??null;render();}
-function pickGraveyard(){const items=scopedItems().filter(x=>x.status!=='Open'&&(x.completedDate||x.cancelledDate)).sort((a,b)=>(a.completedDate||a.cancelledDate)-(b.completedDate||b.cancelledDate));funState.graveyard=random(items.slice(0,Math.max(1,Math.ceil(items.length/2))))?.universalId??null;render();}
 
 function renderTimeMachine(){const result=$('#timemachineResult'),day=funState.timeMachine;if(!day){result.replaceChildren(empty('Pick a historical date.'));return;}const heading=document.createElement('div');heading.className='fun-day-heading';heading.textContent=`You on ${dayLabel(day)}`;const rows=eventsOn(day).map(([item,event])=>[listName(item.listId),taskLink(item),item.title,event,statusWithTimestampNote(item)]);result.replaceChildren(heading,wrapperTable(['List','ID','Task','Event on this date','Current status'],rows));}
 function renderRecords(){
@@ -92,14 +98,10 @@ function renderEarlyBird(){renderHourWindow('#earlybirdResult',h=>h>=5&&h<9,'ear
 function renderSameDaySpeedrun(){const result=$('#samedayspeedResult'),rows=scopedItems().map(item=>[item,durationMs(item)]).filter(([item,ms])=>ms!=null&&ms>=MIN_SPEEDRUN_MS&&hasConfirmedCompletionPair(item)&&localDayKey(item.createdDate)===localDayKey(item.completedDate)).sort((a,b)=>a[1]-b[1]).slice(0,20),summary=document.createElement('div');summary.className='fun-current-summary';summary.textContent=rows.length?`Fastest same-day finish: ${formatDuration(rows[0][1])}`:'No same-day completed tasks with confirmed creation/completion times and at least 5 minutes elapsed.';result.replaceChildren(summary,wrapperTable(['Elapsed','Date','List','ID','Task'],rows.map(([item,ms])=>[formatDuration(ms),formatDate(item.completedDate),listName(item.listId),taskLink(item),item.title])));}
 function renderCleanupDay(){const result=$('#cleanupdayResult'),items=scopedItems(),days=new Map(),row=day=>{if(!days.has(day))days.set(day,{created:0,completed:0});return days.get(day);};for(const item of items){if(item.createdDate&&hasConfirmedClockTime(item.createdAt))row(localDayKey(item.createdDate)).created++;if(item.completedDate&&hasConfirmedClockTime(item.completedAt))row(localDayKey(item.completedDate)).completed++;}const best=[...days.entries()].map(([day,value])=>({day,...value,net:value.completed-value.created})).sort((a,b)=>b.net-a.net||b.completed-a.completed||b.day.localeCompare(a.day))[0];if(!best){result.replaceChildren(empty('No timed activity.'));return;}const heading=document.createElement('div');heading.className='fun-current-summary';heading.textContent=`${dayLabel(best.day)} — net cleanup ${best.net>=0?'+':''}${best.net}`;const sub=document.createElement('div');sub.className='fun-current-sub';sub.textContent=`${numberFmt.format(best.completed)} completed • ${numberFmt.format(best.created)} created`;const completed=items.filter(item=>item.completedDate&&hasConfirmedClockTime(item.completedAt)&&localDayKey(item.completedDate)===best.day).sort((a,b)=>a.completedDate-b.completedDate);result.replaceChildren(heading,sub,wrapperTable(['Completed','List','ID','Task'],completed.map(item=>[formatDateTime(item.completedDate),listName(item.listId),taskLink(item),item.title])));}
 
-function renderAncient(){
-  const ancient=findItem(funState.ancient);
-  spotlight('#ancientResult',ancient,'Pick an ancient task.',ancient?[['Age',formatDuration(new Date()-ancient.createdDate)],['Created',formatDateTime(ancient.createdDate)]]:[]);
-}
 function renderForgotten(){
-  const forgotten=scopedItems().filter(x=>x.status==='Open'&&x.createdDate).sort((a,b)=>(a.updatedDate||a.reopenedDate||a.createdDate)-(b.updatedDate||b.reopenedDate||b.createdDate))[0]||null;
-  const last=forgotten&&(forgotten.updatedDate||forgotten.reopenedDate||forgotten.createdDate);
-  spotlight('#forgottenResult',forgotten,'No dated open task.',forgotten?[['Last known activity',formatDateTime(last)],['Time since',formatDuration(new Date()-last)]]:[]);
+  const forgotten=scopedItems().filter(x=>x.status==='Open'&&x.createdDate).sort((a,b)=>lastKnownActivity(a).date-lastKnownActivity(b).date)[0]||null;
+  const last=forgotten&&lastKnownActivity(forgotten);
+  spotlight('#forgottenResult',forgotten,'No dated open task.',forgotten?[['Last known activity',storedTimestamp(last.date,last.raw)],['Time since',formatDuration(new Date()-last.date)]]:[]);
 }
 function renderJackpot(){
   const jackpotDay=funState.jackpot,jackpotResult=$('#jackpotResult');
@@ -107,10 +109,6 @@ function renderJackpot(){
   const completed=scopedItems().filter(x=>localDayKey(x.completedDate)===jackpotDay);
   const heading=document.createElement('div');heading.className='fun-day-heading';heading.textContent=`${dayLabel(jackpotDay)} — ${completed.length} completed`;
   jackpotResult.replaceChildren(heading,wrapperTable(['List','ID','Task'],completed.map(x=>[listName(x.listId),taskLink(x),x.title])));
-}
-function renderGraveyard(){
-  const grave=findItem(funState.graveyard),terminal=grave&&(grave.completedDate||grave.cancelledDate);
-  spotlight('#graveyardResult',grave,'Dig up an old task.',grave?[['Final status',grave.status],['Buried on',formatDateTime(terminal)],['Age when closed',formatDuration(terminalDurationMs(grave))]]:[]);
 }
 function renderDejaVu(){
   const groups=new Map();
@@ -126,16 +124,14 @@ function renderDejaVu(){
 function renderSlowest(){
   const durations=scopedItems().map(item=>[item,durationMs(item)]).filter(x=>x[1]!=null).sort((a,b)=>a[1]-b[1]);
   const slow=durations.at(-1);
-  spotlight('#slowestResult',slow?.[0]||null,'No completed timestamp pair.',slow?[['Elapsed',formatDuration(slow[1])],['Created',formatDateTime(slow[0].createdDate)],['Completed',formatDateTime(slow[0].completedDate)]]:[]);
+  spotlight('#slowestResult',slow?.[0]||null,'No completed timestamp pair.',slow?[['Elapsed',formatDuration(slow[1])],['Created',itemTimestamp(slow[0],'created')],['Completed',itemTimestamp(slow[0],'completed')]]:[]);
 }
 
 const FUN_RENDERERS={
   roulette:renderRoulette,
-  ancient:renderAncient,
   forgotten:renderForgotten,
   timemachine:renderTimeMachine,
   jackpot:renderJackpot,
-  graveyard:renderGraveyard,
   records:renderRecords,
   today:renderToday,
   dejavu:renderDejaVu,
@@ -151,6 +147,6 @@ function render(){
   FUN_RENDERERS[funState.activeTab]?.();
 }
 
-function initialize(){if(initialized)return;initialized=true;addPanel('ancient','Ancient Task','Randomly choose one of the ten oldest open tasks.','Summon an Ancient Task',pickAncient);addPanel('forgotten','Forgotten Task','Find the open task with the oldest known activity.');addPanel('timemachine','Time Machine','Jump to a random historical date and show only the timestamps actually stored on that date. A task can currently be Done even when its completion date is different or unknown.','Travel to a Random Date',pickTimeMachine);addPanel('jackpot','Productivity Jackpot','Draw one of your ten biggest completion days.','Spin the Jackpot',pickJackpot);addPanel('graveyard','Task Graveyard','Dig up a random older completed or cancelled task.','Dig Up a Task',pickGraveyard);addPanel('records','Personal Records','High-water marks and task-specific records from the current list scope.');addPanel('today','On This Day','Task events on today’s month/day in any represented year, including the full stored month/day/year for each event.');addPanel('dejavu','Déjà Vu','Exact task titles you have reused.');addPanel('slowest','Slowest Task','Longest observed created-to-completed duration.');addPanel('nightowl','Night Owl','Recent task creation/completion activity during night-owl hours, from 9 PM through 4:59 AM.');addPanel('earlybird','Early Bird','Recent task creation/completion activity during early-morning hours, from 5 AM through 8:59 AM.');addPanel('samedayspeed','Same-Day Speedrun','The fastest tasks created and completed on the same local calendar day using confirmed times only, with a 5-minute minimum.');addPanel('cleanupday','Cleanup Day','The historical day with the largest completed-minus-created count using events with times.');$$('.subtabs [role="tab"]').forEach(button=>button.addEventListener('click',()=>switchTab(button.dataset.funTab)));$('#rouletteButton').addEventListener('click',pickRoulette);switchTab('roulette');}
+function initialize(){if(initialized)return;initialized=true;addPanel('forgotten','Forgotten Task','Find the open task with the oldest known activity.');addPanel('timemachine','Time Machine','Jump to a random historical date and show only the timestamps actually stored on that date. A task can currently be Done even when its completion date is different or unknown.','Travel to a Random Date',pickTimeMachine);addPanel('jackpot','Productivity Jackpot','Draw one of your ten biggest completion days.','Spin the Jackpot',pickJackpot);addPanel('records','Personal Records','High-water marks and task-specific records from the current list scope.');addPanel('today','On This Day','Task events on today’s month/day in any represented year, including the full stored month/day/year for each event.');addPanel('dejavu','Déjà Vu','Exact task titles you have reused.');addPanel('slowest','Slowest Task','Longest observed created-to-completed duration.');addPanel('nightowl','Night Owl','Recent task creation/completion activity during night-owl hours, from 9 PM through 4:59 AM.');addPanel('earlybird','Early Bird','Recent task creation/completion activity during early-morning hours, from 5 AM through 8:59 AM.');addPanel('samedayspeed','Same-Day Speedrun','The fastest tasks created and completed on the same local calendar day using confirmed times only, with a 5-minute minimum.');addPanel('cleanupday','Cleanup Day','The historical day with the largest completed-minus-created count using events with times.');$$('.subtabs [role="tab"]').forEach(button=>button.addEventListener('click',()=>switchTab(button.dataset.funTab)));$('#rouletteButton').addEventListener('click',pickRoulette);switchTab('roulette');}
 window.Fun={initialize,render};
 })();
