@@ -1,11 +1,11 @@
 'use strict';
 
 function calendarDayKeyFromCell(cell) {
-  const monthValue = $('#calendarMonth')?.value;
+  const selected = parseCalendarMonth($('#calendarMonth')?.value);
   const dayText = cell.querySelector('.calendar-date')?.textContent;
   const day = Number(dayText);
-  if (!/^\d{4}-\d{2}$/.test(monthValue || '') || !Number.isInteger(day) || day < 1 || day > 31) return null;
-  return `${monthValue}-${String(day).padStart(2, '0')}`;
+  if (!selected || !Number.isInteger(day) || day < 1 || day > 31) return null;
+  return `${selected.year}-${String(selected.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
 function calendarItemsForDay(dayKey, dateField) {

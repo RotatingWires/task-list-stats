@@ -78,8 +78,6 @@
 }
 .analysis-table-wrap table { min-width: 680px; }
 #historyExplorerTable { min-width: 600px; }
-#historyExplorerTable th:nth-child(7),
-#historyExplorerTable td:nth-child(7) { display: none; }
 .compare-panels {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
