@@ -65,9 +65,7 @@
   font-size: 12px;
   overflow-wrap: anywhere;
 }
-.compare-control-group {
-  display: contents;
-}
+.compare-control-group { display: contents; }
 .analysis-table-wrap {
   width: 100%;
   max-width: 100%;
@@ -120,6 +118,7 @@
   font-weight: 700;
   white-space: nowrap;
 }
+
 .milestone-timeline {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
@@ -160,31 +159,6 @@
   border-left: 2px solid #404040;
   border-right: 2px solid #fff;
   border-bottom: 2px solid #fff;
-}
-
-@media (max-width: 780px) {
-  .analysis-controls {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .analysis-controls label,
-  .analysis-control,
-  .analysis-controls .wide-control,
-  .analysis-select-menu,
-  .analysis-date-input {
-    min-width: 0;
-    width: 100%;
-    max-width: 100%;
-  }
-  .analysis-table-wrap { max-height: 55vh; }
-  .compare-panels { grid-template-columns: 1fr; }
-  .milestone-timeline { grid-template-columns: 1fr; }
-  .milestone-heading { display: grid; gap: 2px; }
-  .milestone-when { font-weight: 400; }
-}
-
-@media (max-width: 460px) {
-  .analysis-controls { grid-template-columns: 1fr; }
 }
 
 /* Activity Sessions uses the same compact timeline language as Milestones. */
@@ -243,7 +217,6 @@
   background: transparent;
   box-shadow: none;
 }
-
 .session-events-dialog {
   width: min(760px, calc(100vw - 24px));
   max-width: min(760px, calc(100vw - 24px));
@@ -299,21 +272,96 @@
   overflow-wrap: anywhere;
 }
 
+/* Calendar day drill-down lives with the other feature-dialog styles. */
+.calendar-day:not(.empty) { cursor: pointer; }
+.calendar-day:not(.empty):hover,
+.calendar-day:not(.empty):focus-within {
+  outline: 2px dotted #000080;
+  outline-offset: -3px;
+}
+.calendar-detail-dialog {
+  width: min(780px, calc(100vw - 24px));
+  max-width: min(780px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: hidden;
+}
+.calendar-detail-dialog .dialog-window {
+  width: 100%;
+  height: auto;
+  max-height: min(760px, calc(100dvh - 32px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.calendar-day-detail-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+.calendar-detail-dialog .dialog-title,
+.calendar-detail-dialog .dialog-buttons { flex: 0 0 auto; }
+.calendar-detail-dialog .dialog-buttons { background: var(--face); }
+.calendar-detail-dialog .dialog-buttons button { transform: translateY(6px); }
+.calendar-detail-scope {
+  font-size: 12px;
+  font-weight: 700;
+}
+.calendar-detail-group { margin: 0; }
+.calendar-detail-empty {
+  padding: 10px;
+  background: #fff;
+  border-top: 2px solid #404040;
+  border-left: 2px solid #404040;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  color: #555;
+}
+.calendar-detail-dialog table { min-width: 520px; }
+
 @media (max-width: 780px) {
+  .analysis-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .analysis-controls label,
+  .analysis-control,
+  .analysis-controls .wide-control,
+  .analysis-select-menu,
+  .analysis-date-input {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+  .analysis-table-wrap { max-height: 55vh; }
+  .compare-panels { grid-template-columns: 1fr; }
+  .milestone-timeline { grid-template-columns: 1fr; }
+  .milestone-heading,
   .session-heading,
   .session-event-heading {
     display: grid;
     gap: 2px;
   }
+  .milestone-when,
   .session-when,
-  .session-event-when {
-    font-weight: 400;
-  }
-  .session-events-dialog {
+  .session-event-when { font-weight: 400; }
+  .session-events-dialog,
+  .calendar-detail-dialog {
     width: calc(100vw - 16px);
     max-width: calc(100vw - 16px);
   }
-  .session-events-window {
+  .session-events-window,
+  .calendar-detail-dialog .dialog-window {
+    height: auto;
     max-height: calc(100dvh - 24px);
   }
+  .calendar-detail-dialog { max-height: calc(100dvh - 16px); }
+}
+
+@media (max-width: 460px) {
+  .analysis-controls { grid-template-columns: 1fr; }
 }

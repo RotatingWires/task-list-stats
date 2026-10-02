@@ -126,55 +126,55 @@ function renderYearComparison(items) {
   setTable($('#yearComparisonTable'), ['Year', ...MONTHS], rows, Array.from({length:12}, (_,i)=>i+1));
 }
 
-function parseCalendarMonth(value) {
-  const match = /^\s*(\d{1,2})\/(\d{2}|\d{4})\s*$/.exec(value || '');
-  if (!match) return null;
-  const month = Number(match[1]);
-  let year = Number(match[2]);
-  if (match[2].length === 2) year += 2000;
-  if (month < 1 || month > 12 || year < 1) return null;
+function availableCalendarYears(items) {
+  const years = allValidYears(items);
+  return years.length ? years : [new Date().getFullYear()];
+}
+
+function selectedCalendarYear(inputId, years, fallback) {
+  const value = Number($(`#${inputId}`).value);
+  return years.includes(value) ? value : fallback;
+}
+
+function calendarDetailSelection() {
+  const year = Number($('#calendarDetailYear').value);
+  const month = Number($('#calendarDetailMonth').value);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return null;
   return { year, month };
 }
 
-function formatCalendarMonthValue(year, month) {
-  return `${month}/${year}`;
+function populateCalendarSelectors(items) {
+  const years = availableCalendarYears(items);
+  const currentYear = new Date().getFullYear();
+  const heatmapFallback = years.includes(currentYear) ? currentYear : years.at(-1);
+  const heatmapYear = selectedCalendarYear('heatmapYear', years, heatmapFallback);
+  setSingleSelectOptions('heatmapYear', years.map(year => [String(year), String(year)]), String(heatmapYear));
+
+  const detailYear = selectedCalendarYear('calendarDetailYear', years, heatmapYear);
+  setSingleSelectOptions('calendarDetailYear', years.map(year => [String(year), String(year)]), String(detailYear));
+
+  let detailMonth = Number($('#calendarDetailMonth').value);
+  if (!Number.isInteger(detailMonth) || detailMonth < 1 || detailMonth > 12) {
+    const latest = items
+      .map(item => item.createdDate)
+      .filter(date => date && date.getFullYear() === detailYear)
+      .sort((a,b)=>b-a)[0];
+    detailMonth = latest?.getMonth() + 1 || (detailYear === currentYear ? new Date().getMonth() + 1 : 1);
+  }
+  setSingleSelectOptions(
+    'calendarDetailMonth',
+    MONTHS.map((label, index) => [String(index + 1), label]),
+    String(detailMonth)
+  );
 }
 
 function renderCalendar() {
   const items = scopedItems();
-  populateYearSelector(items);
+  populateCalendarSelectors(items);
   renderYearHeatmap(items);
   renderMonthCalendar(items);
   renderMonthYearHeatmap(items);
   renderSeasonality(items);
-}
-
-function populateYearSelector(items) {
-  const input = $('#heatmapYear');
-  const years = allValidYears(items);
-  const currentYear = new Date().getFullYear();
-  const current = Number(input.value) || currentYear;
-  const availableYears = years.length ? years : [currentYear];
-  const selected = availableYears.includes(current)
-    ? current
-    : availableYears.includes(currentYear)
-      ? currentYear
-      : availableYears.at(-1);
-
-  setSingleSelectOptions(
-    'heatmapYear',
-    availableYears.map(year => [String(year), String(year)]),
-    String(selected)
-  );
-
-  const monthInput = $('#calendarMonth');
-  const selectedYear = Number(input.value);
-  const selectedMonth = parseCalendarMonth(monthInput.value);
-  if (!selectedMonth || selectedMonth.year !== selectedYear) {
-    const latest = items.map(x=>x.createdDate).filter(d=>d && d.getFullYear()===selectedYear).sort((a,b)=>b-a)[0];
-    const d = latest || new Date(selectedYear, new Date().getMonth(), 1);
-    monthInput.value = formatCalendarMonthValue(d.getFullYear(), d.getMonth()+1);
-  }
 }
 
 function dailyMap(items, mode) {
@@ -241,7 +241,7 @@ function renderYearHeatmap(items) {
 }
 
 function renderMonthCalendar(items) {
-  const selected = parseCalendarMonth($('#calendarMonth').value);
+  const selected = calendarDetailSelection();
   if (!selected) {
     $('#monthCalendar').replaceChildren();
     return;
@@ -253,7 +253,7 @@ function renderMonthCalendar(items) {
   const grid = $('#monthCalendar');
   grid.replaceChildren();
   for (const day of WEEKDAYS) {
-    const head = document.createElement('div'); head.className = 'calendar-head'; head.textContent = day.slice(0, 3); grid.append(head);
+    const head = document.createElement('div'); head.className = 'calendar-head'; head.textContent = day; grid.append(head);
   }
   const first = new Date(year, month - 1, 1);
   const days = new Date(year, month, 0).getDate();
@@ -339,3 +339,80 @@ function renderLists() {
   });
   setTable($('#activeListByMonthTable'), ['Month','Most active list','Created'], activeRows, [2]);
 }
+
+function calendarDayKeyFromCell(cell) {
+  const selected = calendarDetailSelection();
+  const day = Number(cell.querySelector('.calendar-date')?.textContent);
+  if (!selected || !Number.isInteger(day) || day < 1 || day > 31) return null;
+  return `${selected.year}-${String(selected.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+function calendarItemsForDay(dayKey, dateField) {
+  return scopedItems()
+    .filter(item => localDayKey(item[dateField]) === dayKey)
+    .sort((a, b) => b.universalId - a.universalId);
+}
+
+function calendarDaySection(label, items) {
+  const fieldset = document.createElement('fieldset');
+  fieldset.className = 'groupbox calendar-detail-group';
+  const legend = document.createElement('legend');
+  legend.textContent = `${label} (${numberFmt.format(items.length)})`;
+  fieldset.append(legend);
+
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'calendar-detail-empty';
+    empty.textContent = `No tasks ${label.toLowerCase()} on this day.`;
+    fieldset.append(empty);
+    return fieldset;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'table-wrap';
+  const table = document.createElement('table');
+  setTable(table, ['List', 'ID', 'Task', 'Current status'], items.map(item => [
+    listName(item.listId),
+    taskLink(item),
+    item.title || '(Untitled task)',
+    item.status
+  ]));
+  wrap.append(table);
+  fieldset.append(wrap);
+  return fieldset;
+}
+
+function openCalendarDayDetails(dayKey) {
+  const date = new Date(`${dayKey}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return;
+
+  const created = calendarItemsForDay(dayKey, 'createdDate');
+  const completed = calendarItemsForDay(dayKey, 'completedDate');
+  const cancelled = calendarItemsForDay(dayKey, 'cancelledDate');
+
+  $('#calendarDayTitle').textContent = date.toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const scope = document.createElement('div');
+  scope.className = 'calendar-detail-scope';
+  scope.textContent = `Scope: ${isAllListScope() ? 'All lists' : selectedListNames().join(', ')}`;
+
+  $('#calendarDayBody').replaceChildren(
+    scope,
+    calendarDaySection('Created', created),
+    calendarDaySection('Completed', completed),
+    calendarDaySection('Cancelled', cancelled)
+  );
+  $('#calendarDayDialog').showModal();
+}
+
+$('#monthCalendar').addEventListener('click', event => {
+  const cell = event.target.closest('.calendar-day:not(.empty)');
+  if (!cell || !$('#monthCalendar').contains(cell)) return;
+  const dayKey = calendarDayKeyFromCell(cell);
+  if (dayKey) openCalendarDayDetails(dayKey);
+});

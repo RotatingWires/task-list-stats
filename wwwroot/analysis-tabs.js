@@ -1,6 +1,10 @@
 'use strict';
 
 const ANALYSIS_EVENT_TYPES = ['Created', 'Completed', 'Cancelled', 'Reopened'];
+const MILESTONE_EVENT_THRESHOLDS = [1, 100, 500, 1000, 2000, 3000, 5000, 10000];
+const MILESTONE_UID_THRESHOLDS = [1, 100, 500, 1000, 2000, 2500, 3000, 5000, 10000];
+const MILESTONE_LIST_THRESHOLDS = [100, 500, 1000, 2000, 5000];
+const MILESTONE_YEAR_THRESHOLDS = [100, 500, 1000, 2000];
 
 function allRecordedEvents() {
   const events = state.snapshot?.events ?? [];
@@ -296,82 +300,36 @@ function formatSessionDate(date) {
   });
 }
 
-function ensureSessionEventsDialog() {
-  let dialog = $('#sessionEventsDialog');
-  if (dialog) return dialog;
-
-  dialog = document.createElement('dialog');
-  dialog.id = 'sessionEventsDialog';
-  dialog.className = 'retro-dialog session-events-dialog';
-
-  const form = document.createElement('form');
-  form.method = 'dialog';
-  form.className = 'dialog-window session-events-window';
-
-  const title = document.createElement('div');
-  title.id = 'sessionEventsTitle';
-  title.className = 'dialog-title';
-  title.textContent = 'Activity Session';
-
-  const body = document.createElement('div');
-  body.id = 'sessionEventsBody';
-  body.className = 'dialog-body session-events-body';
-
-  const buttons = document.createElement('div');
-  buttons.className = 'dialog-buttons';
-  const close = document.createElement('button');
-  close.type = 'submit';
-  close.textContent = 'OK';
-  buttons.append(close);
-
-  form.append(title, body, buttons);
-  dialog.append(form);
-  document.body.append(dialog);
-  return dialog;
-}
-
 function makeSessionEventRow(event) {
   const row = document.createElement('div');
   row.className = 'session-event-row';
-
   const heading = document.createElement('div');
   heading.className = 'session-event-heading';
-
   const type = document.createElement('strong');
   type.textContent = event.eventType;
-
   const when = document.createElement('span');
   when.className = 'session-event-when';
   when.textContent = formatSessionTime(event.eventDate);
-
   heading.append(type, when);
 
   const task = document.createElement('div');
   task.className = 'session-event-task';
-
   const list = document.createElement('span');
   list.textContent = `${listName(event.listId)} • `;
   task.append(list, eventTaskNode(event));
-
   const title = document.createElement('span');
   title.textContent = ` • ${event.title}`;
   task.append(title);
 
   const meta = document.createElement('div');
   meta.className = 'session-event-meta';
-  const transition = eventTransition(event);
-  meta.textContent = transition;
-
+  meta.textContent = eventTransition(event);
   row.append(heading, task, meta);
   return row;
 }
 
 function openSessionEvents(session) {
-  const dialog = ensureSessionEventsDialog();
-  const title = $('#sessionEventsTitle');
-  const body = $('#sessionEventsBody');
-
-  title.textContent = `Activity Session — ${formatSessionDate(session.start)}`;
+  $('#sessionEventsTitle').textContent = `Activity Session — ${formatSessionDate(session.start)}`;
 
   const summary = document.createElement('div');
   summary.className = 'session-dialog-summary';
@@ -382,8 +340,8 @@ function openSessionEvents(session) {
   const ordered = [...session.events].sort((a, b) => a.eventDate - b.eventDate || a.id - b.id);
   list.replaceChildren(...ordered.map(makeSessionEventRow));
 
-  body.replaceChildren(summary, list);
-  dialog.showModal();
+  $('#sessionEventsBody').replaceChildren(summary, list);
+  $('#sessionEventsDialog').showModal();
 }
 
 function makeSessionRow(session) {
@@ -394,22 +352,17 @@ function makeSessionRow(session) {
 
   const row = document.createElement('div');
   row.className = 'session-row';
-
   const heading = document.createElement('div');
   heading.className = 'session-heading';
-
   const date = document.createElement('strong');
   date.textContent = formatSessionDate(session.start);
-
   const times = document.createElement('span');
   times.className = 'session-when';
   times.textContent = `${formatSessionTime(session.start)} – ${formatSessionTime(session.end)}`;
-
   heading.append(date, times);
 
   const detail = document.createElement('div');
   detail.className = 'session-detail';
-
   const span = document.createElement('span');
   span.textContent = `${formatDuration(session.end - session.start)} • `;
   detail.append(span);
@@ -425,7 +378,6 @@ function makeSessionRow(session) {
   const counts = document.createElement('span');
   counts.textContent = ` • ${created} created • ${completed} completed • ${cancelled} cancelled • ${reopened} reopened`;
   detail.append(counts);
-
   row.append(heading, detail);
   return row;
 }
@@ -451,10 +403,7 @@ function renderActivitySessions() {
     { label: 'Longest session span', value: formatDuration(Math.max(0, ...durations)) }
   ]);
 
-  const recent = [...sessions]
-    .sort((a, b) => b.start - a.start)
-    .slice(0, 100);
-
+  const recent = [...sessions].sort((a, b) => b.start - a.start).slice(0, 100);
   setTable(table, ['Session'], recent.map(session => [makeSessionRow(session)]));
 }
 
@@ -475,13 +424,60 @@ function milestoneLabel(threshold, noun) {
   return `${ordinal(threshold)} ${noun}`;
 }
 
-function milestoneEventRecords(events, eventType, thresholds) {
+function milestoneEventRecords(events, eventType, thresholds, labelPrefix = '') {
   const typed = events.filter(event => event.eventType === eventType).sort((a,b)=>a.eventDate-b.eventDate || a.id-b.id);
   const records = [];
   for (const threshold of thresholds) {
     if (typed.length < threshold) continue;
     const event = typed[threshold - 1];
-    records.push({ label: milestoneLabel(threshold, eventType.toLowerCase()), event });
+    const base = milestoneLabel(threshold, eventType.toLowerCase());
+    records.push({ label: labelPrefix ? `${labelPrefix} — ${base}` : base, event });
+  }
+  return records;
+}
+
+function milestoneUniversalIdRecords(events) {
+  const createdByUid = new Map(
+    events
+      .filter(event => event.eventType === 'Created')
+      .map(event => [event.universalId, event])
+  );
+  return MILESTONE_UID_THRESHOLDS
+    .map(threshold => {
+      const event = createdByUid.get(threshold);
+      return event ? { label: `Universal ID #${numberFmt.format(threshold)}`, event } : null;
+    })
+    .filter(Boolean);
+}
+
+function milestonePerListRecords(events) {
+  const records = [];
+  const listIds = [...new Set(events.map(event => event.listId))].sort((a,b)=>listName(a).localeCompare(listName(b)));
+  for (const listId of listIds) {
+    const listEvents = events.filter(event => event.listId === listId);
+    const prefix = listName(listId);
+    records.push(
+      ...milestoneEventRecords(listEvents, 'Created', MILESTONE_LIST_THRESHOLDS, prefix),
+      ...milestoneEventRecords(listEvents, 'Completed', MILESTONE_LIST_THRESHOLDS, prefix)
+    );
+  }
+  return records;
+}
+
+function milestoneYearRecords(events) {
+  const records = [];
+  const years = [...new Set(events.map(event => event.eventDate?.getFullYear()).filter(Boolean))].sort((a,b)=>a-b);
+  for (const year of years) {
+    const yearEvents = events.filter(event => event.eventDate?.getFullYear() === year);
+    for (const eventType of ['Created', 'Completed']) {
+      const typed = yearEvents.filter(event => event.eventType === eventType).sort((a,b)=>a.eventDate-b.eventDate || a.id-b.id);
+      if (!typed.length) continue;
+      records.push({ label: `${year} — First ${eventType.toLowerCase()}`, event: typed[0] });
+      for (const threshold of MILESTONE_YEAR_THRESHOLDS) {
+        if (typed.length < threshold) continue;
+        records.push({ label: `${year} — ${ordinal(threshold)} ${eventType.toLowerCase()}`, event: typed[threshold - 1] });
+      }
+    }
   }
   return records;
 }
@@ -516,12 +512,12 @@ function makeMilestoneRow(record) {
 
 function renderMilestones() {
   const timeline = $('#milestonesTimeline');
-  const events = eventLogReady() ? scopedRecordedEvents().filter(e => e.eventDate).sort((a,b)=>a.eventDate-b.eventDate || a.id-b.id) : [];
+  const events = eventLogReady() ? scopedRecordedEvents().filter(event => event.eventDate).sort((a,b)=>a.eventDate-b.eventDate || a.id-b.id) : [];
   renderCards($('#milestoneCards'), [
     { label: 'Highest Universal ID', value: numberFmt.format(state.snapshot?.highestUniversalId || 0) },
     { label: 'Recorded events in scope', value: numberFmt.format(events.length) },
-    { label: 'Created events', value: numberFmt.format(events.filter(e => e.eventType === 'Created').length) },
-    { label: 'Completed events', value: numberFmt.format(events.filter(e => e.eventType === 'Completed').length) }
+    { label: 'Created events', value: numberFmt.format(events.filter(event => event.eventType === 'Created').length) },
+    { label: 'Completed events', value: numberFmt.format(events.filter(event => event.eventType === 'Completed').length) }
   ]);
   if (!eventLogReady()) {
     const empty = document.createElement('div');
@@ -531,18 +527,20 @@ function renderMilestones() {
     return;
   }
 
-  const thresholds = [1, 100, 500, 1000, 2000, 3000, 5000, 10000];
   const records = [
-    ...milestoneEventRecords(events, 'Created', thresholds),
-    ...milestoneEventRecords(events, 'Completed', thresholds),
+    ...milestoneEventRecords(events, 'Created', MILESTONE_EVENT_THRESHOLDS),
+    ...milestoneEventRecords(events, 'Completed', MILESTONE_EVENT_THRESHOLDS),
     ...milestoneEventRecords(events, 'Cancelled', [1,100,500,1000]),
-    ...milestoneEventRecords(events, 'Reopened', [1,100,500,1000])
+    ...milestoneEventRecords(events, 'Reopened', [1,100,500,1000]),
+    ...milestoneUniversalIdRecords(events),
+    ...milestonePerListRecords(events),
+    ...milestoneYearRecords(events)
   ];
-  for (const threshold of thresholds) {
+  for (const threshold of MILESTONE_EVENT_THRESHOLDS) {
     if (events.length < threshold) continue;
     records.push({ label: milestoneLabel(threshold, 'recorded event'), event: events[threshold - 1] });
   }
-  records.sort((a, b) => a.event.eventDate - b.event.eventDate || a.event.id - b.event.id);
+  records.sort((a, b) => a.event.eventDate - b.event.eventDate || a.event.id - b.event.id || a.label.localeCompare(b.label));
   timeline.replaceChildren(...records.map(makeMilestoneRow));
 }
 
