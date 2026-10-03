@@ -37,8 +37,7 @@
         <div class="section-title">History Explorer</div>
         <div class="analysis-note">Browse recorded task state changes by date, event type, list, task, and status transition.</div>
         <div class="analysis-controls">
-          <label>From<input id="historyFrom" class="analysis-date-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="m/d or m/d/yy"></label>
-          <label>To<input id="historyTo" class="analysis-date-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="m/d or m/d/yy"></label>
+          <label class="wide-control">Date range<input id="historyDateRange" class="analysis-date-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="10/3 - 10/8"></label>
           <div class="analysis-control"><span>Event</span><input type="hidden" id="historyEventType" value="all"><div class="menu-wrap inline-select-menu analysis-select-menu" data-single-select="historyEventType"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>All events</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div>
           <div class="analysis-control"><span>Order</span><input type="hidden" id="historyOrder" value="newest"><div class="menu-wrap inline-select-menu analysis-select-menu" data-single-select="historyOrder"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Newest first</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div>
           <label class="wide-control">Task / ID / list<input id="historyQuery" type="text" placeholder="Optional filter"></label>
@@ -57,10 +56,8 @@
             <div class="analysis-control"><span>B</span><input type="hidden" id="compareListB" value=""><div class="menu-wrap inline-select-menu analysis-select-menu" data-single-select="compareListB"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Choose list</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div>
           </div>
           <div id="comparePeriodControls" class="compare-control-group" hidden>
-            <label>A from<input id="compareAFrom" class="analysis-date-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="m/d or m/d/yy"></label>
-            <label>A to<input id="compareATo" class="analysis-date-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="m/d or m/d/yy"></label>
-            <label>B from<input id="compareBFrom" class="analysis-date-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="m/d or m/d/yy"></label>
-            <label>B to<input id="compareBTo" class="analysis-date-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="m/d or m/d/yy"></label>
+            <label class="wide-control">A date range<input id="compareRangeA" class="analysis-date-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="10/3 - 10/8"></label>
+            <label class="wide-control">B date range<input id="compareRangeB" class="analysis-date-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="9/25 - 10/2"></label>
           </div>
         </div>
         <div id="compareSummary" class="analysis-summary"></div>
