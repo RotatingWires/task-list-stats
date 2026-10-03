@@ -3,7 +3,7 @@
 
 # TaskList Stats
 
-**TaskList Stats v2.0.7** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
+**TaskList Stats v2.0.8** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
 
 TaskList stays focused on creating and managing tasks. TaskList Stats reads the same SQLite database and provides charts, records, calendars, hierarchy analysis, event history, comparisons, inferred activity sessions, milestones, and Fun views without adding that weight to the main TaskList app.
 
@@ -206,11 +206,11 @@ Nesting depth, largest task trees, deepest tasks, title categories, common words
 
 ### History Explorer
 
-Chronological event history with date range, event type, ordering, text/list/ID filtering, status transitions, and TaskList deep links.
+Chronological event history with one compact typed date-range field, event type, ordering, text/list/ID filtering, status transitions, and TaskList deep links. Ranges use the same `10/3 - 10/8` style as TaskList Search, with `m/d`, `m/d/yy`, or `m/d/yyyy` accepted on either side.
 
 ### Compare
 
-Compare either two list scopes or two date ranges. A and B use matching Windows-style metric panels and the Difference section reports `A - B` for the same metrics.
+Compare either two list scopes or two date ranges. Time-period mode uses one compact typed range for Period A and one for Period B instead of separate From/To controls. A and B use matching Windows-style metric panels and the Difference section reports `A - B` for the same metrics.
 
 ### Activity Sessions
 
@@ -329,7 +329,17 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.7
+## Current release: v2.0.8
+
+### v2.0.8
+
+- Replace History Explorer's separate From/To fields with one compact typed Date range control.
+- Replace Compare time-period mode's four From/To fields with one typed date range for Period A and one for Period B.
+- Use the same `10/3 - 10/8` range format as TaskList Search; either side accepts `m/d`, `m/d/yy`, or `m/d/yyyy`.
+- Accept hyphen, en dash, or em dash separators and keep existing date validation/order checks.
+- Keep the current default History and Compare date windows while formatting them into the compact controls.
+- Remove the old separate-date parsing/listener paths and keep the range controls responsive on desktop and mobile.
+- Bump project/assembly/frontend version metadata to v2.0.8 with no new dependencies or monkey patches.
 
 ### v2.0.7
 

@@ -62,24 +62,32 @@ function parseAnalysisDate(value) {
   return date;
 }
 
-function parseOptionalAnalysisDate(value, endOfDay = false) {
+function splitAnalysisRange(value) {
   const text = value.trim();
-  if (!text) return { specified: false, date: null };
-  const date = parseAnalysisDate(text);
-  if (!date) return null;
-  if (endOfDay) date.setHours(23, 59, 59, 999);
-  else date.setHours(0, 0, 0, 0);
-  return { specified: true, date };
+  if (!text) return null;
+  const match = /^(.+?)\s*[-–—]\s*(.+)$/.exec(text);
+  if (!match) return null;
+  return [match[1].trim(), match[2].trim()];
 }
 
-function readAnalysisRange(fromValue, toValue) {
-  const from = parseOptionalAnalysisDate(fromValue, false);
-  const to = parseOptionalAnalysisDate(toValue, true);
-  if (from === null || to === null)
-    return { error: 'Use m/d, m/d/yy, or m/d/yyyy for dates.' };
-  if (from.specified && to.specified && from.date > to.date)
+function readAnalysisRange(value) {
+  const text = value.trim();
+  if (!text) return { from: null, to: null, error: null };
+
+  const parts = splitAnalysisRange(text);
+  if (!parts)
+    return { error: 'Use a date range like 10/3 - 10/8. Each date can be m/d, m/d/yy, or m/d/yyyy.' };
+
+  const from = parseAnalysisDate(parts[0]);
+  const to = parseAnalysisDate(parts[1]);
+  if (!from || !to)
+    return { error: 'Use a date range like 10/3 - 10/8. Each date can be m/d, m/d/yy, or m/d/yyyy.' };
+
+  from.setHours(0, 0, 0, 0);
+  to.setHours(23, 59, 59, 999);
+  if (from > to)
     return { error: 'Start date must be on or before End date.' };
-  return { from: from.date, to: to.date, error: null };
+  return { from, to, error: null };
 }
 
 function inDateRange(date, range) {
@@ -89,6 +97,10 @@ function inDateRange(date, range) {
 
 function formatAnalysisInputDate(date) {
   return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(-2)}`;
+}
+
+function formatAnalysisInputRange(from, to) {
+  return `${formatAnalysisInputDate(from)} - ${formatAnalysisInputDate(to)}`;
 }
 
 function setAnalysisEmpty(table, message) {
@@ -104,7 +116,7 @@ function renderHistoryExplorer() {
     return;
   }
 
-  const range = readAnalysisRange($('#historyFrom').value, $('#historyTo').value);
+  const range = readAnalysisRange($('#historyDateRange').value);
   if (range.error) {
     summary.textContent = range.error;
     setAnalysisEmpty(table, range.error);
@@ -221,8 +233,8 @@ function renderCompare() {
     bLabel = bValue === 'all' ? 'All selected lists' : listName(Number(bValue));
     summary.textContent = `${aLabel} compared with ${bLabel}.`;
   } else {
-    const rangeA = readAnalysisRange($('#compareAFrom').value, $('#compareATo').value);
-    const rangeB = readAnalysisRange($('#compareBFrom').value, $('#compareBTo').value);
+    const rangeA = readAnalysisRange($('#compareRangeA').value);
+    const rangeB = readAnalysisRange($('#compareRangeB').value);
     const error = rangeA.error || rangeB.error;
     if (error) {
       summary.textContent = error;
@@ -546,22 +558,19 @@ function renderMilestones() {
 
 function initializeAnalysisTabs() {
   const now = new Date();
-  const today = formatAnalysisInputDate(now);
-  const ago30 = formatAnalysisInputDate(new Date(now.getTime() - 29 * 86_400_000));
-  const ago31 = formatAnalysisInputDate(new Date(now.getTime() - 30 * 86_400_000));
-  const ago60 = formatAnalysisInputDate(new Date(now.getTime() - 59 * 86_400_000));
-  if (!$('#historyFrom').value) $('#historyFrom').value = ago30;
-  if (!$('#historyTo').value) $('#historyTo').value = today;
-  if (!$('#compareAFrom').value) $('#compareAFrom').value = ago30;
-  if (!$('#compareATo').value) $('#compareATo').value = today;
-  if (!$('#compareBFrom').value) $('#compareBFrom').value = ago60;
-  if (!$('#compareBTo').value) $('#compareBTo').value = ago31;
+  const today = now;
+  const ago30 = new Date(now.getTime() - 29 * 86_400_000);
+  const ago31 = new Date(now.getTime() - 30 * 86_400_000);
+  const ago60 = new Date(now.getTime() - 59 * 86_400_000);
+  if (!$('#historyDateRange').value) $('#historyDateRange').value = formatAnalysisInputRange(ago30, today);
+  if (!$('#compareRangeA').value) $('#compareRangeA').value = formatAnalysisInputRange(ago30, today);
+  if (!$('#compareRangeB').value) $('#compareRangeB').value = formatAnalysisInputRange(ago60, ago31);
 
   $('#historyQuery').addEventListener('input', () => { if (state.activeTab === 'history') renderHistoryExplorer(); });
-  for (const id of ['historyFrom', 'historyTo', 'historyEventType', 'historyOrder'])
+  for (const id of ['historyDateRange', 'historyEventType', 'historyOrder'])
     $(`#${id}`).addEventListener('change', () => { if (state.activeTab === 'history') renderHistoryExplorer(); });
 
-  for (const id of ['compareMode', 'compareListA', 'compareListB', 'compareAFrom', 'compareATo', 'compareBFrom', 'compareBTo'])
+  for (const id of ['compareMode', 'compareListA', 'compareListB', 'compareRangeA', 'compareRangeB'])
     $(`#${id}`).addEventListener('change', () => { if (state.activeTab === 'compare') renderCompare(); });
 
   $('#sessionGap').addEventListener('change', () => { if (state.activeTab === 'sessions') renderActivitySessions(); });
