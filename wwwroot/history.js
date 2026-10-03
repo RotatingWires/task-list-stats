@@ -126,51 +126,51 @@ function renderYearComparison(items) {
   setTable($('#yearComparisonTable'), ['Year', ...MONTHS], rows, Array.from({length:12}, (_,i)=>i+1));
 }
 
-function availableCalendarYears(items) {
-  const years = allValidYears(items);
-  return years.length ? years : [new Date().getFullYear()];
-}
-
-function selectedCalendarYear(inputId, years, fallback) {
-  const value = Number($(`#${inputId}`).value);
-  return years.includes(value) ? value : fallback;
-}
-
-function calendarDetailSelection() {
-  const year = Number($('#calendarDetailYear').value);
-  const month = Number($('#calendarDetailMonth').value);
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return null;
+function parseCalendarMonth(value) {
+  const match = /^\s*(\d{1,2})\/(\d{2}|\d{4})\s*$/.exec(value || '');
+  if (!match) return null;
+  const month = Number(match[1]);
+  let year = Number(match[2]);
+  if (match[2].length === 2) year += 2000;
+  if (month < 1 || month > 12 || year < 1) return null;
   return { year, month };
 }
 
-function populateCalendarSelectors(items) {
-  const years = availableCalendarYears(items);
+function formatCalendarMonthValue(year, month) {
+  return `${month}/${year}`;
+}
+
+function populateCalendarControls(items) {
+  const years = allValidYears(items);
   const currentYear = new Date().getFullYear();
-  const heatmapFallback = years.includes(currentYear) ? currentYear : years.at(-1);
-  const heatmapYear = selectedCalendarYear('heatmapYear', years, heatmapFallback);
-  setSingleSelectOptions('heatmapYear', years.map(year => [String(year), String(year)]), String(heatmapYear));
+  const availableYears = years.length ? years : [currentYear];
+  const requestedYear = Number($('#heatmapYear').value) || currentYear;
+  const selectedYear = availableYears.includes(requestedYear)
+    ? requestedYear
+    : availableYears.includes(currentYear)
+      ? currentYear
+      : availableYears.at(-1);
 
-  const detailYear = selectedCalendarYear('calendarDetailYear', years, heatmapYear);
-  setSingleSelectOptions('calendarDetailYear', years.map(year => [String(year), String(year)]), String(detailYear));
+  setSingleSelectOptions(
+    'heatmapYear',
+    availableYears.map(year => [String(year), String(year)]),
+    String(selectedYear)
+  );
 
-  let detailMonth = Number($('#calendarDetailMonth').value);
-  if (!Number.isInteger(detailMonth) || detailMonth < 1 || detailMonth > 12) {
+  const monthInput = $('#calendarMonth');
+  if (!parseCalendarMonth(monthInput.value)) {
     const latest = items
       .map(item => item.createdDate)
-      .filter(date => date && date.getFullYear() === detailYear)
+      .filter(date => date && date.getFullYear() === selectedYear)
       .sort((a,b)=>b-a)[0];
-    detailMonth = latest?.getMonth() + 1 || (detailYear === currentYear ? new Date().getMonth() + 1 : 1);
+    const fallback = latest || new Date(selectedYear, selectedYear === currentYear ? new Date().getMonth() : 0, 1);
+    monthInput.value = formatCalendarMonthValue(fallback.getFullYear(), fallback.getMonth() + 1);
   }
-  setSingleSelectOptions(
-    'calendarDetailMonth',
-    MONTHS.map((label, index) => [String(index + 1), label]),
-    String(detailMonth)
-  );
 }
 
 function renderCalendar() {
   const items = scopedItems();
-  populateCalendarSelectors(items);
+  populateCalendarControls(items);
   renderYearHeatmap(items);
   renderMonthCalendar(items);
   renderMonthYearHeatmap(items);
@@ -241,7 +241,7 @@ function renderYearHeatmap(items) {
 }
 
 function renderMonthCalendar(items) {
-  const selected = calendarDetailSelection();
+  const selected = parseCalendarMonth($('#calendarMonth').value);
   if (!selected) {
     $('#monthCalendar').replaceChildren();
     return;
@@ -341,7 +341,7 @@ function renderLists() {
 }
 
 function calendarDayKeyFromCell(cell) {
-  const selected = calendarDetailSelection();
+  const selected = parseCalendarMonth($('#calendarMonth').value);
   const day = Number(cell.querySelector('.calendar-date')?.textContent);
   if (!selected || !Number.isInteger(day) || day < 1 || day > 31) return null;
   return `${selected.year}-${String(selected.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;

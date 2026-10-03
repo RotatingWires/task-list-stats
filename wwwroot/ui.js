@@ -152,10 +152,16 @@ $('#logoutButton').addEventListener('click', logout);
 $('#aboutButton').addEventListener('click',()=>{closeMenus();$('#aboutDialog').showModal();});
 $$('.tabs [role="tab"]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
 $('#trendGroup').addEventListener('change',renderTrends);
-$('#heatmapYear').addEventListener('change',()=>renderYearHeatmap(scopedItems()));
+$('#heatmapYear').addEventListener('change',()=>{
+  renderYearHeatmap(scopedItems());
+  const year = Number($('#heatmapYear').value);
+  const selected = parseCalendarMonth($('#calendarMonth').value);
+  $('#calendarMonth').value = formatCalendarMonthValue(year, selected?.month || 1);
+  renderMonthCalendar(scopedItems());
+});
 $('#heatmapMode').addEventListener('change',()=>renderYearHeatmap(scopedItems()));
-$('#calendarDetailMonth').addEventListener('change',()=>renderMonthCalendar(scopedItems()));
-$('#calendarDetailYear').addEventListener('change',()=>renderMonthCalendar(scopedItems()));
+$('#calendarMonth').addEventListener('input',()=>renderMonthCalendar(scopedItems()));
+$('#calendarMonth').addEventListener('change',()=>renderMonthCalendar(scopedItems()));
 $('#hourHeatmapMode').addEventListener('change',()=>renderWeekdayHourHeatmap(scopedItems()));
 document.addEventListener('click',closeMenus);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenus();});
@@ -180,7 +186,6 @@ function initializeTouchHelp() {
 const STATIC_SINGLE_SELECT_OPTIONS = {
   trendGroup: [['day', 'Day'], ['week', 'Week'], ['month', 'Month']],
   heatmapMode: [['created', 'Created'], ['completed', 'Completed'], ['cancelled', 'Cancelled'], ['reopened', 'Reopened'], ['activity', 'All activity']],
-  calendarDetailMonth: MONTHS.map((label, index) => [String(index + 1), label]),
   hourHeatmapMode: [['created', 'Created'], ['completed', 'Completed']],
   historyEventType: [['all', 'All events'], ['Created', 'Created'], ['Completed', 'Completed'], ['Cancelled', 'Cancelled'], ['Reopened', 'Reopened']],
   historyOrder: [['newest', 'Newest first'], ['oldest', 'Oldest first']],
