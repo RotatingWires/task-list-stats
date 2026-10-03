@@ -3,7 +3,7 @@
 
 # TaskList Stats
 
-**TaskList Stats v2.0.6** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
+**TaskList Stats v2.0.7** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
 
 TaskList stays focused on creating and managing tasks. TaskList Stats reads the same SQLite database and provides charts, records, calendars, hierarchy analysis, event history, comparisons, inferred activity sessions, milestones, and Fun views without adding that weight to the main TaskList app.
 
@@ -182,13 +182,13 @@ The backlog chart remains approximate because it reconstructs older state from t
 ### Calendar
 
 - Year Activity Heatmap with Created / Completed / Cancelled / Reopened / All activity modes
-- custom Month and Year controls for Month Detail
+- typed Month Detail using `m/yy` or `m/yyyy`
 - Month Calendar with three-letter weekday headings
 - Month × Year creation heatmap
 - seasonality chart
 - clickable days that open the exact Created / Completed / Cancelled tasks for that date
 
-Calendar controls use the same custom Windows-style menus as the rest of Stats instead of browser-native date/month pickers.
+The Month Detail field is a normal styled text input with `inputmode="text"`, matching the other typed date/month controls instead of using a browser-native picker.
 
 ### Lists
 
@@ -329,7 +329,16 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.6
+## Current release: v2.0.7
+
+### v2.0.7
+
+- Returned Calendar Month Detail to one typed `m/yy` / `m/yyyy` field for consistency with the app's other typed date/month controls.
+- Force the Month Detail field to `inputmode="text"` so mobile browsers use a normal text keyboard rather than a numeric-only picker.
+- Removed the separate Month/Year selector markup, selector options, synchronization handlers, and selector-specific Calendar helper functions introduced in v2.0.6.
+- Consolidated Calendar month parsing, initialization, rendering, and day-drill-down around the single `calendarMonth` value instead of keeping duplicate month/year state.
+- Kept the v2.0.6 milestone families and file consolidation intact with no new files, dependencies, monkey patches, or hidden replacement controls.
+- Bumped project/assembly/frontend version metadata to v2.0.7.
 
 ### v2.0.6
 
