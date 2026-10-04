@@ -1,3 +1,4 @@
+/* Shared persistent theme controller for TaskList Stats. */
 (() => {
 'use strict';
 
