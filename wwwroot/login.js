@@ -59,6 +59,11 @@ async function request(url, options = {}) {
 
 async function initialize() {
   try {
+    await import('/theme.js');
+    await window.TaskTheme?.ready;
+  } catch {}
+
+  try {
     const status = await request('/api/auth/status');
     applyReleaseLabel(await frontendReleaseVersion(status.version));
     if (status.authenticated) {
