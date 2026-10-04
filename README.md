@@ -3,11 +3,11 @@
 
 # TaskList Stats
 
-**TaskList Stats v2.0.9** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
+**TaskList Stats v2.0.11** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
 
 TaskList stays focused on creating and managing tasks. TaskList Stats reads the same SQLite database and provides charts, records, calendars, hierarchy analysis, event history, comparisons, inferred activity sessions, milestones, and Fun views without adding that weight to the main TaskList app.
 
-The interface uses the same Windows 95-style visual language as TaskList, includes TaskList-style first-run password setup/login, works on desktop and mobile, and can be installed as a PWA.
+The interface uses the same Windows 95-style visual language as TaskList, includes persistent **Light** and **Dark** themes, includes TaskList-style first-run password setup/login, works on desktop and mobile, and can be installed as a PWA.
 
 ## What it does
 
@@ -190,6 +190,8 @@ The backlog chart remains approximate because it reconstructs older state from t
 
 The Month Detail field is a normal styled text input with `inputmode="text"`, matching the other typed date/month controls instead of using a browser-native picker.
 
+Calendar day drill-down only renders event categories that actually contain tasks for the selected day. Empty Created, Completed, or Cancelled sections are omitted instead of showing placeholder boxes.
+
 ### Lists
 
 Per-list current counts, completion percentage, completion duration, share of current entries, and most-active-list-by-month history.
@@ -333,7 +335,27 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.9
+## Current release: v2.0.11
+
+### v2.0.11
+
+- Remove **System** from View → Theme so theme selection is strictly Light or Dark.
+- Remove the `prefers-color-scheme` listener, System effective-theme resolution, unused effective-theme accessor, and exported theme-options list instead of only hiding the menu item.
+- Make Calendar day drill-down omit Created / Completed / Cancelled categories when that category has no tasks on the selected day.
+- Remove the now-unused Calendar empty-category renderer branch and its dead CSS styling.
+- Use darker, less neon Created/Completed colors for the Patterns grouped charts in dark mode while leaving other chart palettes unchanged.
+- Audit the source tree and service-worker shell for old compatibility, release-specific override, and retired Calendar files; no extra legacy files remain.
+- Preserve the read-only TaskList database model and add no monkey patches, chart libraries, or runtime dependencies.
+- Bump project/assembly/frontend version metadata to v2.0.11.
+
+### v2.0.10
+
+- Add persistent Light, Dark, and System theme support across the Stats workspace and login/setup screen.
+- Add shared Win95 dark-theme styling for chrome, menus, custom inputs/selects, tables, cards, dialogs, Calendar, heatmaps, History/Compare/Sessions/Milestones, Fun, links, notes, and tooltips.
+- Make Canvas charts use theme-aware backgrounds, axes, grid lines, labels, and Created/Completed/Cancelled series colors and redraw the active tab after a theme change.
+- Cache the shared theme assets in the existing network-first service-worker shell.
+- Preserve the Windows 95 raised/recessed visual language and keep TaskList database access read-only.
+- Bump project/assembly/frontend version metadata to v2.0.10.
 
 ### v2.0.9
 

@@ -1,10 +1,9 @@
-/* Shared persistent theme controller for TaskList Stats. */
+/* Shared persistent light/dark theme controller for TaskList Stats. */
 (() => {
 'use strict';
 
 const STORAGE_KEY = 'task-ui-theme';
-const VALID = new Set(['light', 'dark', 'system']);
-const media = window.matchMedia?.('(prefers-color-scheme: dark)') ?? null;
+const VALID = new Set(['light', 'dark']);
 
 function ensureStylesheet() {
   const existing = document.querySelector('link[data-task-theme-styles]');
@@ -37,11 +36,6 @@ function readPreference() {
   }
 }
 
-function effectiveTheme(preference) {
-  if (preference !== 'system') return preference;
-  return media?.matches ? 'dark' : 'light';
-}
-
 function applyTheme(preference, persist = false) {
   const selected = VALID.has(preference) ? preference : 'light';
   if (persist) {
@@ -49,42 +43,29 @@ function applyTheme(preference, persist = false) {
   }
 
   const root = document.documentElement;
-  const previousPreference = root.dataset.themePreference;
-  const previousEffective = root.dataset.themeEffective;
-  const effective = effectiveTheme(selected);
+  const previous = root.dataset.themePreference;
   root.dataset.themePreference = selected;
-  root.dataset.themeEffective = effective;
-  root.style.colorScheme = effective;
+  root.dataset.themeEffective = selected;
+  root.style.colorScheme = selected;
 
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', effective === 'dark' ? '#111858' : '#000080');
+  if (meta) meta.setAttribute('content', selected === 'dark' ? '#111858' : '#000080');
 
-  if (previousPreference !== undefined && (previousPreference !== selected || previousEffective !== effective)) {
+  if (previous !== undefined && previous !== selected) {
     window.dispatchEvent(new CustomEvent('task-theme-change', {
-      detail: { preference: selected, effective }
+      detail: { theme: selected }
     }));
   }
-  return effective;
+  return selected;
 }
 
 function getPreference() {
   return document.documentElement.dataset.themePreference || readPreference();
 }
 
-function getEffective() {
-  return document.documentElement.dataset.themeEffective || effectiveTheme(getPreference());
-}
-
 function setPreference(preference) {
   return applyTheme(preference, true);
 }
-
-function handleSystemThemeChange() {
-  if (getPreference() === 'system') applyTheme('system', false);
-}
-
-if (media?.addEventListener) media.addEventListener('change', handleSystemThemeChange);
-else media?.addListener?.(handleSystemThemeChange);
 
 window.addEventListener('storage', event => {
   if (event.key === STORAGE_KEY) applyTheme(readPreference(), false);
@@ -95,8 +76,6 @@ applyTheme(readPreference(), false);
 window.TaskTheme = {
   ready,
   getPreference,
-  getEffective,
-  setPreference,
-  options: ['light', 'dark', 'system']
+  setPreference
 };
 })();

@@ -313,15 +313,6 @@
   font-weight: 700;
 }
 .calendar-detail-group { margin: 0; }
-.calendar-detail-empty {
-  padding: 10px;
-  background: #fff;
-  border-top: 2px solid #404040;
-  border-left: 2px solid #404040;
-  border-right: 2px solid #fff;
-  border-bottom: 2px solid #fff;
-  color: #555;
-}
 .calendar-detail-dialog table { min-width: 520px; }
 
 @media (max-width: 780px) {

@@ -1,3 +1,8 @@
+function patternChartColor(name, fallback) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
 function renderPatterns() {
   const items = scopedItems();
   const createWeek = Array(7).fill(0), doneWeek = Array(7).fill(0);
@@ -12,8 +17,10 @@ function renderPatterns() {
       if (hasConfirmedClockTime(item.completedAt)) doneHour[item.completedDate.getHours()]++;
     }
   }
-  Charts.drawGroupedBarChart($('#weekdayChart'), WEEKDAYS, createWeek, doneWeek, '#000080', '#008000', 'Tasks');
-  Charts.drawGroupedBarChart($('#hourChart'), Array.from({length:24},(_,h)=>formatHour(h)), createHour, doneHour, '#000080', '#008000', 'Tasks');
+  const createdColor = patternChartColor('--pattern-created', '#000080');
+  const completedColor = patternChartColor('--pattern-completed', '#008000');
+  Charts.drawGroupedBarChart($('#weekdayChart'), WEEKDAYS, createWeek, doneWeek, createdColor, completedColor, 'Tasks');
+  Charts.drawGroupedBarChart($('#hourChart'), Array.from({length:24},(_,h)=>formatHour(h)), createHour, doneHour, createdColor, completedColor, 'Tasks');
   renderWeekdayHourHeatmap(items);
 
   const bestCreationWeekCount = Math.max(...createWeek);

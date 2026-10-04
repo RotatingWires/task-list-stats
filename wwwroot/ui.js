@@ -86,7 +86,7 @@ function populateViewMenu() {
   menu.append(separator,heading);
 
   const preference=window.TaskTheme?.getPreference?.() ?? 'light';
-  for(const [value,label] of [['light','Light'],['dark','Dark'],['system','System']]){
+  for(const [value,label] of [['light','Light'],['dark','Dark']]){
     menu.append(menuRadioButton(value,label,value===preference,event=>{
       event.stopPropagation();
       window.TaskTheme?.setPreference?.(value);
