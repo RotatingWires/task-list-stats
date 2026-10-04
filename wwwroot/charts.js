@@ -7,12 +7,34 @@ let tooltip = null;
 let tooltipCanvas = null;
 let tooltipIndexValue = -1;
 
+function cssColor(name, fallback) {
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+}
+
+function chartPalette() {
+  return {
+    surface: cssColor('--chart-surface', '#fff'),
+    text: cssColor('--chart-text', '#222'),
+    muted: cssColor('--chart-muted', '#333'),
+    axis: cssColor('--chart-axis', '#808080'),
+    grid: cssColor('--chart-grid', '#e0e0e0'),
+    created: cssColor('--chart-created', '#000080'),
+    completed: cssColor('--chart-completed', '#008000'),
+    cancelled: cssColor('--chart-cancelled', '#800000')
+  };
+}
+
+function themedSeriesColor(color) {
+  const value = String(color || '').toLowerCase();
+  const palette = chartPalette();
+  if (value === '#000080') return palette.created;
+  if (value === '#008000') return palette.completed;
+  if (value === '#800000') return palette.cancelled;
+  return color;
+}
+
 function prepareCanvas(canvas, minHeight = 220) {
-  // canvas.width/canvas.height are backing-store dimensions. Setting them also
-  // changes the corresponding HTML attributes, so never read the height
-  // attribute again after the first render. On high-DPI displays that would
-  // feed devicePixelRatio-scaled pixels back in as a CSS height and make the
-  // chart grow on every redraw.
   let declaredHeight = Number(canvas.dataset.logicalHeight);
   if (!declaredHeight) {
     declaredHeight = Number(canvas.getAttribute('height')) || minHeight;
@@ -30,7 +52,7 @@ function prepareCanvas(canvas, minHeight = 220) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   ctx.clearRect(0, 0, cssWidth, cssHeight);
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = chartPalette().surface;
   ctx.fillRect(0, 0, cssWidth, cssHeight);
   ctx.font = 'bold 15px Tahoma, Arial, sans-serif';
   ctx.textBaseline = 'middle';
@@ -38,9 +60,10 @@ function prepareCanvas(canvas, minHeight = 220) {
 }
 
 function axes(ctx, width, height, maxValue, yLabel = 'Tasks', left = 78, bottom = 54, top = 32, right = 44, decimalTicks = false) {
+  const palette = chartPalette();
   const plotW = width - left - right;
   const plotH = height - top - bottom;
-  ctx.strokeStyle = '#808080';
+  ctx.strokeStyle = palette.axis;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(left, top);
@@ -52,11 +75,11 @@ function axes(ctx, width, height, maxValue, yLabel = 'Tasks', left = 78, bottom 
     const y = top + plotH - (plotH * i / 4);
     const raw = max * i / 4;
     const value = decimalTicks ? oneDecimal.format(raw) : numberFmt.format(Math.round(raw));
-    ctx.fillStyle = '#333';
+    ctx.fillStyle = palette.muted;
     ctx.textAlign = 'right';
     ctx.fillText(value, left - 5, y);
     if (i > 0) {
-      ctx.strokeStyle = '#e0e0e0';
+      ctx.strokeStyle = palette.grid;
       ctx.beginPath();
       ctx.moveTo(left, y);
       ctx.lineTo(width - right, y);
@@ -67,7 +90,7 @@ function axes(ctx, width, height, maxValue, yLabel = 'Tasks', left = 78, bottom 
     ctx.save();
     ctx.translate(13, top + plotH / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = '#222';
+    ctx.fillStyle = palette.text;
     ctx.textAlign = 'center';
     let yFontSize = 16;
     const maxLabelSpan = Math.max(60, height - 16);
@@ -87,7 +110,7 @@ function drawBarValue(ctx, text, x, y) {
   ctx.font = 'bold 14px Tahoma, Arial, sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
-  ctx.fillStyle = '#111';
+  ctx.fillStyle = chartPalette().text;
   ctx.fillText(text, x, Math.max(13, y - 4));
   ctx.restore();
 }
@@ -95,8 +118,9 @@ function drawBarValue(ctx, text, x, y) {
 function drawBarChart(canvas, labels, values, color = '#000080', decimal = false, yLabel = 'Tasks') {
   if (!canvas || canvas.closest('[hidden]')) return;
   const { ctx, width, height } = prepareCanvas(canvas);
+  const palette = chartPalette();
   if (!values.length) {
-    ctx.fillStyle = '#333';
+    ctx.fillStyle = palette.muted;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('No data', width / 2, height / 2);
@@ -107,16 +131,17 @@ function drawBarChart(canvas, labels, values, color = '#000080', decimal = false
   const n = values.length;
   const slot = a.plotW / n;
   const barW = Math.max(4, slot * .70);
+  const fill = themedSeriesColor(color);
   values.forEach((value, i) => {
     const h = a.plotH * (value / a.max);
     const x = a.left + i * slot + (slot - barW) / 2;
     const y = height - a.bottom - h;
-    ctx.fillStyle = color;
+    ctx.fillStyle = fill;
     ctx.fillRect(x, y, barW, h);
     drawBarValue(ctx, decimal ? oneDecimal.format(value) : numberFmt.format(value), x + barW / 2, y);
   });
   const step = Math.max(1, Math.ceil(n / 12));
-  ctx.fillStyle = '#222';
+  ctx.fillStyle = palette.text;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   labels.forEach((label, i) => {
@@ -128,28 +153,31 @@ function drawBarChart(canvas, labels, values, color = '#000080', decimal = false
 function drawGroupedBarChart(canvas, labels, aValues, bValues, aColor, bColor, yLabel = 'Tasks') {
   if (!canvas || canvas.closest('[hidden]')) return;
   const { ctx, width, height } = prepareCanvas(canvas);
+  const palette = chartPalette();
   const rawMax = Math.max(1, ...aValues, ...bValues);
   const a = axes(ctx, width, height, rawMax * 1.16, yLabel);
   const n = labels.length;
   const slot = a.plotW / n;
   const hourChart = canvas.id === 'hourChart';
   const bw = Math.max(4, slot * (hourChart ? .38 : .34));
+  const colorA = themedSeriesColor(aColor);
+  const colorB = themedSeriesColor(bColor);
   for (let i = 0; i < n; i++) {
     const h1 = a.plotH * aValues[i] / a.max;
     const h2 = a.plotH * bValues[i] / a.max;
     const center = a.left + (i + .5) * slot;
     const y1 = height - a.bottom - h1;
     const y2 = height - a.bottom - h2;
-    ctx.fillStyle = aColor;
+    ctx.fillStyle = colorA;
     ctx.fillRect(center - bw, y1, bw, h1);
-    ctx.fillStyle = bColor;
+    ctx.fillStyle = colorB;
     ctx.fillRect(center, y2, bw, h2);
     const close = aValues[i] && bValues[i] && Math.abs(y1 - y2) < 16;
     if (aValues[i]) drawBarValue(ctx, numberFmt.format(aValues[i]), center - bw / 2, y1);
     if (bValues[i]) drawBarValue(ctx, numberFmt.format(bValues[i]), center + bw / 2, close ? y2 - 15 : y2);
   }
   const step = n >= 24 ? 2 : Math.max(1, Math.ceil(n / 12));
-  ctx.fillStyle = '#222';
+  ctx.fillStyle = palette.text;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   labels.forEach((label, i) => {
@@ -236,20 +264,21 @@ function drawLineChart(canvas, labels, values, color = '#000080', yLabel = 'Task
 function drawMultiLineChart(canvas, labels, series, yLabel = 'Tasks') {
   if (!canvas || canvas.closest('[hidden]')) return;
   const { ctx, width, height } = prepareCanvas(canvas, Number(canvas.dataset.logicalHeight) || Number(canvas.getAttribute('height')) || 220);
+  const palette = chartPalette();
   const rawMax = Math.max(1, ...series.flatMap(s => s.values));
   const a = axes(ctx, width, height, rawMax * 1.08, yLabel);
   const n = labels.length;
   if (!n) {
     delete canvas._tooltipConfig;
     hideTooltip();
-    ctx.fillStyle = '#333';
+    ctx.fillStyle = palette.muted;
     ctx.textAlign = 'center';
     ctx.fillText('No data', width / 2, height / 2);
     return;
   }
   const xAt = i => a.left + (n === 1 ? a.plotW / 2 : a.plotW * i / (n - 1));
   for (const item of series) {
-    ctx.strokeStyle = item.color;
+    ctx.strokeStyle = themedSeriesColor(item.color);
     ctx.lineWidth = 2;
     ctx.beginPath();
     item.values.forEach((value, i) => {
@@ -260,7 +289,7 @@ function drawMultiLineChart(canvas, labels, series, yLabel = 'Tasks') {
     ctx.stroke();
   }
   const step = Math.max(1, Math.ceil(n / 10));
-  ctx.fillStyle = '#222';
+  ctx.fillStyle = palette.text;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   labels.forEach((label, i) => {
@@ -280,5 +309,5 @@ document.addEventListener('pointerdown', event => {
 window.addEventListener('scroll', hideTooltip, { capture: true, passive: true });
 document.addEventListener('keydown', event => { if (event.key === 'Escape') hideTooltip(); });
 
-window.Charts = { drawBarChart, drawGroupedBarChart, drawLineChart, drawMultiLineChart };
+window.Charts = { drawBarChart, drawGroupedBarChart, drawLineChart, drawMultiLineChart, hideTooltip };
 })();
