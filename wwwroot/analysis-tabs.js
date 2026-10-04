@@ -39,6 +39,7 @@ function eventTaskNode(event) {
 }
 
 function eventTransition(event) {
+  if (event.eventType === 'Created') return `Created → ${event.toStatus ?? 'Open'}`;
   if (!event.fromStatus && !event.toStatus) return '—';
   return `${event.fromStatus ?? '—'} → ${event.toStatus ?? '—'}`;
 }

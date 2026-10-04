@@ -3,7 +3,7 @@
 
 # TaskList Stats
 
-**TaskList Stats v2.0.8** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
+**TaskList Stats v2.0.9** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
 
 TaskList stays focused on creating and managing tasks. TaskList Stats reads the same SQLite database and provides charts, records, calendars, hierarchy analysis, event history, comparisons, inferred activity sessions, milestones, and Fun views without adding that weight to the main TaskList app.
 
@@ -51,7 +51,7 @@ That file stores the Stats password hash. It is not part of the TaskList databas
 
 On first run, if `data/auth.json` does not exist, the server prints a setup token. Open Stats, enter that token, choose a password of at least 8 characters, and confirm it.
 
-The plaintext password is never stored. `data/auth.json` contains a random salt and PBKDF2-HMAC-SHA256 derived hash using 210,000 iterations.
+The plaintext password is never stored. `auth.json` contains a random salt and PBKDF2-HMAC-SHA256 derived hash using 210,000 iterations.
 
 Successful login creates the `TaskListStats.Auth` cookie. It is HttpOnly, SameSite=Strict, persistent for up to 30 days, sliding while active, and marked Secure when the request itself uses HTTPS.
 
@@ -208,6 +208,8 @@ Nesting depth, largest task trees, deepest tasks, title categories, common words
 
 Chronological event history with one compact typed date-range field, event type, ordering, text/list/ID filtering, status transitions, and TaskList deep links. Ranges use the same `10/3 - 10/8` style as TaskList Search, with `m/d`, `m/d/yy`, or `m/d/yyyy` accepted on either side.
 
+Created events display as `Created → Open` rather than showing a missing previous status, while normal state changes continue to display their actual `Open → Done`, `Done → Open`, or other transitions.
+
 ### Compare
 
 Compare either two list scopes or two date ranges. Time-period mode uses one compact typed range for Period A and one for Period B instead of separate From/To controls. A and B use matching Windows-style metric panels and the Difference section reports `A - B` for the same metrics.
@@ -246,6 +248,8 @@ The list selector is a multi-select Windows-style checklist.
 - Unchecking the final selected list returns to **All lists**.
 
 The selected scope is shared across Stats tabs.
+
+TaskList Stats currently reads every row from TaskList's `lists`, `items`, and `task_events` tables without applying TaskList's archived-list flag. That means archived lists are included in **All lists**, their current items and historical events contribute to statistics, and archived lists appear in the Stats list selector like active lists. Selecting a narrower list scope excludes any list that is not selected.
 
 ## Timestamp precision rules
 
@@ -329,7 +333,14 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.8
+## Current release: v2.0.9
+
+### v2.0.9
+
+- Display Created event transitions as `Created → Open` instead of `— → Open` so History Explorer and Activity Session details do not imply missing data for a task's initial state.
+- Preserve the actual stored event data and all normal state-transition labels; this is a presentation-only clarification.
+- Document the current archived-list behavior: archived lists, items, and events are included in **All lists** because Stats currently reads all TaskList list rows without applying the archived flag.
+- Bump project/assembly/frontend version metadata to v2.0.9.
 
 ### v2.0.8
 
