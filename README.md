@@ -1,9 +1,9 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats
+# TaskList Stats v2.0.11
 
-**TaskList Stats v2.0.11** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
+**TaskList Stats** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
 
 TaskList stays focused on creating and managing tasks. TaskList Stats reads the same SQLite database and provides charts, records, calendars, hierarchy analysis, event history, comparisons, inferred activity sessions, milestones, and Fun views without adding that weight to the main TaskList app.
 
