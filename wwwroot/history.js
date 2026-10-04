@@ -360,14 +360,6 @@ function calendarDaySection(label, items) {
   legend.textContent = `${label} (${numberFmt.format(items.length)})`;
   fieldset.append(legend);
 
-  if (!items.length) {
-    const empty = document.createElement('div');
-    empty.className = 'calendar-detail-empty';
-    empty.textContent = `No tasks ${label.toLowerCase()} on this day.`;
-    fieldset.append(empty);
-    return fieldset;
-  }
-
   const wrap = document.createElement('div');
   wrap.className = 'table-wrap';
   const table = document.createElement('table');
@@ -386,9 +378,11 @@ function openCalendarDayDetails(dayKey) {
   const date = new Date(`${dayKey}T12:00:00`);
   if (Number.isNaN(date.getTime())) return;
 
-  const created = calendarItemsForDay(dayKey, 'createdDate');
-  const completed = calendarItemsForDay(dayKey, 'completedDate');
-  const cancelled = calendarItemsForDay(dayKey, 'cancelledDate');
+  const categories = [
+    ['Created', calendarItemsForDay(dayKey, 'createdDate')],
+    ['Completed', calendarItemsForDay(dayKey, 'completedDate')],
+    ['Cancelled', calendarItemsForDay(dayKey, 'cancelledDate')]
+  ].filter(([, items]) => items.length);
 
   $('#calendarDayTitle').textContent = date.toLocaleDateString(undefined, {
     weekday: 'long',
@@ -403,9 +397,7 @@ function openCalendarDayDetails(dayKey) {
 
   $('#calendarDayBody').replaceChildren(
     scope,
-    calendarDaySection('Created', created),
-    calendarDaySection('Completed', completed),
-    calendarDaySection('Cancelled', cancelled)
+    ...categories.map(([label, items]) => calendarDaySection(label, items))
   );
   $('#calendarDayDialog').showModal();
 }

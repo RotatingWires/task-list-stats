@@ -19,6 +19,8 @@
   --chart-created: #000080;
   --chart-completed: #008000;
   --chart-cancelled: #800000;
+  --pattern-created: #000080;
+  --pattern-completed: #008000;
 }
 
 :root[data-theme-effective="dark"] {
@@ -53,6 +55,8 @@
   --chart-created: #8fa8ff;
   --chart-completed: #69d37d;
   --chart-cancelled: #ff8a8a;
+  --pattern-created: #5f73b3;
+  --pattern-completed: #4a8757;
 }
 
 html,
@@ -169,7 +173,6 @@ button:active,
 .roulette-empty,
 .fun-empty,
 .session-event-list,
-.calendar-detail-empty,
 .milestone-empty {
   color: var(--theme-text);
   background: var(--theme-surface);
@@ -224,6 +227,8 @@ td,
 .legend-created { color: var(--chart-created); }
 .legend-done { color: var(--chart-completed); }
 .legend-cancelled { color: var(--chart-cancelled); }
+.tab-panel[data-panel="patterns"] .legend-created { color: var(--pattern-created); }
+.tab-panel[data-panel="patterns"] .legend-done { color: var(--pattern-completed); }
 
 .heat {
   border-top-color: var(--light);
