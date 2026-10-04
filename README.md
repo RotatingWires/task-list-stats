@@ -62,7 +62,7 @@ Use **File → Log Out** to clear the session. Setup and login are rate-limited 
 - C# / ASP.NET Core Minimal API
 - .NET 10
 - Kestrel
-- Microsoft.Data.Sqlite
+- SQLite through `Microsoft.Data.Sqlite`
 - Plain HTML, CSS, and JavaScript
 - Browser Canvas API for charts
 - Service worker + web manifest for PWA behavior
@@ -94,7 +94,9 @@ wwwroot/
   fun.js                  Fun workspace
   charts.js               Canvas chart drawing and chart tooltip interactions
   ui.js                   navigation, custom selects, filtering, startup/session UI
+  theme.js                persistent Light/Dark theme selection and startup application
   style.css               base Windows 95-style UI and responsive layout
+  theme.css               shared Light/Dark Win95 theme tokens and dark-theme styling
   analysis-tabs.css       analysis, milestone/session, and Calendar-dialog styles
   login.html              login / first-run setup page
   login.js                login, setup-token, and return-URL behavior
@@ -149,6 +151,14 @@ export TASKLIST_DB_PATH=/srv/task-list/data/task-list.db
 export TASKLIST_STATS_URL=http://0.0.0.0:8712
 ```
 
+## Themes
+
+Use **View → Theme** to choose **Light** or **Dark**. The selection persists in browser storage and applies to the Stats workspace and login/setup UI.
+
+The dark theme keeps the Windows 95 raised/recessed look instead of replacing it with a generic flat theme. Canvas charts read theme-aware colors and redraw appropriately.
+
+There is intentionally no automatic **System** theme in v2.0.11; theme selection is strictly Light or Dark.
+
 ## TaskList deep links
 
 Task IDs shown in Stats link back to the main TaskList app using the task's Universal ID:
@@ -177,7 +187,7 @@ Current counts, creation/completion records, completion behavior, open-task agin
 
 Created / Completed / Cancelled history, approximate backlog history, busiest months, completion-speed months, and year-over-year monthly creation comparison.
 
-The backlog chart remains approximate because it reconstructs older state from the timestamps stored on current task rows.
+The backlog chart remains approximate because it reconstructs older state from timestamps stored on current task rows.
 
 ### Calendar
 
@@ -188,9 +198,7 @@ The backlog chart remains approximate because it reconstructs older state from t
 - seasonality chart
 - clickable days that open the exact Created / Completed / Cancelled tasks for that date
 
-The Month Detail field is a normal styled text input with `inputmode="text"`, matching the other typed date/month controls instead of using a browser-native picker.
-
-Calendar day drill-down only renders event categories that actually contain tasks for the selected day. Empty Created, Completed, or Cancelled sections are omitted instead of showing placeholder boxes.
+Calendar day drill-down only renders event categories that actually contain tasks for the selected day. Empty categories are omitted instead of showing placeholder boxes.
 
 ### Lists
 
@@ -210,11 +218,11 @@ Nesting depth, largest task trees, deepest tasks, title categories, common words
 
 Chronological event history with one compact typed date-range field, event type, ordering, text/list/ID filtering, status transitions, and TaskList deep links. Ranges use the same `10/3 - 10/8` style as TaskList Search, with `m/d`, `m/d/yy`, or `m/d/yyyy` accepted on either side.
 
-Created events display as `Created → Open` rather than showing a missing previous status, while normal state changes continue to display their actual `Open → Done`, `Done → Open`, or other transitions.
+Created events display as `Created → Open` rather than showing a missing previous status, while normal state changes continue to display their actual transitions.
 
 ### Compare
 
-Compare either two list scopes or two date ranges. Time-period mode uses one compact typed range for Period A and one for Period B instead of separate From/To controls. A and B use matching Windows-style metric panels and the Difference section reports `A - B` for the same metrics.
+Compare either two list scopes or two date ranges. Time-period mode uses one compact typed range for Period A and one for Period B. The Difference section reports `A - B` for the same metrics.
 
 ### Activity Sessions
 
@@ -231,8 +239,6 @@ Milestones are calculated automatically from the available event history. Curren
 - Universal ID milestones such as #100, #500, #1,000, #2,500, #5,000, and #10,000
 - per-list creation/completion thresholds
 - yearly first creation/completion plus yearly round-number thresholds
-
-No milestone rows need to be entered manually.
 
 ### Fun
 
@@ -251,7 +257,7 @@ The list selector is a multi-select Windows-style checklist.
 
 The selected scope is shared across Stats tabs.
 
-TaskList Stats currently reads every row from TaskList's `lists`, `items`, and `task_events` tables without applying TaskList's archived-list flag. That means archived lists are included in **All lists**, their current items and historical events contribute to statistics, and archived lists appear in the Stats list selector like active lists. Selecting a narrower list scope excludes any list that is not selected.
+TaskList Stats currently reads every row from TaskList's `lists`, `items`, and `task_events` tables without applying TaskList's archived-list flag. Archived lists are therefore included in **All lists**, their current items and historical events contribute to statistics, and archived lists appear in the Stats list selector like active lists.
 
 ## Timestamp precision rules
 
@@ -275,9 +281,9 @@ This prevents a preserved old terminal timestamp from inflating the wrong curren
 
 TaskList v1.5 introduced an append-only `task_events` state-transition log. New transitions are stored individually as they happen.
 
-For older task data, TaskList reconstructs event rows from the timestamps it already had. That older reconstruction can be incomplete when a task changed state repeatedly before the event log existed, and tasks deleted before event logging cannot be reconstructed.
+For older task data, TaskList reconstructs event rows from timestamps it already had. That older reconstruction can be incomplete when a task changed state repeatedly before the event log existed, and tasks deleted before event logging cannot be reconstructed.
 
-The Stats **About** dialog contains the same user-facing explanation. The individual tabs stay focused on their statistics instead of repeating the warning everywhere.
+The Stats **About** dialog contains the same user-facing explanation.
 
 ## Exporting a snapshot
 
@@ -287,7 +293,7 @@ Treat exports as private because they can contain task titles, descriptions, lis
 
 ## PWA behavior
 
-The service worker caches the application shell and login/setup assets, uses network-first behavior for current same-origin static assets, always fetches `/api/*` from the network, and uses cached files only as an offline fallback.
+The service worker caches the application shell, shared theme assets, and login/setup assets; uses network-first behavior for current same-origin static assets; always fetches `/api/*` from the network; and uses cached files only as an offline fallback.
 
 The shell cache does not contain the live TaskList snapshot.
 
@@ -340,115 +346,39 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 ### v2.0.11
 
 - Remove **System** from View → Theme so theme selection is strictly Light or Dark.
-- Remove the `prefers-color-scheme` listener, System effective-theme resolution, unused effective-theme accessor, and exported theme-options list instead of only hiding the menu item.
+- Remove the `prefers-color-scheme` listener and System-theme resolution instead of merely hiding the menu choice.
 - Make Calendar day drill-down omit Created / Completed / Cancelled categories when that category has no tasks on the selected day.
-- Remove the now-unused Calendar empty-category renderer branch and its dead CSS styling.
 - Use darker, less neon Created/Completed colors for the Patterns grouped charts in dark mode while leaving other chart palettes unchanged.
-- Audit the source tree and service-worker shell for old compatibility, release-specific override, and retired Calendar files; no extra legacy files remain.
+- Audit the source tree and service-worker shell for old compatibility, release-specific override, and retired Calendar files.
 - Preserve the read-only TaskList database model and add no monkey patches, chart libraries, or runtime dependencies.
-- Bump project/assembly/frontend version metadata to v2.0.11.
 
 ### v2.0.10
 
-- Add persistent Light, Dark, and System theme support across the Stats workspace and login/setup screen.
-- Add shared Win95 dark-theme styling for chrome, menus, custom inputs/selects, tables, cards, dialogs, Calendar, heatmaps, History/Compare/Sessions/Milestones, Fun, links, notes, and tooltips.
-- Make Canvas charts use theme-aware backgrounds, axes, grid lines, labels, and Created/Completed/Cancelled series colors and redraw the active tab after a theme change.
-- Cache the shared theme assets in the existing network-first service-worker shell.
-- Preserve the Windows 95 raised/recessed visual language and keep TaskList database access read-only.
-- Bump project/assembly/frontend version metadata to v2.0.10.
+- Add persistent Light, Dark, and initially System theme support across the Stats workspace and login/setup screen.
+- Add shared Win95 dark-theme styling for chrome, menus, controls, tables, cards, dialogs, Calendar, heatmaps, analysis tabs, Fun, links, notes, and tooltips.
+- Make Canvas charts theme-aware and redraw the active tab after a theme change.
 
 ### v2.0.9
 
-- Display Created event transitions as `Created → Open` instead of `— → Open` so History Explorer and Activity Session details do not imply missing data for a task's initial state.
-- Preserve the actual stored event data and all normal state-transition labels; this is a presentation-only clarification.
-- Document the current archived-list behavior: archived lists, items, and events are included in **All lists** because Stats currently reads all TaskList list rows without applying the archived flag.
-- Bump project/assembly/frontend version metadata to v2.0.9.
+- Display Created event transitions as `Created → Open` instead of `— → Open`.
+- Document archived-list behavior in **All lists**.
 
 ### v2.0.8
 
-- Replace History Explorer's separate From/To fields with one compact typed Date range control.
-- Replace Compare time-period mode's four From/To fields with one typed date range for Period A and one for Period B.
-- Use the same `10/3 - 10/8` range format as TaskList Search; either side accepts `m/d`, `m/d/yy`, or `m/d/yyyy`.
-- Accept hyphen, en dash, or em dash separators and keep existing date validation/order checks.
-- Keep the current default History and Compare date windows while formatting them into the compact controls.
-- Remove the old separate-date parsing/listener paths and keep the range controls responsive on desktop and mobile.
-- Bump project/assembly/frontend version metadata to v2.0.8 with no new dependencies or monkey patches.
+- Replace separate From/To fields in History Explorer and Compare with compact typed date-range controls.
 
-### v2.0.7
+### v2.0.7 / v2.0.6
 
-- Returned Calendar Month Detail to one typed `m/yy` / `m/yyyy` field for consistency with the app's other typed date/month controls.
-- Force the Month Detail field to `inputmode="text"` so mobile browsers use a normal text keyboard rather than a numeric-only picker.
-- Removed the separate Month/Year selector markup, selector options, synchronization handlers, and selector-specific Calendar helper functions introduced in v2.0.6.
-- Consolidated Calendar month parsing, initialization, rendering, and day-drill-down around the single `calendarMonth` value instead of keeping duplicate month/year state.
-- Kept the v2.0.6 milestone families and file consolidation intact with no new files, dependencies, monkey patches, or hidden replacement controls.
-- Bumped project/assembly/frontend version metadata to v2.0.7.
+- Return Calendar Month Detail to one typed `m/yy` / `m/yyyy` field.
+- Add Universal-ID, per-list, and yearly milestone families.
+- Consolidate Calendar drill-down into the normal History/analysis modules and remove redundant release-specific files.
 
-### v2.0.6
+### v2.0.x highlights
 
-- Replaced the Calendar Month Detail text field with separate custom Month and Year menus so iOS never needs to type a slash or invoke a browser-native month picker.
-- Added Universal ID milestones, per-list creation/completion milestones, and yearly first/round-number creation/completion milestones.
-- Consolidated Calendar day-drill-down JavaScript into `history.js` and its feature styles into `analysis-tabs.css`.
-- Removed the now-redundant `calendar-details.js` and `calendar-details.css` files and their service-worker/index references.
-- Made the Activity Session event dialog normal static application markup instead of dynamically building another dialog structure in JavaScript.
-- Kept removed/old feature code out of the source tree rather than hiding it.
-- Bumped checked-in frontend and project version metadata to v2.0.6.
+- Add History Explorer, Compare, Activity Sessions, Milestones, Calendar drill-down, responsive analysis controls, improved chart tooltips, and the current Fun workspace.
+- Remove retired Search / Explorer, Flow, Insights, Ancient Task, and Task Graveyard features from the actual source instead of merely hiding them.
 
-### v2.0.5
-
-- Fixed mobile line-chart tooltip dismissal.
-- Changed Calendar labels to three-letter weekdays, added Reopened heatmap mode, and replaced the native month picker with a custom-styled control.
-- Consolidated old/live event-history explanations into About instead of repeating them on individual tabs.
-- Removed Ancient Task and Task Graveyard from Fun.
-- Prevented date-only Fun values from displaying a made-up midnight time.
-- Removed the History Explorer Source column from the renderer itself.
-
-### v2.0.4
-
-- Removed the History Explorer Source column from the visible table.
-
-### v2.0.3
-
-- Turned Milestones into responsive tiles.
-- Made Compare's Difference section match the A/B metric presentation.
-
-### v2.0.2
-
-- Restyled Activity Session rows and added clickable event-count drill-down dialogs.
-
-### v2.0.1
-
-- Fixed horizontal scrolling from the analysis tabs on mobile.
-- Converted new analysis controls to the custom Windows-style control system.
-- Removed Search / Explorer, Flow, and Insights completely.
-- Added busiest completion weekday/hour to Workload Rhythm.
-- Redesigned Milestones and Compare.
-
-### v2.0
-
-- Added History Explorer, Compare, Activity Sessions, and Milestones based on TaskList's state-event log.
-
-### v1.0.13
-
-- Fixed Calendar dialog sizing on mobile while keeping one scrollable dialog body.
-
-### v1.0.12
-
-- Moved only the Calendar dialog OK button slightly lower.
-
-### v1.0.11
-
-- Fixed Calendar dialog single-scroll behavior.
-- Added checked-in/generated `version.json` so frontend version labels remain current even when an older executable is still running.
-
-### v1.0.10
-
-- Added Task Roulette tooltips and Calendar day drill-down.
-
-### v1.0.9
-
-- Removed release-specific compatibility/override code and organized browser behavior into normal purpose-based modules.
-
-Earlier 1.0.x and 0.x releases built authentication, records, current-status semantics, backlog reconstruction, hierarchy performance, mobile layout, custom controls, deep links, Fun analyses, heatmaps, and the original statistics dashboards. The Git commit history contains the detailed release-by-release notes.
+Earlier release-by-release details remain available in Git commit history.
 
 ## Development philosophy
 
