@@ -59,6 +59,18 @@ function populateListFilter() {
   }
 }
 
+function menuRadioButton(value, label, checked, onClick) {
+  const button=document.createElement('button');
+  button.type='button';
+  button.setAttribute('role','menuitemradio');
+  button.setAttribute('aria-checked',checked?'true':'false');
+  const check=document.createElement('span'); check.className='menu-check';
+  const text=document.createElement('span'); text.className='menu-label'; text.textContent=label;
+  button.append(check,text);
+  button.addEventListener('click',onClick);
+  return button;
+}
+
 function populateViewMenu() {
   const labels = [
     ['overview','Overview'],['trends','Trends'],['calendar','Calendar'],['lists','Lists'],['patterns','Patterns'],['trees','Trees & Titles'],
@@ -66,9 +78,21 @@ function populateViewMenu() {
   ];
   const menu=$('#viewMenu'); menu.replaceChildren();
   for(const [value,label] of labels){
-    const button=document.createElement('button'); button.type='button'; button.setAttribute('role','menuitemradio'); button.setAttribute('aria-checked',value===state.activeTab?'true':'false');
-    const check=document.createElement('span');check.className='menu-check';const text=document.createElement('span');text.className='menu-label';text.textContent=label;
-    button.append(check,text); button.addEventListener('click',()=>{switchTab(value);populateViewMenu();}); menu.append(button);
+    menu.append(menuRadioButton(value,label,value===state.activeTab,()=>{switchTab(value);populateViewMenu();}));
+  }
+
+  const separator=document.createElement('div'); separator.className='menu-separator'; separator.setAttribute('role','separator');
+  const heading=document.createElement('div'); heading.className='menu-heading'; heading.textContent='Theme'; heading.setAttribute('role','presentation');
+  menu.append(separator,heading);
+
+  const preference=window.TaskTheme?.getPreference?.() ?? 'light';
+  for(const [value,label] of [['light','Light'],['dark','Dark'],['system','System']]){
+    menu.append(menuRadioButton(value,label,value===preference,event=>{
+      event.stopPropagation();
+      window.TaskTheme?.setPreference?.(value);
+      populateViewMenu();
+      closeMenus();
+    }));
   }
 }
 
@@ -217,10 +241,20 @@ function initializeCustomSingleSelects() {
   $$('[data-single-select]').forEach(host => { const button = host.querySelector('[data-single-select-button]'); const menu = host.querySelector('[data-single-select-menu]'); button.addEventListener('click', event => { event.stopPropagation(); if (button.disabled) return; toggleMenu(button, menu); }); });
 }
 
+window.addEventListener('task-theme-change', () => {
+  populateViewMenu();
+  Charts.hideTooltip?.();
+  if (state.snapshot) requestAnimationFrame(() => renderAll());
+});
+
 let appStarted = false;
-function startApp() {
+async function startApp() {
   if (appStarted) return;
   appStarted = true;
+  try {
+    await import('/theme.js');
+    await window.TaskTheme?.ready;
+  } catch {}
   Fun.initialize();
   initializeCustomSingleSelects();
   initializeTouchHelp();
