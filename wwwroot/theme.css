@@ -99,6 +99,10 @@ button:active,
   border-bottom-color: var(--light);
 }
 
+.menubar > .menu-wrap > button u {
+  text-decoration: none;
+}
+
 .menu-dropdown {
   color: var(--theme-text);
   background: var(--face);
