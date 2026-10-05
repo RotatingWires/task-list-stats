@@ -20,7 +20,7 @@ function renderAll() {
   renderers[state.activeTab]?.();
   $('#statusLeft').textContent = `${numberFmt.format(scopedItems().length)} current items • ${scopeLabel()}`;
   const eventText = state.snapshot.eventLogAvailable ? ` • ${numberFmt.format(state.snapshot.events?.length || 0)} recorded events` : '';
-  $('#statusRight').textContent = `DB updated ${formatDateTime(parseDate(state.snapshot.databaseLastWriteUtc))} • Read-only${eventText}`;
+  $('#statusRight').textContent = `DB updated ${formatDateTime(parseDate(state.snapshot.databaseLastWriteUtc))} • Task data read-only${eventText}`;
 }
 
 function switchTab(name) {
@@ -229,7 +229,7 @@ function setSingleSelectOptions(id, options, preferredValue = null) {
   parts.button.disabled = false; const wanted = preferredValue == null ? parts.input.value : String(preferredValue); const selected = normalized.find(option => option.value === wanted) ?? normalized[0];
   parts.input.value = selected.value; parts.label.textContent = selected.label;
   for (const option of normalized) {
-    const button = document.createElement('button'); button.type = 'button'; button.dataset.value = option.value; button.setAttribute('role', 'menuitemradio'); button.setAttribute('aria-checked', option.value === selected.value ? 'true' : 'false');
+    const button = document.createElement('button'); button.type = 'button'; button.dataset.value = option.value; button.setAttribute('role','menuitemradio'); button.setAttribute('aria-checked', option.value === selected.value ? 'true' : 'false');
     const check=document.createElement('span'); check.className='menu-check'; const text=document.createElement('span'); text.className='menu-label'; text.textContent=option.label; button.append(check,text);
     button.addEventListener('click', event => { event.stopPropagation(); const changed = parts.input.value !== option.value; parts.input.value = option.value; parts.label.textContent = option.label; for (const choice of parts.menu.querySelectorAll('[data-value]')) choice.setAttribute('aria-checked', choice.dataset.value === option.value ? 'true' : 'false'); parts.menu.hidden = true; parts.button.setAttribute('aria-expanded','false'); parts.button.focus(); if (changed) parts.input.dispatchEvent(new Event('change',{bubbles:true})); });
     parts.menu.append(button);
@@ -259,7 +259,10 @@ async function startApp() {
   initializeCustomSingleSelects();
   initializeTouchHelp();
   initializeAnalysisTabs();
-  loadSnapshot();
+  await loadSnapshot();
+  try {
+    await import('/milestones.js');
+  } catch {}
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp, { once: true }); else startApp();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});

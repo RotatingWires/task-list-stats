@@ -157,6 +157,7 @@ app.MapPost("/api/auth/logout", async (HttpContext context) =>
 }).RequireAuthorization();
 
 var api = app.MapGroup("/api").RequireAuthorization();
+MilestoneNotifications.MapEndpoints(api, () => ResolveDatabasePath(builder.Configuration), "stats");
 
 api.MapGet("/health", () =>
 {
