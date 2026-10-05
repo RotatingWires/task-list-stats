@@ -1,11 +1,13 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.0.11
+# TaskList Stats v2.0.12
 
-**TaskList Stats** is a separate, read-only statistics and history explorer for the self-hosted **TaskList** database.
+**TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
 TaskList stays focused on creating and managing tasks. TaskList Stats reads the same SQLite database and provides charts, records, calendars, hierarchy analysis, event history, comparisons, inferred activity sessions, milestones, and Fun views without adding that weight to the main TaskList app.
+
+Normal statistics/snapshot access stays read-only. v2.0.12 adds one deliberately narrow shared-database write: Stats can atomically acknowledge a pending milestone notification so the same celebration is not shown again in TaskList. It does not edit tasks, lists, task events, statuses, or Universal IDs.
 
 The interface uses the same Windows 95-style visual language as TaskList, includes persistent **Light** and **Dark** themes, includes TaskList-style first-run password setup/login, works on desktop and mobile, and can be installed as a PWA.
 
@@ -28,18 +30,22 @@ It can answer questions such as:
 - What round-number, Universal-ID, per-list, and yearly milestones have been reached?
 - Which exact tasks were created, completed, or cancelled on a Calendar day?
 
-## Read-only TaskList database access
+## TaskList database access
 
-TaskList Stats does **not** create, update, or delete TaskList rows.
+Normal TaskList Stats snapshot reads do **not** create, update, or delete TaskList data.
 
-The TaskList SQLite database is opened with:
+The snapshot reader opens the TaskList SQLite database with:
 
 - `Mode=ReadOnly`
 - `PRAGMA query_only = ON`
 
-There are no TaskList-data write endpoints in the Stats API. The server reads TaskList into a snapshot and the browser performs the statistics against that snapshot.
+The server reads TaskList into a snapshot and the browser performs the statistics against that snapshot.
 
-Authentication does require one Stats-owned file:
+v2.0.12 adds one exception for shared milestone notifications. `POST /api/milestones/claim` briefly opens the database read/write and only updates `viewed_at` / `viewed_by` on pending rows in TaskList's `milestone_notifications` table. This is what lets TaskList and Stats share one global "already celebrated" state. It never writes to `lists`, `items`, `task_events`, or `universal_ids`.
+
+If the Stats process only has read permission to the TaskList database, normal statistics still work; Stats simply cannot claim/show a real shared milestone notification, leaving it pending for TaskList to claim later.
+
+Authentication also requires one Stats-owned file:
 
 ```text
 data/auth.json
@@ -77,7 +83,8 @@ The source tree intentionally stays small. Behavior belongs in normal purpose-ba
 
 ```text
 TaskListStats.csproj      .NET project, dependencies, and release version
-Program.cs                server, auth, read-only DB reader, and API
+Program.cs                server, auth, read-only snapshot reader, and API
+MilestoneNotifications.cs shared milestone acknowledgement endpoint
 appsettings.json          database path and listen-address configuration
 README.md                 setup, behavior, security, and release documentation
 
@@ -94,6 +101,8 @@ wwwroot/
   fun.js                  Fun workspace
   charts.js               Canvas chart drawing and chart tooltip interactions
   ui.js                   navigation, custom selects, filtering, startup/session UI
+  milestones.js           shared milestone claim/dialog/confetti behavior
+  milestones.css          responsive Light/Dark milestone celebration styling
   theme.js                persistent Light/Dark theme selection and startup application
   style.css               base Windows 95-style UI and responsive layout
   theme.css               shared Light/Dark Win95 theme tokens and dark-theme styling
@@ -121,7 +130,8 @@ Server requirements:
 
 - .NET 10 SDK/runtime
 - a TaskList `task-list.db` SQLite database
-- read permission to the TaskList database and parent path
+- read permission to the TaskList database and parent path for normal Stats features
+- write permission to the TaskList database if Stats should be able to acknowledge/show shared milestone notifications
 - write permission to the Stats working directory for `data/auth.json`
 
 Run:
@@ -157,7 +167,7 @@ Use **View → Theme** to choose **Light** or **Dark**. The selection persists i
 
 The dark theme keeps the Windows 95 raised/recessed look instead of replacing it with a generic flat theme. Canvas charts read theme-aware colors and redraw appropriately.
 
-There is intentionally no automatic **System** theme in v2.0.11; theme selection is strictly Light or Dark.
+There is intentionally no automatic **System** theme; theme selection is strictly Light or Dark.
 
 ## TaskList deep links
 
@@ -240,6 +250,8 @@ Milestones are calculated automatically from the available event history. Curren
 - per-list creation/completion thresholds
 - yearly first creation/completion plus yearly round-number thresholds
 
+TaskList v1.5.5+ also keeps a tiny shared notification ledger for major global Created, Completed, and Universal-ID thresholds. Either TaskList or Stats can claim a pending milestone, show a short celebration dialog with confetti, and mark that notification viewed globally so the other app does not repeat it. This popup state is separate from the permanent Milestones analysis shown here.
+
 ### Fun
 
 Task Roulette, Forgotten Task, Time Machine, Productivity Jackpot, Personal Records, On This Day, Déjà Vu, Slowest Task, Night Owl, Early Bird, Same-Day Speedrun, and Cleanup Day.
@@ -293,7 +305,7 @@ Treat exports as private because they can contain task titles, descriptions, lis
 
 ## PWA behavior
 
-The service worker caches the application shell, shared theme assets, and login/setup assets; uses network-first behavior for current same-origin static assets; always fetches `/api/*` from the network; and uses cached files only as an offline fallback.
+The service worker caches the application shell, shared theme/milestone assets, and login/setup assets; uses network-first behavior for current same-origin static assets; always fetches `/api/*` from the network; and uses cached files only as an offline fallback.
 
 The shell cache does not contain the live TaskList snapshot.
 
@@ -309,8 +321,9 @@ Recommended deployment:
 
 Important distinctions:
 
-- **TaskList DB writes:** blocked by read-only SQLite mode and `PRAGMA query_only`.
-- **Stats auth storage:** Stats writes only its own `data/auth.json` credential file.
+- **TaskList task/history data:** normal snapshot access is read-only SQLite mode with `PRAGMA query_only`; Stats does not edit lists, items, event history, statuses, or Universal IDs.
+- **Milestone acknowledgement:** one narrow endpoint may update only `viewed_at` / `viewed_by` in `milestone_notifications` so a celebration is globally one-time across the two apps.
+- **Stats auth storage:** Stats writes its own `data/auth.json` credential file.
 - **Passwords:** plaintext passwords are never stored.
 - **Sessions:** the cookie is HttpOnly and SameSite=Strict; use HTTPS if the network is not trusted.
 - **Exports:** snapshot JSON contains personal task data and should be protected like a database export.
@@ -333,6 +346,10 @@ Check `TaskListStats:DatabasePath` or `TASKLIST_DB_PATH` and verify filesystem r
 
 An expired session should send you back to Login. Otherwise inspect `/api/health` and `/api/snapshot` after logging in.
 
+### A real milestone popup never appears in Stats
+
+TaskList v1.5.5 or newer must have initialized the shared `milestone_notifications` table. Stats also needs filesystem write permission to the TaskList database to atomically acknowledge the notification. If it cannot write, the normal Stats dashboard still works and TaskList can claim the notification instead.
+
 ### Task-ID links open the wrong TaskList server
 
 Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
@@ -341,7 +358,17 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.11
+## Current release: v2.0.12
+
+### v2.0.12
+
+- Add shared milestone celebrations for major global Created, Completed, and Universal-ID thresholds generated by TaskList v1.5.5+.
+- Atomically claim pending notifications so a real celebration appears only once across TaskList and TaskList Stats.
+- Keep normal Stats snapshots strictly read-only; the only TaskList-database write is the narrow milestone acknowledgement update.
+- Add the same responsive Win95-style Light/Dark celebration dialog and short dependency-free confetti as TaskList, including reduced-motion support.
+- Keep the existing Milestones tab as the permanent analytical/history view after a popup is dismissed.
+- Add milestone frontend assets to the existing network-first PWA shell.
+- Add no monkey patches, frontend libraries, or new runtime dependencies.
 
 ### v2.0.11
 
@@ -350,7 +377,7 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 - Make Calendar day drill-down omit Created / Completed / Cancelled categories when that category has no tasks on the selected day.
 - Use darker, less neon Created/Completed colors for the Patterns grouped charts in dark mode while leaving other chart palettes unchanged.
 - Audit the source tree and service-worker shell for old compatibility, release-specific override, and retired Calendar files.
-- Preserve the read-only TaskList database model and add no monkey patches, chart libraries, or runtime dependencies.
+- Preserve the read-only TaskList snapshot model and add no monkey patches, chart libraries, or runtime dependencies.
 
 ### v2.0.10
 
@@ -386,7 +413,7 @@ Earlier release-by-release details remain available in Git commit history.
 - prefer normal source edits over version-specific patch files
 - do not monkey-patch or reassign existing functions to bolt on release behavior
 - remove retired features from markup, code, styles, and dependencies instead of merely hiding them
-- keep the TaskList database authoritative and read-only from Stats
+- keep TaskList authoritative; keep normal Stats snapshot reads read-only and limit shared writes to the explicit milestone acknowledgement
 - preserve timestamp precision instead of inventing data
 - keep controls consistent across desktop and mobile
 - use boring, understandable browser/.NET features before adding dependencies
