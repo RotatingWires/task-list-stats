@@ -11,6 +11,8 @@ using System.Text.RegularExpressions;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+var consoleLogPath = Path.Combine(builder.Environment.ContentRootPath, "logs", "console.log");
+builder.Logging.AddProvider(new SingleFileLoggerProvider(consoleLogPath, 10 * 1024 * 1024));
 
 var configuredUrl = Environment.GetEnvironmentVariable("TASKLIST_STATS_URL")
     ?? builder.Configuration["TaskListStats:ListenUrl"]
