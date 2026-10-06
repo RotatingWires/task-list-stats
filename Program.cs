@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.RateLimiting;
@@ -234,7 +235,7 @@ api.MapGet("/snapshot", async () =>
     }
 });
 
-api.MapGet("/events", async () =>
+api.MapGet("/events", async (long? afterId, string? cursor) =>
 {
     var dbPath = ResolveDatabasePath(builder.Configuration);
     if (!File.Exists(dbPath))
@@ -264,32 +265,71 @@ api.MapGet("/events", async () =>
             await pragma.ExecuteNonQueryAsync();
         }
 
+        var requestedAfterId = Math.Max(0, afterId ?? 0);
         await using (var existsCommand = connection.CreateCommand())
         {
             existsCommand.CommandText = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'task_events');";
             if (Convert.ToInt64(await existsCommand.ExecuteScalarAsync(), CultureInfo.InvariantCulture) == 0)
-                return Results.Ok(Array.Empty<EventSnapshot>());
+                return Results.Ok(new EventBatch(requestedAfterId > 0, 0, null, []));
+        }
+
+        var resetRequired = false;
+        EventSnapshot? anchor = null;
+
+        if (requestedAfterId > 0)
+        {
+            await using var anchorCommand = connection.CreateCommand();
+            anchorCommand.CommandText = """
+                SELECT id, universal_id, event_type, event_at, from_status, to_status,
+                       list_id, display_id, parent_display_id, title, source
+                FROM task_events
+                WHERE id = $afterId;
+                """;
+            anchorCommand.Parameters.AddWithValue("$afterId", requestedAfterId);
+
+            await using var anchorReader = await anchorCommand.ExecuteReaderAsync();
+            if (await anchorReader.ReadAsync())
+                anchor = ReadEvent(anchorReader);
+
+            if (anchor is null ||
+                string.IsNullOrWhiteSpace(cursor) ||
+                !string.Equals(EventCursor(anchor), cursor, StringComparison.OrdinalIgnoreCase))
+            {
+                resetRequired = true;
+                requestedAfterId = 0;
+                anchor = null;
+            }
         }
 
         var events = new List<EventSnapshot>();
-        await using var command = connection.CreateCommand();
-        command.CommandText = """
-            SELECT id, universal_id, event_type, event_at, from_status, to_status,
-                   list_id, display_id, parent_display_id, title, source
-            FROM task_events
-            ORDER BY event_at, id;
-            """;
-        await using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        await using (var command = connection.CreateCommand())
         {
-            events.Add(new EventSnapshot(
-                reader.GetInt64(0), reader.GetInt64(1), reader.GetString(2), reader.GetString(3),
-                reader.IsDBNull(4) ? null : reader.GetString(4), reader.IsDBNull(5) ? null : reader.GetString(5),
-                reader.GetInt64(6), reader.GetString(7), reader.IsDBNull(8) ? null : reader.GetString(8),
-                reader.GetString(9), reader.GetString(10)));
+            command.CommandText = """
+                SELECT id, universal_id, event_type, event_at, from_status, to_status,
+                       list_id, display_id, parent_display_id, title, source
+                FROM task_events
+                WHERE id > $afterId
+                ORDER BY id;
+                """;
+            command.Parameters.AddWithValue("$afterId", requestedAfterId);
+
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                events.Add(ReadEvent(reader));
         }
 
-        return Results.Ok(events);
+        var lastEvent = anchor;
+        foreach (var item in events)
+        {
+            if (lastEvent is null || item.Id > lastEvent.Id)
+                lastEvent = item;
+        }
+
+        return Results.Ok(new EventBatch(
+            resetRequired,
+            lastEvent?.Id ?? 0,
+            lastEvent is null ? null : EventCursor(lastEvent),
+            events));
     }
     catch (SqliteException ex)
     {
@@ -316,6 +356,36 @@ static string ResolveDatabasePath(IConfiguration configuration)
         if (File.Exists(full)) return full;
     }
     return Path.GetFullPath(Path.Combine(basePath, configuredPath));
+}
+
+static EventSnapshot ReadEvent(SqliteDataReader reader) => new(
+    reader.GetInt64(0),
+    reader.GetInt64(1),
+    reader.GetString(2),
+    reader.GetString(3),
+    reader.IsDBNull(4) ? null : reader.GetString(4),
+    reader.IsDBNull(5) ? null : reader.GetString(5),
+    reader.GetInt64(6),
+    reader.GetString(7),
+    reader.IsDBNull(8) ? null : reader.GetString(8),
+    reader.GetString(9),
+    reader.GetString(10));
+
+static string EventCursor(EventSnapshot item)
+{
+    var payload = string.Join('\u001F',
+        item.Id.ToString(CultureInfo.InvariantCulture),
+        item.UniversalId.ToString(CultureInfo.InvariantCulture),
+        item.EventType,
+        item.EventAt,
+        item.FromStatus ?? string.Empty,
+        item.ToStatus ?? string.Empty,
+        item.ListId.ToString(CultureInfo.InvariantCulture),
+        item.DisplayId,
+        item.ParentDisplayId ?? string.Empty,
+        item.Title,
+        item.Source);
+    return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(payload)));
 }
 
 static string GenerateSetupToken()
@@ -392,4 +462,5 @@ record PasswordFile(int Version, int Iterations, string Salt, string Hash);
 record ListSnapshot(long Id, string Name, string CreatedAt);
 record ItemSnapshot(long UniversalId, long ListId, string DisplayId, string? ParentDisplayId, string Title, string Description, string Status, string CreatedAt, string? UpdatedAt, string? CompletedAt, string? CancelledAt, string? ReopenedAt);
 record EventSnapshot(long Id, long UniversalId, string EventType, string EventAt, string? FromStatus, string? ToStatus, long ListId, string DisplayId, string? ParentDisplayId, string Title, string Source);
+record EventBatch(bool ResetRequired, long LastEventId, string? Cursor, List<EventSnapshot> Events);
 record StatsSnapshot(string Version, string GeneratedAtUtc, string DatabaseLastWriteUtc, long HighestUniversalId, List<ListSnapshot> Lists, List<ItemSnapshot> Items, bool EventLogAvailable, List<EventSnapshot> Events);

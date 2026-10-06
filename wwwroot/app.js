@@ -5,7 +5,10 @@ const state = {
   selectedListIds: new Set(),
   activeTab: 'overview',
   eventsLoaded: false,
-  eventsLoading: null
+  eventsLoading: null,
+  eventsNeedRefresh: false,
+  lastEventId: 0,
+  eventCursor: null
 };
 
 const $ = selector => document.querySelector(selector);

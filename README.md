@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.0.19
+# TaskList Stats v2.1.0
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -39,7 +39,11 @@ The snapshot reader opens the TaskList SQLite database with:
 - `Mode=ReadOnly`
 - `PRAGMA query_only = ON`
 
-The server reads current TaskList lists/items into the initial snapshot and the browser performs the statistics against that snapshot. The append-only `task_events` history is intentionally excluded from initial startup and is loaded from `/api/events` only when History Explorer, Compare, Activity Sessions, Milestones, or snapshot export actually needs it. Once loaded, the browser reuses that in-memory event set for the rest of the current snapshot.
+The server reads current TaskList lists/items into the initial snapshot and the browser performs the statistics against that snapshot. The append-only `task_events` history is intentionally excluded from initial startup and is loaded from `/api/events` only when History Explorer, Compare, Activity Sessions, Milestones, or snapshot export actually needs it.
+
+After the first event-history load, Stats keeps the events in browser memory across normal **Refresh** operations. When event history is needed again, the browser sends the last event ID plus an opaque cursor derived from that last event. The server validates that cursor against the current database and returns only rows with a larger event ID. Those new rows are appended to the in-memory event set, so a refresh after five new TaskList events transfers five event rows instead of the entire history.
+
+If the database was restored, replaced, truncated, or otherwise no longer contains the same last cached event, cursor validation fails. The same `/api/events` response then marks the cache for reset and returns the full current event history, so Stats recovers automatically instead of silently combining events from two database histories. Event history is not persisted in browser storage, so a full page/browser restart still performs one normal lazy full-history load when an event-dependent feature is first opened.
 
 The one exception is shared milestone acknowledgement. `POST /api/milestones/claim` briefly opens the database read/write and only updates `viewed_at` / `viewed_by` on pending rows in TaskList's `milestone_notifications` table. This is what lets TaskList and Stats share one global "already celebrated" state. It never writes to `lists`, `items`, `task_events`, or `universal_ids`.
 
@@ -376,7 +380,22 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.19
+## Current release: v2.1.0
+
+### v2.1.0
+
+- Add incremental event-history refreshes on top of the v2.0.19 lazy-loading path.
+- Keep already-loaded event history in browser memory across normal Stats Refresh operations instead of discarding and downloading it again.
+- Extend `/api/events` with an `afterId` cursor path so refreshes transfer only newly appended `task_events` rows.
+- Validate an opaque SHA-256 cursor derived from the last cached event before accepting an incremental continuation.
+- Automatically fall back to a full event-history replacement in the same response if the TaskList database was restored, replaced, truncated, or the cached cursor no longer matches.
+- Keep the normal startup snapshot free of event-history rows, and continue loading history only for History Explorer, Compare, Activity Sessions, Milestones, or snapshot export.
+- Keep event caching memory-only; a full page/browser restart still starts clean and performs one lazy full-history load when needed.
+- Cache-bust the changed app/UI scripts and advance the PWA shell cache.
+- Update project/frontend metadata and documentation to v2.1.0.
+- Add no monkey patches or new runtime/frontend dependencies.
+
+### v2.0.19
 
 ### v2.0.19
 
