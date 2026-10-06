@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.0.13
+# TaskList Stats v2.0.14
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -247,8 +247,8 @@ Milestones are calculated automatically from the available event history. Curren
 - global Created / Completed / Cancelled / Reopened thresholds, continuing every 5,000 events after 10,000
 - overall recorded-event thresholds, continuing every 5,000 events after 10,000
 - Universal ID milestones such as #100, #500, #1,000, #2,500, #5,000, #10,000, then every 5,000 IDs indefinitely
-- per-list creation/completion thresholds at 100, 500, 1,000, 2,000, and 5,000
-- yearly first creation/completion plus 100, 500, 1,000, and 2,000 round-number thresholds
+- per-list creation/completion thresholds at 100, 500, 1,000, 2,000, and 5,000, then every 5,000 events indefinitely
+- yearly first creation/completion plus 100, 500, 1,000, and 2,000 round-number thresholds, then every 5,000 events indefinitely within that year
 
 TaskList v1.5.5+ also keeps a tiny shared notification ledger for major global Created, Completed, and Universal-ID thresholds. Either TaskList or Stats can claim a pending milestone, show a short celebration dialog with confetti, and mark that notification viewed globally so the other app does not repeat it. This popup state is separate from the permanent Milestones analysis shown here, and the continuing 5,000-step analytical milestones do not change the popup-notification threshold set.
 
@@ -358,7 +358,16 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.13
+## Current release: v2.0.14
+
+### v2.0.14
+
+- Keep per-list Created and Completed milestones going every 5,000 events after the existing 5,000 threshold.
+- Keep each year's Created and Completed milestones going at 5,000-event intervals after the existing First/100/500/1,000/2,000 thresholds.
+- Preserve the existing early per-list and yearly milestones while removing their hard upper ceilings.
+- Reuse the same generated-threshold helper as the global event and Universal-ID milestone series instead of hardcoding future limits.
+- Keep these as permanent Stats milestones only; shared celebration-notification thresholds are unchanged.
+- Add no monkey patches, frontend libraries, or runtime dependencies.
 
 ### v2.0.13
 
