@@ -1,13 +1,13 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.0.14
+# TaskList Stats v2.0.15
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
 TaskList stays focused on creating and managing tasks. TaskList Stats reads the same SQLite database and provides charts, records, calendars, hierarchy analysis, event history, comparisons, inferred activity sessions, milestones, and Fun views without adding that weight to the main TaskList app.
 
-Normal statistics/snapshot access stays read-only. v2.0.12 adds one deliberately narrow shared-database write: Stats can atomically acknowledge a pending milestone notification so the same celebration is not shown again in TaskList. It does not edit tasks, lists, task events, statuses, or Universal IDs.
+Normal statistics/snapshot access stays read-only. The only deliberately narrow shared-database write is milestone acknowledgement: Stats can atomically claim a pending celebration so the same milestone is not shown again in TaskList. It does not edit tasks, lists, task events, statuses, or Universal IDs.
 
 The interface uses the same Windows 95-style visual language as TaskList, includes persistent **Light** and **Dark** themes, includes TaskList-style first-run password setup/login, works on desktop and mobile, and can be installed as a PWA.
 
@@ -41,7 +41,7 @@ The snapshot reader opens the TaskList SQLite database with:
 
 The server reads TaskList into a snapshot and the browser performs the statistics against that snapshot.
 
-v2.0.12 adds one exception for shared milestone notifications. `POST /api/milestones/claim` briefly opens the database read/write and only updates `viewed_at` / `viewed_by` on pending rows in TaskList's `milestone_notifications` table. This is what lets TaskList and Stats share one global "already celebrated" state. It never writes to `lists`, `items`, `task_events`, or `universal_ids`.
+The one exception is shared milestone acknowledgement. `POST /api/milestones/claim` briefly opens the database read/write and only updates `viewed_at` / `viewed_by` on pending rows in TaskList's `milestone_notifications` table. This is what lets TaskList and Stats share one global "already celebrated" state. It never writes to `lists`, `items`, `task_events`, or `universal_ids`.
 
 If the Stats process only has read permission to the TaskList database, normal statistics still work; Stats simply cannot claim/show a real shared milestone notification, leaving it pending for TaskList to claim later.
 
@@ -250,7 +250,9 @@ Milestones are calculated automatically from the available event history. Curren
 - per-list creation/completion thresholds at 100, 500, 1,000, 2,000, and 5,000, then every 5,000 events indefinitely
 - yearly first creation/completion plus 100, 500, 1,000, and 2,000 round-number thresholds, then every 5,000 events indefinitely within that year
 
-TaskList v1.5.5+ also keeps a tiny shared notification ledger for major global Created, Completed, and Universal-ID thresholds. Either TaskList or Stats can claim a pending milestone, show a short celebration dialog with confetti, and mark that notification viewed globally so the other app does not repeat it. This popup state is separate from the permanent Milestones analysis shown here, and the continuing 5,000-step analytical milestones do not change the popup-notification threshold set.
+TaskList v1.5.6+ keeps a shared notification ledger whose celebration thresholds mirror these permanent milestone families: global Created / Completed / Cancelled / Reopened events, overall recorded events, Universal IDs, per-list Created / Completed milestones, and yearly Created / Completed milestones. Their existing early thresholds are preserved and the continuing families keep producing celebrations every 5,000 after their normal transition point, so milestone popups do not end permanently.
+
+TaskList and Stats both use the same atomic claim operation. Whichever app claims a pending milestone first shows the responsive Win95-style dialog and confetti, then marks it viewed globally so the other app does not repeat it. Several milestones reached by one action are bundled into one dialog and one confetti run. Newly introduced notification families are baselined against existing history by TaskList so upgrading does not replay old achievements. The permanent Milestones timeline remains independent of whether a popup has already been acknowledged.
 
 ### Fun
 
@@ -348,7 +350,7 @@ An expired session should send you back to Login. Otherwise inspect `/api/health
 
 ### A real milestone popup never appears in Stats
 
-TaskList v1.5.5 or newer must have initialized the shared `milestone_notifications` table. Stats also needs filesystem write permission to the TaskList database to atomically acknowledge the notification. If it cannot write, the normal Stats dashboard still works and TaskList can claim the notification instead.
+TaskList v1.5.5 or newer must have initialized the shared `milestone_notifications` table; TaskList v1.5.6 or newer is required for the expanded global, recorded-event, per-list, yearly, and continuing 5,000-step celebration families. Stats also needs filesystem write permission to the TaskList database to atomically acknowledge the notification. If it cannot write, the normal Stats dashboard still works and TaskList can claim the notification instead.
 
 ### Task-ID links open the wrong TaskList server
 
@@ -358,7 +360,18 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.14
+## Current release: v2.0.15
+
+### v2.0.15
+
+- Expand shared celebration popups to the same milestone families shown in the permanent Milestones timeline.
+- Support global Created / Completed / Cancelled / Reopened, overall recorded-event, Universal-ID, per-list Created / Completed, and yearly Created / Completed notifications.
+- Allow the continuing milestone families to keep celebrating every 5,000 instead of stopping permanently.
+- Display list/year context in the shared milestone dialog and bundle simultaneous milestones into one confetti celebration.
+- Remain compatible with the older v1.5.5 TaskList notification schema when Stats is updated before TaskList.
+- Keep normal statistics reads read-only; Stats still only writes milestone acknowledgement state.
+- Update project/frontend versions and documentation to v2.0.15.
+- Add no monkey patches, frontend libraries, or runtime dependencies.
 
 ### v2.0.14
 

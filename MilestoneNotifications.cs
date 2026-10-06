@@ -36,26 +36,62 @@ static class MilestoneNotifications
                         return Results.Ok(Array.Empty<MilestoneNotice>());
                 }
 
+                var extendedSchema = false;
+                await using (var columns = connection.CreateCommand())
+                {
+                    columns.CommandText = "PRAGMA table_info(milestone_notifications);";
+                    await using var reader = await columns.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        if (string.Equals(reader.GetString(1), "scope", StringComparison.OrdinalIgnoreCase))
+                        {
+                            extendedSchema = true;
+                            break;
+                        }
+                    }
+                }
+
                 var now = DateTimeOffset.UtcNow.ToString("O");
                 var notices = new List<MilestoneNotice>();
                 await using var command = connection.CreateCommand();
-                command.CommandText = """
-                    UPDATE milestone_notifications
-                    SET viewed_at = $now, viewed_by = $viewer
-                    WHERE viewed_at IS NULL
-                    RETURNING kind, threshold, reached_at, historical;
-                    """;
+                command.CommandText = extendedSchema
+                    ? """
+                        UPDATE milestone_notifications
+                        SET viewed_at = $now, viewed_by = $viewer
+                        WHERE viewed_at IS NULL
+                        RETURNING kind, threshold, scope, scope_value, scope_label, reached_at, historical;
+                        """
+                    : """
+                        UPDATE milestone_notifications
+                        SET viewed_at = $now, viewed_by = $viewer
+                        WHERE viewed_at IS NULL
+                        RETURNING kind, threshold, reached_at, historical;
+                        """;
                 command.Parameters.AddWithValue("$now", now);
                 command.Parameters.AddWithValue("$viewer", viewer);
-                await using var reader = await command.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
+
+                await using var noticeReader = await command.ExecuteReaderAsync();
+                while (await noticeReader.ReadAsync())
                 {
-                    notices.Add(new MilestoneNotice(
-                        reader.GetString(0),
-                        reader.GetInt64(1),
-                        reader.GetString(2),
-                        reader.GetInt64(3) != 0));
+                    notices.Add(extendedSchema
+                        ? new MilestoneNotice(
+                            noticeReader.GetString(0),
+                            noticeReader.GetInt64(1),
+                            noticeReader.GetString(2),
+                            noticeReader.IsDBNull(3) ? null : noticeReader.GetString(3),
+                            noticeReader.IsDBNull(4) ? null : noticeReader.GetString(4),
+                            noticeReader.GetString(5),
+                            noticeReader.GetInt64(6) != 0)
+                        : new MilestoneNotice(
+                            noticeReader.GetString(0),
+                            noticeReader.GetInt64(1),
+                            "global",
+                            null,
+                            null,
+                            noticeReader.GetString(2),
+                            noticeReader.GetInt64(3) != 0));
                 }
+
                 notices.Sort((a, b) => string.CompareOrdinal(a.ReachedAt, b.ReachedAt));
                 return Results.Ok(notices);
             }
@@ -69,5 +105,12 @@ static class MilestoneNotifications
         });
     }
 
-    private sealed record MilestoneNotice(string Kind, long Threshold, string ReachedAt, bool Historical);
+    private sealed record MilestoneNotice(
+        string Kind,
+        long Threshold,
+        string Scope,
+        string? ScopeValue,
+        string? ScopeLabel,
+        string ReachedAt,
+        bool Historical);
 }
