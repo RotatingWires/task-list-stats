@@ -3,12 +3,12 @@
 const ANALYSIS_EVENT_TYPES = ['Created', 'Completed', 'Cancelled', 'Reopened'];
 const MILESTONE_EVENT_BASE_THRESHOLDS = [1, 100, 500, 1000, 2000, 3000, 5000, 10000];
 const MILESTONE_UID_BASE_THRESHOLDS = [1, 100, 500, 1000, 2000, 2500, 3000, 5000, 10000];
-const MILESTONE_LIST_THRESHOLDS = [100, 500, 1000, 2000, 5000];
-const MILESTONE_YEAR_THRESHOLDS = [100, 500, 1000, 2000];
+const MILESTONE_LIST_BASE_THRESHOLDS = [100, 500, 1000, 2000, 5000];
+const MILESTONE_YEAR_BASE_THRESHOLDS = [100, 500, 1000, 2000];
 
-function continuingMilestoneThresholds(baseThresholds, maximum) {
+function continuingMilestoneThresholds(baseThresholds, maximum, continuationStart = 15000) {
   const thresholds = [...baseThresholds];
-  for (let threshold = 15000; threshold <= maximum; threshold += 5000)
+  for (let threshold = continuationStart; threshold <= maximum; threshold += 5000)
     thresholds.push(threshold);
   return thresholds;
 }
@@ -478,9 +478,21 @@ function milestonePerListRecords(events) {
   for (const listId of listIds) {
     const listEvents = events.filter(event => event.listId === listId);
     const prefix = listName(listId);
+    const createdCount = listEvents.filter(event => event.eventType === 'Created').length;
+    const completedCount = listEvents.filter(event => event.eventType === 'Completed').length;
     records.push(
-      ...milestoneEventRecords(listEvents, 'Created', MILESTONE_LIST_THRESHOLDS, prefix),
-      ...milestoneEventRecords(listEvents, 'Completed', MILESTONE_LIST_THRESHOLDS, prefix)
+      ...milestoneEventRecords(
+        listEvents,
+        'Created',
+        continuingMilestoneThresholds(MILESTONE_LIST_BASE_THRESHOLDS, createdCount, 10000),
+        prefix
+      ),
+      ...milestoneEventRecords(
+        listEvents,
+        'Completed',
+        continuingMilestoneThresholds(MILESTONE_LIST_BASE_THRESHOLDS, completedCount, 10000),
+        prefix
+      )
     );
   }
   return records;
@@ -495,7 +507,7 @@ function milestoneYearRecords(events) {
       const typed = yearEvents.filter(event => event.eventType === eventType).sort((a,b)=>a.eventDate-b.eventDate || a.id-b.id);
       if (!typed.length) continue;
       records.push({ label: `${year} — First ${eventType.toLowerCase()}`, event: typed[0] });
-      for (const threshold of MILESTONE_YEAR_THRESHOLDS) {
+      for (const threshold of continuingMilestoneThresholds(MILESTONE_YEAR_BASE_THRESHOLDS, typed.length, 5000)) {
         if (typed.length < threshold) continue;
         records.push({ label: `${year} — ${ordinal(threshold)} ${eventType.toLowerCase()}`, event: typed[threshold - 1] });
       }
