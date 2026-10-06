@@ -1,13 +1,13 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.0.16
+# TaskList Stats v2.0.17
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
 TaskList stays focused on creating and managing tasks. TaskList Stats reads the same SQLite database and provides charts, records, calendars, hierarchy analysis, event history, comparisons, inferred activity sessions, milestones, and Fun views without adding that weight to the main TaskList app.
 
-Normal statistics/snapshot access stays read-only. The only deliberately narrow shared-database write is milestone acknowledgement: Stats can atomically claim a pending celebration so the same milestone is not shown again in TaskList. It does not edit tasks, lists, task events, statuses, or Universal IDs.
+Normal statistics/snapshot access stays read-only. The only deliberately narrow shared-database write is milestone acknowledgement: Stats can atomically claim a pending celebration so the same milestone is not shown again in TaskList. Read-only snapshot connections use a private SQLite page cache, while the acknowledgement path opens a fresh private read/write connection so the two access modes cannot contaminate each other through a shared in-process cache. It does not edit tasks, lists, task events, statuses, or Universal IDs.
 
 The interface uses the same Windows 95-style visual language as TaskList, includes persistent **Light** and **Dark** themes, includes TaskList-style first-run password setup/login, works on desktop and mobile, and can be installed as a PWA.
 
@@ -350,7 +350,7 @@ An expired session should send you back to Login. Otherwise inspect `/api/health
 
 ### A real milestone popup never appears in Stats
 
-TaskList v1.5.5 or newer must have initialized the shared `milestone_notifications` table; TaskList v1.5.6 or newer is required for the expanded global, recorded-event, per-list, yearly, and continuing 5,000-step celebration families. Stats also needs filesystem write permission to the TaskList database to atomically acknowledge the notification. If it cannot write, the normal Stats dashboard still works and TaskList can claim the notification instead.
+TaskList v1.5.5 or newer must have initialized the shared `milestone_notifications` table; TaskList v1.5.6 or newer is required for the expanded global, recorded-event, per-list, yearly, and continuing 5,000-step celebration families. Stats also needs filesystem write permission to the TaskList database to atomically acknowledge the notification. v2.0.17 uses separate private SQLite caches for read-only snapshots and the narrow read/write acknowledgement path to avoid a read-only shared-cache handle causing `SQLite Error 8: attempt to write a readonly database`. If the filesystem itself is actually read-only, the normal Stats dashboard still works and TaskList can claim the notification instead.
 
 ### Task-ID links open the wrong TaskList server
 
@@ -360,7 +360,16 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.16
+## Current release: v2.0.17
+
+### v2.0.17
+
+- Fix Stats milestone acknowledgement returning 503 / SQLite Error 8 when a read-only shared-cache connection had already opened the TaskList database.
+- Change normal read-only snapshot connections from SQLite shared cache to private cache.
+- Open milestone acknowledgement with a fresh non-pooled private read/write connection and explicitly clear query_only before the narrow viewed-state update.
+- Preserve read-only behavior for every normal Stats snapshot/query and keep the only write limited to milestone acknowledgement state.
+- Update project/frontend version metadata and README documentation to v2.0.17.
+- Add no monkey patches, frontend libraries, or runtime dependencies.
 
 ### v2.0.16
 

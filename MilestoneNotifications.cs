@@ -16,8 +16,8 @@ static class MilestoneNotifications
                 {
                     DataSource = path,
                     Mode = SqliteOpenMode.ReadWrite,
-                    Cache = SqliteCacheMode.Shared,
-                    Pooling = true,
+                    Cache = SqliteCacheMode.Private,
+                    Pooling = false,
                     DefaultTimeout = 5
                 }.ToString();
 
@@ -25,7 +25,7 @@ static class MilestoneNotifications
                 await connection.OpenAsync();
                 await using (var pragma = connection.CreateCommand())
                 {
-                    pragma.CommandText = "PRAGMA busy_timeout = 5000;";
+                    pragma.CommandText = "PRAGMA query_only = OFF; PRAGMA busy_timeout = 5000;";
                     await pragma.ExecuteNonQueryAsync();
                 }
 
