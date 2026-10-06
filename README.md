@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.0
+# TaskList Stats v2.1.1
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -380,7 +380,14 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.0
+## Current release: v2.1.1
+
+### v2.1.1
+
+- Clarify History Explorer's description that every recorded event is displayed on its own row so each event's timestamp can be seen individually.
+- Advance project/frontend version metadata and the PWA shell cache to v2.1.1.
+
+### v2.1.0
 
 ### v2.1.0
 
