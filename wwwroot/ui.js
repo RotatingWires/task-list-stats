@@ -7,18 +7,41 @@ function activeTabNeedsEvents(name = state.activeTab) {
 function eventHistoryStatusText() {
   if (!state.snapshot?.eventLogAvailable) return 'event log unavailable';
   if (!state.eventsLoaded) return 'event history on demand';
+  if (state.eventsNeedRefresh) return 'event history refresh on demand';
   return `${numberFmt.format(state.snapshot.events.length)} events`;
 }
 
+function resetEventCache() {
+  if (state.snapshot) state.snapshot.events = [];
+  state.eventsLoaded = false;
+  state.eventsLoading = null;
+  state.eventsNeedRefresh = Boolean(state.snapshot?.eventLogAvailable);
+  state.lastEventId = 0;
+  state.eventCursor = null;
+}
+
 async function ensureEventsLoaded() {
-  if (!state.snapshot?.eventLogAvailable || state.eventsLoaded) return;
+  if (!state.snapshot?.eventLogAvailable) {
+    resetEventCache();
+    return;
+  }
+  if (state.eventsLoaded && !state.eventsNeedRefresh) return;
   if (state.eventsLoading) return state.eventsLoading;
 
+  const canIncrement =
+    state.eventsLoaded &&
+    state.lastEventId > 0 &&
+    typeof state.eventCursor === 'string' &&
+    state.eventCursor.length > 0;
+
   $('#databaseStatus').textContent =
-    `${numberFmt.format(state.snapshot.items.length)} current items • loading event history...`;
+    `${numberFmt.format(state.snapshot.items.length)} current items • ${canIncrement ? 'checking for new events...' : 'loading event history...'}`;
 
   state.eventsLoading = (async () => {
-    const response = await fetch('/api/events', { cache: 'no-store', credentials: 'same-origin' });
+    const query = canIncrement
+      ? `?afterId=${encodeURIComponent(state.lastEventId)}&cursor=${encodeURIComponent(state.eventCursor)}`
+      : '';
+    const response = await fetch(`/api/events${query}`, { cache: 'no-store', credentials: 'same-origin' });
     if (response.status === 401) {
       window.location.replace(loginUrl());
       return;
@@ -32,8 +55,19 @@ async function ensureEventsLoaded() {
       throw new Error(message);
     }
 
-    state.snapshot.events = await response.json();
+    const batch = await response.json();
+    const incoming = Array.isArray(batch.events) ? batch.events : [];
+
+    if (!state.eventsLoaded || batch.resetRequired) {
+      state.snapshot.events = incoming;
+    } else {
+      state.snapshot.events.push(...incoming);
+    }
+
+    state.lastEventId = Number(batch.lastEventId) || 0;
+    state.eventCursor = typeof batch.cursor === 'string' && batch.cursor ? batch.cursor : null;
     state.eventsLoaded = true;
+    state.eventsNeedRefresh = false;
   })();
 
   try {
@@ -65,7 +99,11 @@ function renderAll() {
   renderers[state.activeTab]?.();
   $('#statusLeft').textContent = `${numberFmt.format(scopedItems().length)} current items • ${scopeLabel()}`;
   const eventText = state.snapshot.eventLogAvailable
-    ? ` • ${state.eventsLoaded ? `${numberFmt.format(state.snapshot.events.length)} recorded events` : 'event history on demand'}`
+    ? ` • ${state.eventsLoaded && !state.eventsNeedRefresh
+        ? `${numberFmt.format(state.snapshot.events.length)} recorded events`
+        : state.eventsLoaded
+          ? 'event history refresh on demand'
+          : 'event history on demand'}`
     : '';
   $('#statusRight').textContent = `DB updated ${formatDateTime(parseDate(state.snapshot.databaseLastWriteUtc))} • Task data read-only${eventText}`;
 }
@@ -195,6 +233,12 @@ async function loadSnapshot() {
   $('#loadingPanel').hidden = false;
   $('#errorPanel').hidden = true;
   $('#databaseStatus').textContent = 'Loading database...';
+
+  const cachedEvents = state.eventsLoaded ? (state.snapshot?.events ?? []) : [];
+  const cachedLastEventId = state.lastEventId;
+  const cachedEventCursor = state.eventCursor;
+  const hadLoadedEvents = state.eventsLoaded;
+
   try {
     const response = await fetch('/api/snapshot', { cache: 'no-store', credentials: 'same-origin' });
     if (response.status === 401) { window.location.replace(loginUrl()); return; }
@@ -205,8 +249,17 @@ async function loadSnapshot() {
     }
 
     state.snapshot = normalizeSnapshot(await response.json());
-    state.eventsLoaded = false;
     state.eventsLoading = null;
+
+    if (state.snapshot.eventLogAvailable && hadLoadedEvents) {
+      state.snapshot.events = cachedEvents;
+      state.eventsLoaded = true;
+      state.eventsNeedRefresh = true;
+      state.lastEventId = cachedLastEventId;
+      state.eventCursor = cachedEventCursor;
+    } else {
+      resetEventCache();
+    }
 
     applyReleaseLabel(await frontendReleaseVersion(state.snapshot.version));
     const validListIds = new Set(state.snapshot.lists.map(list => list.id));
