@@ -1,10 +1,17 @@
 'use strict';
 
 const ANALYSIS_EVENT_TYPES = ['Created', 'Completed', 'Cancelled', 'Reopened'];
-const MILESTONE_EVENT_THRESHOLDS = [1, 100, 500, 1000, 2000, 3000, 5000, 10000];
-const MILESTONE_UID_THRESHOLDS = [1, 100, 500, 1000, 2000, 2500, 3000, 5000, 10000];
+const MILESTONE_EVENT_BASE_THRESHOLDS = [1, 100, 500, 1000, 2000, 3000, 5000, 10000];
+const MILESTONE_UID_BASE_THRESHOLDS = [1, 100, 500, 1000, 2000, 2500, 3000, 5000, 10000];
 const MILESTONE_LIST_THRESHOLDS = [100, 500, 1000, 2000, 5000];
 const MILESTONE_YEAR_THRESHOLDS = [100, 500, 1000, 2000];
+
+function continuingMilestoneThresholds(baseThresholds, maximum) {
+  const thresholds = [...baseThresholds];
+  for (let threshold = 15000; threshold <= maximum; threshold += 5000)
+    thresholds.push(threshold);
+  return thresholds;
+}
 
 function allRecordedEvents() {
   const events = state.snapshot?.events ?? [];
@@ -437,10 +444,11 @@ function milestoneLabel(threshold, noun) {
   return `${ordinal(threshold)} ${noun}`;
 }
 
-function milestoneEventRecords(events, eventType, thresholds, labelPrefix = '') {
+function milestoneEventRecords(events, eventType, thresholds = null, labelPrefix = '') {
   const typed = events.filter(event => event.eventType === eventType).sort((a,b)=>a.eventDate-b.eventDate || a.id-b.id);
+  const activeThresholds = thresholds ?? continuingMilestoneThresholds(MILESTONE_EVENT_BASE_THRESHOLDS, typed.length);
   const records = [];
-  for (const threshold of thresholds) {
+  for (const threshold of activeThresholds) {
     if (typed.length < threshold) continue;
     const event = typed[threshold - 1];
     const base = milestoneLabel(threshold, eventType.toLowerCase());
@@ -455,7 +463,8 @@ function milestoneUniversalIdRecords(events) {
       .filter(event => event.eventType === 'Created')
       .map(event => [event.universalId, event])
   );
-  return MILESTONE_UID_THRESHOLDS
+  const highestCreatedUid = Math.max(0, ...createdByUid.keys());
+  return continuingMilestoneThresholds(MILESTONE_UID_BASE_THRESHOLDS, highestCreatedUid)
     .map(threshold => {
       const event = createdByUid.get(threshold);
       return event ? { label: `Universal ID #${numberFmt.format(threshold)}`, event } : null;
@@ -541,15 +550,15 @@ function renderMilestones() {
   }
 
   const records = [
-    ...milestoneEventRecords(events, 'Created', MILESTONE_EVENT_THRESHOLDS),
-    ...milestoneEventRecords(events, 'Completed', MILESTONE_EVENT_THRESHOLDS),
-    ...milestoneEventRecords(events, 'Cancelled', [1,100,500,1000]),
-    ...milestoneEventRecords(events, 'Reopened', [1,100,500,1000]),
+    ...milestoneEventRecords(events, 'Created'),
+    ...milestoneEventRecords(events, 'Completed'),
+    ...milestoneEventRecords(events, 'Cancelled'),
+    ...milestoneEventRecords(events, 'Reopened'),
     ...milestoneUniversalIdRecords(events),
     ...milestonePerListRecords(events),
     ...milestoneYearRecords(events)
   ];
-  for (const threshold of MILESTONE_EVENT_THRESHOLDS) {
+  for (const threshold of continuingMilestoneThresholds(MILESTONE_EVENT_BASE_THRESHOLDS, events.length)) {
     if (events.length < threshold) continue;
     records.push({ label: milestoneLabel(threshold, 'recorded event'), event: events[threshold - 1] });
   }
