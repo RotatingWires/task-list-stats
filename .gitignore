@@ -12,6 +12,9 @@ Thumbs.db
 data/
 auth.json
 
+# Runtime logs
+logs/
+
 # SQLite/database files
 *.db
 *.db-shm

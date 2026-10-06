@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.0.17
+# TaskList Stats v2.0.18
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -132,7 +132,7 @@ Server requirements:
 - a TaskList `task-list.db` SQLite database
 - read permission to the TaskList database and parent path for normal Stats features
 - write permission to the TaskList database if Stats should be able to acknowledge/show shared milestone notifications
-- write permission to the Stats working directory for `data/auth.json`
+- write permission to the Stats working directory for `data/auth.json` and `logs/console.log`
 
 Run:
 
@@ -160,6 +160,22 @@ Environment variables can override it:
 export TASKLIST_DB_PATH=/srv/task-list/data/task-list.db
 export TASKLIST_STATS_URL=http://0.0.0.0:8712
 ```
+
+## Runtime logging
+
+TaskList Stats writes its normal ASP.NET/runtime log stream to:
+
+```text
+logs\console.log
+```
+
+The same framework messages still go to the normal console when Stats is launched interactively. The file includes application startup/shutdown messages, HTTP request routing/status/timing messages, warnings, errors, and exceptions emitted through the normal .NET logging pipeline.
+
+Only one log file is kept. When `logs\console.log` would exceed 10 MiB, Stats truncates that same file and continues writing from the beginning instead of creating rotated backup files. The `logs/` directory is ignored by Git.
+
+Sensitive first-run authentication material is intentionally excluded from file logging. In particular, the one-time TaskList Stats setup token is still printed directly to the interactive server console and is not sent through the file logger. Passwords are not logged.
+
+Task Scheduler can therefore launch `TaskListStats.exe` directly rather than using `cmd.exe` only for output redirection.
 
 ## Themes
 
@@ -360,7 +376,19 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.17
+## Current release: v2.0.18
+
+### v2.0.18
+
+- Add native single-file runtime logging at `logs/console.log` while preserving the normal interactive console output.
+- Capture the ASP.NET/.NET logging pipeline, including startup/shutdown, request status/timing, warnings, errors, and exceptions, without requiring a `cmd.exe` redirection wrapper.
+- Keep exactly one log file: when it would exceed 10 MiB, truncate that same file and continue writing rather than creating rotated copies.
+- Keep the one-time TaskList Stats setup token console-only so sensitive setup material is not persisted in the runtime log.
+- Ignore the runtime `logs/` directory in Git and document logging behavior, retention, and Task Scheduler use.
+- Update project/frontend version metadata to v2.0.18.
+- Add no monkey patches or new runtime/frontend dependencies.
+
+### v2.0.17
 
 ### v2.0.17
 
