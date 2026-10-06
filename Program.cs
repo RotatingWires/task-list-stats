@@ -180,7 +180,7 @@ api.MapGet("/snapshot", async () =>
     }
     try
     {
-        var connectionString = new SqliteConnectionStringBuilder { DataSource = dbPath, Mode = SqliteOpenMode.ReadOnly, Cache = SqliteCacheMode.Shared, Pooling = true, DefaultTimeout = 5 }.ToString();
+        var connectionString = new SqliteConnectionStringBuilder { DataSource = dbPath, Mode = SqliteOpenMode.ReadOnly, Cache = SqliteCacheMode.Private, Pooling = true, DefaultTimeout = 5 }.ToString();
         await using var connection = new SqliteConnection(connectionString);
         await connection.OpenAsync();
         await using (var pragma = connection.CreateCommand()) { pragma.CommandText = "PRAGMA query_only = ON; PRAGMA busy_timeout = 5000;"; await pragma.ExecuteNonQueryAsync(); }
