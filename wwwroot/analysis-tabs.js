@@ -1,6 +1,6 @@
 'use strict';
 
-const ANALYSIS_EVENT_TYPES = ['Created', 'Completed', 'Cancelled', 'Reopened'];
+const ANALYSIS_EVENT_TYPES = ['Created', 'Completed', 'Cancelled', 'Reopened', 'Deleted'];
 const MILESTONE_EVENT_BASE_THRESHOLDS = [1, 100, 500, 1000, 2000, 3000, 5000, 10000];
 const MILESTONE_UID_BASE_THRESHOLDS = [1, 100, 500, 1000, 2000, 2500, 3000, 5000, 10000];
 const MILESTONE_LIST_BASE_THRESHOLDS = [100, 500, 1000, 2000, 5000];
@@ -200,6 +200,7 @@ function compareMetricRows(counts, items = null) {
     ['Completed transitions', numberFmt.format(counts.Completed)],
     ['Cancelled transitions', numberFmt.format(counts.Cancelled)],
     ['Reopened transitions', numberFmt.format(counts.Reopened)],
+    ['Deleted', numberFmt.format(counts.Deleted)],
     ['Net recorded flow', counts.net > 0 ? `+${numberFmt.format(counts.net)}` : numberFmt.format(counts.net)]
   ];
   if (items) {
@@ -551,7 +552,8 @@ function renderMilestones() {
     { label: 'Highest Universal ID', value: numberFmt.format(state.snapshot?.highestUniversalId || 0) },
     { label: 'Recorded events in scope', value: numberFmt.format(events.length) },
     { label: 'Created events', value: numberFmt.format(events.filter(event => event.eventType === 'Created').length) },
-    { label: 'Completed events', value: numberFmt.format(events.filter(event => event.eventType === 'Completed').length) }
+    { label: 'Completed events', value: numberFmt.format(events.filter(event => event.eventType === 'Completed').length) },
+    { label: 'Deleted events', value: numberFmt.format(events.filter(event => event.eventType === 'Deleted').length) }
   ]);
   if (!eventLogReady()) {
     const empty = document.createElement('div');
@@ -566,6 +568,7 @@ function renderMilestones() {
     ...milestoneEventRecords(events, 'Completed'),
     ...milestoneEventRecords(events, 'Cancelled'),
     ...milestoneEventRecords(events, 'Reopened'),
+    ...milestoneEventRecords(events, 'Deleted'),
     ...milestoneUniversalIdRecords(events),
     ...milestonePerListRecords(events),
     ...milestoneYearRecords(events)

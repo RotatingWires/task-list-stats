@@ -1,5 +1,5 @@
-const CACHE = 'task-list-stats-shell-v2';
-const STATIC = ['/', '/index.html', '/login.html', '/login.js', '/version.json', '/auth.css', '/style.css', '/analysis-tabs.css', '/theme.js', '/theme.css', '/milestones.css', '/app.js', '/overview.js', '/history.js', '/patterns.js', '/analysis-tabs.js', '/ui.js', '/charts.js', '/fun.js', '/milestones.js', '/manifest.webmanifest', '/icons/stats.svg'];
+const CACHE = 'task-list-stats-shell-v2.0.16';
+const STATIC = ['/', '/index.html', '/login.html', '/login.js', '/version.json', '/auth.css', '/style.css', '/analysis-tabs.css', '/theme.js', '/theme.css', '/milestones.css', '/app.js', '/overview.js', '/history.js', '/patterns.js', '/analysis-tabs.js?v=2.0.16', '/ui.js?v=2.0.16', '/charts.js', '/fun.js', '/milestones.js?v=2.0.16', '/manifest.webmanifest', '/icons/stats.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC)));
   self.skipWaiting();

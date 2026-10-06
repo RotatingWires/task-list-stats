@@ -211,7 +211,7 @@ const STATIC_SINGLE_SELECT_OPTIONS = {
   trendGroup: [['day', 'Day'], ['week', 'Week'], ['month', 'Month']],
   heatmapMode: [['created', 'Created'], ['completed', 'Completed'], ['cancelled', 'Cancelled'], ['reopened', 'Reopened'], ['activity', 'All activity']],
   hourHeatmapMode: [['created', 'Created'], ['completed', 'Completed']],
-  historyEventType: [['all', 'All events'], ['Created', 'Created'], ['Completed', 'Completed'], ['Cancelled', 'Cancelled'], ['Reopened', 'Reopened']],
+  historyEventType: [['all', 'All events'], ['Created', 'Created'], ['Completed', 'Completed'], ['Cancelled', 'Cancelled'], ['Reopened', 'Reopened'], ['Deleted', 'Deleted']],
   historyOrder: [['newest', 'Newest first'], ['oldest', 'Oldest first']],
   compareMode: [['lists', 'Lists'], ['periods', 'Time periods']],
   sessionGap: [['15', '15 minutes'], ['30', '30 minutes'], ['60', '60 minutes']]
@@ -261,7 +261,7 @@ async function startApp() {
   initializeAnalysisTabs();
   await loadSnapshot();
   try {
-    await import('/milestones.js');
+    await import('/milestones.js?v=2.0.16');
   } catch {}
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp, { once: true }); else startApp();
