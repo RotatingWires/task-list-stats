@@ -211,31 +211,11 @@ api.MapGet("/snapshot", async () =>
             }
         }
 
-        var events = new List<EventSnapshot>();
         var eventLogAvailable = false;
         await using (var command = connection.CreateCommand())
         {
             command.CommandText = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'task_events');";
             eventLogAvailable = Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture) != 0;
-        }
-        if (eventLogAvailable)
-        {
-            await using var command = connection.CreateCommand();
-            command.CommandText = """
-                SELECT id, universal_id, event_type, event_at, from_status, to_status,
-                       list_id, display_id, parent_display_id, title, source
-                FROM task_events
-                ORDER BY event_at, id;
-                """;
-            await using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                events.Add(new EventSnapshot(
-                    reader.GetInt64(0), reader.GetInt64(1), reader.GetString(2), reader.GetString(3),
-                    reader.IsDBNull(4) ? null : reader.GetString(4), reader.IsDBNull(5) ? null : reader.GetString(5),
-                    reader.GetInt64(6), reader.GetString(7), reader.IsDBNull(8) ? null : reader.GetString(8),
-                    reader.GetString(9), reader.GetString(10)));
-            }
         }
 
         long highestUniversalId = 0;
@@ -246,11 +226,77 @@ api.MapGet("/snapshot", async () =>
         }
 
         var fileInfo = new FileInfo(dbPath);
-        return Results.Ok(new StatsSnapshot(appVersion, DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items, eventLogAvailable, events));
+        return Results.Ok(new StatsSnapshot(appVersion, DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items, eventLogAvailable, []));
     }
     catch (SqliteException ex)
     {
         return Results.Problem(title: "Could not read TaskList database", detail: ex.Message, statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+});
+
+api.MapGet("/events", async () =>
+{
+    var dbPath = ResolveDatabasePath(builder.Configuration);
+    if (!File.Exists(dbPath))
+    {
+        return Results.Problem(
+            title: "TaskList database not found",
+            detail: "TaskList Stats could not find task-list.db.",
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+
+    try
+    {
+        var connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = dbPath,
+            Mode = SqliteOpenMode.ReadOnly,
+            Cache = SqliteCacheMode.Private,
+            Pooling = true,
+            DefaultTimeout = 5
+        }.ToString();
+
+        await using var connection = new SqliteConnection(connectionString);
+        await connection.OpenAsync();
+        await using (var pragma = connection.CreateCommand())
+        {
+            pragma.CommandText = "PRAGMA query_only = ON; PRAGMA busy_timeout = 5000;";
+            await pragma.ExecuteNonQueryAsync();
+        }
+
+        await using (var existsCommand = connection.CreateCommand())
+        {
+            existsCommand.CommandText = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'task_events');";
+            if (Convert.ToInt64(await existsCommand.ExecuteScalarAsync(), CultureInfo.InvariantCulture) == 0)
+                return Results.Ok(Array.Empty<EventSnapshot>());
+        }
+
+        var events = new List<EventSnapshot>();
+        await using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT id, universal_id, event_type, event_at, from_status, to_status,
+                   list_id, display_id, parent_display_id, title, source
+            FROM task_events
+            ORDER BY event_at, id;
+            """;
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            events.Add(new EventSnapshot(
+                reader.GetInt64(0), reader.GetInt64(1), reader.GetString(2), reader.GetString(3),
+                reader.IsDBNull(4) ? null : reader.GetString(4), reader.IsDBNull(5) ? null : reader.GetString(5),
+                reader.GetInt64(6), reader.GetString(7), reader.IsDBNull(8) ? null : reader.GetString(8),
+                reader.GetString(9), reader.GetString(10)));
+        }
+
+        return Results.Ok(events);
+    }
+    catch (SqliteException ex)
+    {
+        return Results.Problem(
+            title: "Could not read TaskList event history",
+            detail: ex.Message,
+            statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 });
 

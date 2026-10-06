@@ -3,7 +3,9 @@
 const state = {
   snapshot: null,
   selectedListIds: new Set(),
-  activeTab: 'overview'
+  activeTab: 'overview',
+  eventsLoaded: false,
+  eventsLoading: null
 };
 
 const $ = selector => document.querySelector(selector);
@@ -174,6 +176,7 @@ function taskLink(item, label = `#${item.displayId}`) {
 
 function normalizeSnapshot(raw) {
   raw.lists = raw.lists ?? [];
+  raw.events = raw.events ?? [];
   raw.items = (raw.items ?? []).map(item => ({
     ...item,
     createdDate: parseDate(item.createdAt),
