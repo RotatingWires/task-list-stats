@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.0.12
+# TaskList Stats v2.0.13
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -244,13 +244,13 @@ Session rows show their event mix. Click the event count to open the session's e
 
 Milestones are calculated automatically from the available event history. Current milestone families include:
 
-- global Created / Completed / Cancelled / Reopened thresholds
-- overall recorded-event thresholds
-- Universal ID milestones such as #100, #500, #1,000, #2,500, #5,000, and #10,000
-- per-list creation/completion thresholds
-- yearly first creation/completion plus yearly round-number thresholds
+- global Created / Completed / Cancelled / Reopened thresholds, continuing every 5,000 events after 10,000
+- overall recorded-event thresholds, continuing every 5,000 events after 10,000
+- Universal ID milestones such as #100, #500, #1,000, #2,500, #5,000, #10,000, then every 5,000 IDs indefinitely
+- per-list creation/completion thresholds at 100, 500, 1,000, 2,000, and 5,000
+- yearly first creation/completion plus 100, 500, 1,000, and 2,000 round-number thresholds
 
-TaskList v1.5.5+ also keeps a tiny shared notification ledger for major global Created, Completed, and Universal-ID thresholds. Either TaskList or Stats can claim a pending milestone, show a short celebration dialog with confetti, and mark that notification viewed globally so the other app does not repeat it. This popup state is separate from the permanent Milestones analysis shown here.
+TaskList v1.5.5+ also keeps a tiny shared notification ledger for major global Created, Completed, and Universal-ID thresholds. Either TaskList or Stats can claim a pending milestone, show a short celebration dialog with confetti, and mark that notification viewed globally so the other app does not repeat it. This popup state is separate from the permanent Milestones analysis shown here, and the continuing 5,000-step analytical milestones do not change the popup-notification threshold set.
 
 ### Fun
 
@@ -358,7 +358,16 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.12
+## Current release: v2.0.13
+
+### v2.0.13
+
+- Keep global Created, Completed, Cancelled, Reopened, and overall recorded-event milestones going every 5,000 events after 10,000 instead of ending permanently.
+- Keep Universal-ID milestones going every 5,000 IDs after #10,000.
+- Preserve the existing early milestone thresholds before 10,000.
+- Leave per-list and yearly milestone schedules unchanged so their scoped timelines do not become excessively noisy.
+- Keep permanent Stats milestones separate from the shared celebration-notification threshold set.
+- Add no monkey patches, frontend libraries, or runtime dependencies.
 
 ### v2.0.12
 
