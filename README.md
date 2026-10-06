@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.0.15
+# TaskList Stats v2.0.16
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -244,13 +244,13 @@ Session rows show their event mix. Click the event count to open the session's e
 
 Milestones are calculated automatically from the available event history. Current milestone families include:
 
-- global Created / Completed / Cancelled / Reopened thresholds, continuing every 5,000 events after 10,000
+- global Created / Completed / Cancelled / Reopened / Deleted thresholds, continuing every 5,000 events after 10,000
 - overall recorded-event thresholds, continuing every 5,000 events after 10,000
 - Universal ID milestones such as #100, #500, #1,000, #2,500, #5,000, #10,000, then every 5,000 IDs indefinitely
 - per-list creation/completion thresholds at 100, 500, 1,000, 2,000, and 5,000, then every 5,000 events indefinitely
 - yearly first creation/completion plus 100, 500, 1,000, and 2,000 round-number thresholds, then every 5,000 events indefinitely within that year
 
-TaskList v1.5.6+ keeps a shared notification ledger whose celebration thresholds mirror these permanent milestone families: global Created / Completed / Cancelled / Reopened events, overall recorded events, Universal IDs, per-list Created / Completed milestones, and yearly Created / Completed milestones. Their existing early thresholds are preserved and the continuing families keep producing celebrations every 5,000 after their normal transition point, so milestone popups do not end permanently.
+TaskList v1.5.6+ keeps a shared notification ledger whose celebration thresholds mirror these permanent milestone families. TaskList v1.5.10 extends that shared global event family to include Deleted alongside Created / Completed / Cancelled / Reopened; overall recorded events, Universal IDs, per-list Created / Completed milestones, and yearly Created / Completed milestones keep their existing schedules. Their early thresholds are preserved and the continuing families keep producing celebrations every 5,000 after their normal transition point, so milestone popups do not end permanently.
 
 TaskList and Stats both use the same atomic claim operation. Whichever app claims a pending milestone first shows the responsive Win95-style dialog and confetti, then marks it viewed globally so the other app does not repeat it. Several milestones reached by one action are bundled into one dialog and one confetti run. Newly introduced notification families are baselined against existing history by TaskList so upgrading does not replay old achievements. The permanent Milestones timeline remains independent of whether a popup has already been acknowledged.
 
@@ -293,9 +293,9 @@ This prevents a preserved old terminal timestamp from inflating the wrong curren
 
 ## Event history and older data
 
-TaskList v1.5 introduced an append-only `task_events` state-transition log. New transitions are stored individually as they happen.
+TaskList v1.5 introduced an append-only `task_events` history log. Created, Completed, Cancelled, and Reopened transitions are stored individually as they happen. TaskList v1.5.10 adds Deleted events, including the task's status immediately before deletion.
 
-For older task data, TaskList reconstructs event rows from timestamps it already had. That older reconstruction can be incomplete when a task changed state repeatedly before the event log existed, and tasks deleted before event logging cannot be reconstructed.
+For older task data, TaskList reconstructs event rows from timestamps it already had. That older reconstruction can be incomplete when a task changed state repeatedly before the event log existed. Because older TaskList versions did not store deletion timestamps, tasks deleted before v1.5.10 cannot be given a trustworthy historical Deleted event.
 
 The Stats **About** dialog contains the same user-facing explanation.
 
@@ -360,7 +360,18 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.15
+## Current release: v2.0.16
+
+### v2.0.16
+
+- Add Deleted as a first-class event throughout History Explorer and event-based analysis for TaskList v1.5.10+ databases.
+- Add Deleted to the History Explorer event filter and display transitions such as Open → Deleted, Done → Deleted, or Cancelled → Deleted.
+- Keep deleted task IDs non-clickable when the current item no longer exists while preserving their list/display ID, title snapshot, Universal ID, and event history.
+- Add Deleted counts to Compare and the Milestones summary, and include Deleted in the global permanent milestone family.
+- Teach the shared milestone celebration dialog how to label Deleted milestones rather than treating an unknown event kind as a Universal-ID milestone.
+- Document that pre-v1.5.10 deletions cannot be reconstructed because no trustworthy historical deletion time was stored.
+- Cache-bust changed analysis/UI/milestone assets and update project/frontend metadata to v2.0.16.
+- Add no monkey patches, frontend libraries, or runtime dependencies.
 
 ### v2.0.15
 
