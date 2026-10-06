@@ -1,3 +1,48 @@
+const EVENT_HISTORY_TABS = new Set(['history', 'compare', 'sessions', 'milestones']);
+
+function activeTabNeedsEvents(name = state.activeTab) {
+  return EVENT_HISTORY_TABS.has(name);
+}
+
+function eventHistoryStatusText() {
+  if (!state.snapshot?.eventLogAvailable) return 'event log unavailable';
+  if (!state.eventsLoaded) return 'event history on demand';
+  return `${numberFmt.format(state.snapshot.events.length)} events`;
+}
+
+async function ensureEventsLoaded() {
+  if (!state.snapshot?.eventLogAvailable || state.eventsLoaded) return;
+  if (state.eventsLoading) return state.eventsLoading;
+
+  $('#databaseStatus').textContent =
+    `${numberFmt.format(state.snapshot.items.length)} current items • loading event history...`;
+
+  state.eventsLoading = (async () => {
+    const response = await fetch('/api/events', { cache: 'no-store', credentials: 'same-origin' });
+    if (response.status === 401) {
+      window.location.replace(loginUrl());
+      return;
+    }
+    if (!response.ok) {
+      let message = `Server returned ${response.status}`;
+      try {
+        const body = await response.json();
+        message = body.detail || body.title || message;
+      } catch {}
+      throw new Error(message);
+    }
+
+    state.snapshot.events = await response.json();
+    state.eventsLoaded = true;
+  })();
+
+  try {
+    await state.eventsLoading;
+  } finally {
+    state.eventsLoading = null;
+  }
+}
+
 function renderAll() {
   if (!state.snapshot) return;
   const currentScopeLabel = scopeLabel();
@@ -19,7 +64,9 @@ function renderAll() {
   };
   renderers[state.activeTab]?.();
   $('#statusLeft').textContent = `${numberFmt.format(scopedItems().length)} current items • ${scopeLabel()}`;
-  const eventText = state.snapshot.eventLogAvailable ? ` • ${numberFmt.format(state.snapshot.events?.length || 0)} recorded events` : '';
+  const eventText = state.snapshot.eventLogAvailable
+    ? ` • ${state.eventsLoaded ? `${numberFmt.format(state.snapshot.events.length)} recorded events` : 'event history on demand'}`
+    : '';
   $('#statusRight').textContent = `DB updated ${formatDateTime(parseDate(state.snapshot.databaseLastWriteUtc))} • Task data read-only${eventText}`;
 }
 
@@ -29,7 +76,20 @@ function switchTab(name) {
   $$('.tab-panel').forEach(panel => panel.hidden = panel.dataset.panel !== name);
   closeMenus();
   Charts.hideTooltip?.();
-  requestAnimationFrame(() => renderAll());
+
+  requestAnimationFrame(async () => {
+    try {
+      if (activeTabNeedsEvents(name)) await ensureEventsLoaded();
+      renderAll();
+      $('#databaseStatus').textContent =
+        `${numberFmt.format(state.snapshot.items.length)} current items • ${eventHistoryStatusText()}`;
+    } catch (error) {
+      const panel = $('#errorPanel');
+      panel.hidden = false;
+      panel.textContent = `Could not load event history: ${error.message}`;
+      renderAll();
+    }
+  });
 }
 
 function populateListFilter() {
@@ -143,13 +203,21 @@ async function loadSnapshot() {
       try { const body = await response.json(); message = body.detail || body.title || message; } catch {}
       throw new Error(message);
     }
+
     state.snapshot = normalizeSnapshot(await response.json());
+    state.eventsLoaded = false;
+    state.eventsLoading = null;
+
     applyReleaseLabel(await frontendReleaseVersion(state.snapshot.version));
     const validListIds = new Set(state.snapshot.lists.map(list => list.id));
     state.selectedListIds = new Set([...state.selectedListIds].filter(id => validListIds.has(id)));
     populateListFilter();
     populateViewMenu();
-    $('#databaseStatus').textContent = `${numberFmt.format(state.snapshot.items.length)} current items${state.snapshot.eventLogAvailable ? ` • ${numberFmt.format(state.snapshot.events?.length || 0)} events` : ' • event log unavailable'}`;
+
+    if (activeTabNeedsEvents()) await ensureEventsLoaded();
+
+    $('#databaseStatus').textContent =
+      `${numberFmt.format(state.snapshot.items.length)} current items • ${eventHistoryStatusText()}`;
     $('#loadingPanel').hidden = true;
     renderAll();
   } catch (error) {
@@ -159,11 +227,24 @@ async function loadSnapshot() {
   }
 }
 
-function downloadSnapshot() {
-  if(!state.snapshot)return;
-  const blob=new Blob([JSON.stringify(state.snapshot,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob); const a=document.createElement('a');
-  a.href=url; a.download=`task-list-stats-snapshot-${localDayKey(new Date())}.json`; a.click(); URL.revokeObjectURL(url);
+async function downloadSnapshot() {
+  if (!state.snapshot) return;
+  try {
+    await ensureEventsLoaded();
+  } catch (error) {
+    const panel = $('#errorPanel');
+    panel.hidden = false;
+    panel.textContent = `Could not load event history for export: ${error.message}`;
+    return;
+  }
+
+  const blob = new Blob([JSON.stringify(state.snapshot, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `task-list-stats-snapshot-${localDayKey(new Date())}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 $('#fileMenuButton').addEventListener('click',e=>{e.stopPropagation();toggleMenu($('#fileMenuButton'),$('#fileMenu'));});

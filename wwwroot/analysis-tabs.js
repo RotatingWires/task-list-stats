@@ -29,7 +29,13 @@ function scopedRecordedEvents() {
 }
 
 function eventLogReady() {
-  return Boolean(state.snapshot?.eventLogAvailable);
+  return Boolean(state.snapshot?.eventLogAvailable && state.eventsLoaded);
+}
+
+function eventHistoryUnavailableMessage(feature = 'this view') {
+  if (state.snapshot?.eventLogAvailable && !state.eventsLoaded)
+    return 'Event history is still loading.';
+  return `Event history is not available for ${feature}.`;
 }
 
 function currentItemForEvent(event) {
@@ -119,8 +125,8 @@ function renderHistoryExplorer() {
   const table = $('#historyExplorerTable');
   const summary = $('#historyExplorerSummary');
   if (!eventLogReady()) {
-    summary.textContent = 'Event history is not available in this database.';
-    setAnalysisEmpty(table, 'Event history is not available in this database.');
+    summary.textContent = eventHistoryUnavailableMessage('this database');
+    setAnalysisEmpty(table, eventHistoryUnavailableMessage('this database'));
     return;
   }
 
@@ -218,10 +224,10 @@ function renderCompare() {
   const table = $('#compareTable');
   const summary = $('#compareSummary');
   if (!eventLogReady()) {
-    summary.textContent = 'Event history is not available for comparison.';
+    summary.textContent = eventHistoryUnavailableMessage('comparison');
     renderMetricList($('#compareAMetrics'), []);
     renderMetricList($('#compareBMetrics'), []);
-    setAnalysisEmpty(table, 'Event history is not available for comparison.');
+    setAnalysisEmpty(table, eventHistoryUnavailableMessage('comparison'));
     return;
   }
 
@@ -407,7 +413,7 @@ function renderActivitySessions() {
   const table = $('#sessionsTable');
   if (!eventLogReady()) {
     renderCards($('#sessionCards'), []);
-    setAnalysisEmpty(table, 'Event history is not available for Activity Sessions.');
+    setAnalysisEmpty(table, eventHistoryUnavailableMessage('Activity Sessions'));
     return;
   }
 
@@ -558,7 +564,7 @@ function renderMilestones() {
   if (!eventLogReady()) {
     const empty = document.createElement('div');
     empty.className = 'milestone-empty';
-    empty.textContent = 'Event history is not available for recorded milestones.';
+    empty.textContent = eventHistoryUnavailableMessage('recorded milestones');
     timeline.replaceChildren(empty);
     return;
   }

@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.0.18
+# TaskList Stats v2.0.19
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -39,7 +39,7 @@ The snapshot reader opens the TaskList SQLite database with:
 - `Mode=ReadOnly`
 - `PRAGMA query_only = ON`
 
-The server reads TaskList into a snapshot and the browser performs the statistics against that snapshot.
+The server reads current TaskList lists/items into the initial snapshot and the browser performs the statistics against that snapshot. The append-only `task_events` history is intentionally excluded from initial startup and is loaded from `/api/events` only when History Explorer, Compare, Activity Sessions, Milestones, or snapshot export actually needs it. Once loaded, the browser reuses that in-memory event set for the rest of the current snapshot.
 
 The one exception is shared milestone acknowledgement. `POST /api/milestones/claim` briefly opens the database read/write and only updates `viewed_at` / `viewed_by` on pending rows in TaskList's `milestone_notifications` table. This is what lets TaskList and Stats share one global "already celebrated" state. It never writes to `lists`, `items`, `task_events`, or `universal_ids`.
 
@@ -376,7 +376,21 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.0.18
+## Current release: v2.0.19
+
+### v2.0.19
+
+- Remove the full `task_events` scan and event-history payload from the normal `/api/snapshot` startup path.
+- Add an authenticated read-only `/api/events` endpoint and load event history only when History Explorer, Compare, Activity Sessions, Milestones, or snapshot export needs it.
+- Reuse the loaded event array in browser memory instead of fetching it again while the current snapshot remains active.
+- Reset lazy event state on Refresh so event-dependent views reload history against the newly refreshed current snapshot.
+- Keep all normal Stats database access read-only and preserve the separate narrow milestone acknowledgement write path.
+- Update UI status text so unloaded history is shown as on-demand rather than incorrectly reporting zero events.
+- Cache-bust the changed app/analysis/UI scripts and advance the PWA shell cache.
+- Update project/frontend version metadata to v2.0.19.
+- Add no monkey patches or new runtime/frontend dependencies.
+
+### v2.0.18
 
 ### v2.0.18
 
