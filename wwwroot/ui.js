@@ -395,7 +395,7 @@ async function startApp() {
   initializeAnalysisTabs();
   await loadSnapshot();
   try {
-    await import('/milestones.js?v=2.1.2');
+    await import('/milestones.js');
   } catch {}
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp, { once: true }); else startApp();
