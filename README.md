@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.2
+# TaskList Stats v2.1.3
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -114,7 +114,7 @@ wwwroot/
   login.html              login / first-run setup page
   login.js                login, setup-token, and return-URL behavior
   auth.css                login/setup styling
-  version.json            checked-in frontend release version
+  version.json            frontend release version regenerated from TaskListStats.csproj during build
   manifest.webmanifest    installable-PWA metadata
   sw.js                   network-first service worker/static cache
   icons/stats.svg         app/favicon icon
@@ -122,11 +122,11 @@ wwwroot/
 
 ## Version handling
 
-`TaskListStats.csproj` is the project/assembly version source.
+`TaskListStats.csproj` contains the single authoritative application version in its `<Version>` property. The .NET SDK derives the assembly/file/informational versions from that value, so they are not repeated as separate manually maintained properties.
 
-The build target regenerates `wwwroot/version.json` from that version. The checked-in `version.json` is also updated on every release so the browser displays the current frontend version even when the user updates static files without rebuilding the existing executable immediately.
+The build target regenerates `wwwroot/version.json` from `$(Version)` for the browser's release label. The running server assembly version remains available through the auth/snapshot APIs as a fallback.
 
-The running server assembly version remains available through the auth/snapshot APIs as a fallback.
+Frontend asset URLs no longer carry release-number query strings. The service worker uses a stable shell-cache name and network-first requests with `cache: 'no-store'`, updating the cached copy after a successful network response and using cache only as an offline fallback. That keeps frontend freshness independent of manually duplicated release numbers.
 
 ## Requirements and running
 
@@ -327,9 +327,9 @@ Treat exports as private because they can contain task titles, descriptions, lis
 
 ## PWA behavior
 
-The service worker caches the application shell, shared theme/milestone assets, and login/setup assets; uses network-first behavior for current same-origin static assets; always fetches `/api/*` from the network; and uses cached files only as an offline fallback.
+The service worker caches the application shell, shared theme/milestone assets, and login/setup assets; uses network-first `cache: 'no-store'` behavior for current same-origin static assets; always fetches `/api/*` from the network; and uses cached files only as an offline fallback.
 
-The shell cache does not contain the live TaskList snapshot.
+The cache name is stable rather than release-numbered. Successful online asset loads replace the cached copy, so normal frontend updates do not require duplicated version strings in asset URLs or cache names. The shell cache does not contain the live TaskList snapshot.
 
 ## Security and privacy
 
@@ -380,7 +380,17 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.2
+## Current release: v2.1.3
+
+### v2.1.3
+
+- Make `TaskListStats.csproj`'s single `<Version>` property the only manually maintained runtime release number; let the .NET SDK derive assembly/file/informational versions from it.
+- Remove release-number query strings from JavaScript and dynamic milestone imports so individual frontend assets no longer need manual version bumps.
+- Replace the per-release service-worker cache name with a stable shell cache and force network-first static requests to bypass the browser HTTP cache before refreshing the offline copy.
+- Keep `version.json` generated from the authoritative project version during build for the browser release label.
+- Remove remaining duplicate README release headings.
+- Update release metadata/documentation to v2.1.3.
+- Add no monkey patches or new runtime/frontend dependencies.
 
 ### v2.1.2
 
@@ -391,8 +401,6 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 - Keep the existing purpose-based frontend modules; the cleanup audit found no unreferenced JavaScript functions or safely removable source/runtime files.
 - Update project/frontend metadata to v2.1.2.
 - Add no monkey patches or new runtime/frontend dependencies.
-
-### v2.1.1
 
 ### v2.1.1
 

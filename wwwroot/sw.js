@@ -1,5 +1,5 @@
-const CACHE = 'task-list-stats-shell-v2.1.2';
-const STATIC = ['/', '/index.html', '/login.html', '/login.js', '/version.json', '/auth.css', '/style.css', '/analysis-tabs.css', '/theme.js', '/theme.css', '/milestones.css', '/app.js?v=2.1.2', '/overview.js', '/history.js', '/patterns.js', '/analysis-tabs.js?v=2.1.2', '/ui.js?v=2.1.2', '/charts.js', '/fun.js', '/milestones.js?v=2.1.2', '/manifest.webmanifest', '/icons/stats.svg'];
+const CACHE = 'task-list-stats-shell';
+const STATIC = ['/', '/index.html', '/login.html', '/login.js', '/version.json', '/auth.css', '/style.css', '/analysis-tabs.css', '/theme.js', '/theme.css', '/milestones.css', '/app.js', '/overview.js', '/history.js', '/patterns.js', '/analysis-tabs.js', '/ui.js', '/charts.js', '/fun.js', '/milestones.js', '/manifest.webmanifest', '/icons/stats.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC)));
   self.skipWaiting();
@@ -16,7 +16,7 @@ self.addEventListener('fetch', event => {
   }
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
   event.respondWith(
-    fetch(event.request).then(response => {
+    fetch(event.request, { cache: 'no-store' }).then(response => {
       const copy = response.clone();
       caches.open(CACHE).then(cache => cache.put(event.request, copy));
       return response;
