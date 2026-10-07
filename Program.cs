@@ -183,10 +183,7 @@ api.MapGet("/snapshot", async () =>
     }
     try
     {
-        var connectionString = new SqliteConnectionStringBuilder { DataSource = dbPath, Mode = SqliteOpenMode.ReadOnly, Cache = SqliteCacheMode.Private, Pooling = true, DefaultTimeout = 5 }.ToString();
-        await using var connection = new SqliteConnection(connectionString);
-        await connection.OpenAsync();
-        await using (var pragma = connection.CreateCommand()) { pragma.CommandText = "PRAGMA query_only = ON; PRAGMA busy_timeout = 5000;"; await pragma.ExecuteNonQueryAsync(); }
+        await using var connection = await OpenReadOnlyConnectionAsync(dbPath);
 
         var lists = new List<ListSnapshot>();
         await using (var command = connection.CreateCommand())
@@ -212,12 +209,7 @@ api.MapGet("/snapshot", async () =>
             }
         }
 
-        var eventLogAvailable = false;
-        await using (var command = connection.CreateCommand())
-        {
-            command.CommandText = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'task_events');";
-            eventLogAvailable = Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture) != 0;
-        }
+        var eventLogAvailable = await TaskEventsAvailableAsync(connection);
 
         long highestUniversalId = 0;
         await using (var command = connection.CreateCommand())
@@ -248,30 +240,11 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
 
     try
     {
-        var connectionString = new SqliteConnectionStringBuilder
-        {
-            DataSource = dbPath,
-            Mode = SqliteOpenMode.ReadOnly,
-            Cache = SqliteCacheMode.Private,
-            Pooling = true,
-            DefaultTimeout = 5
-        }.ToString();
-
-        await using var connection = new SqliteConnection(connectionString);
-        await connection.OpenAsync();
-        await using (var pragma = connection.CreateCommand())
-        {
-            pragma.CommandText = "PRAGMA query_only = ON; PRAGMA busy_timeout = 5000;";
-            await pragma.ExecuteNonQueryAsync();
-        }
+        await using var connection = await OpenReadOnlyConnectionAsync(dbPath);
 
         var requestedAfterId = Math.Max(0, afterId ?? 0);
-        await using (var existsCommand = connection.CreateCommand())
-        {
-            existsCommand.CommandText = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'task_events');";
-            if (Convert.ToInt64(await existsCommand.ExecuteScalarAsync(), CultureInfo.InvariantCulture) == 0)
-                return Results.Ok(new EventBatch(requestedAfterId > 0, 0, null, []));
-        }
+        if (!await TaskEventsAvailableAsync(connection))
+            return Results.Ok(new EventBatch(requestedAfterId > 0, 0, null, []));
 
         var resetRequired = false;
         EventSnapshot? anchor = null;
@@ -356,6 +329,40 @@ static string ResolveDatabasePath(IConfiguration configuration)
         if (File.Exists(full)) return full;
     }
     return Path.GetFullPath(Path.Combine(basePath, configuredPath));
+}
+
+static async Task<SqliteConnection> OpenReadOnlyConnectionAsync(string dbPath)
+{
+    var connectionString = new SqliteConnectionStringBuilder
+    {
+        DataSource = dbPath,
+        Mode = SqliteOpenMode.ReadOnly,
+        Cache = SqliteCacheMode.Private,
+        Pooling = true,
+        DefaultTimeout = 5
+    }.ToString();
+
+    var connection = new SqliteConnection(connectionString);
+    try
+    {
+        await connection.OpenAsync();
+        await using var pragma = connection.CreateCommand();
+        pragma.CommandText = "PRAGMA query_only = ON; PRAGMA busy_timeout = 5000;";
+        await pragma.ExecuteNonQueryAsync();
+        return connection;
+    }
+    catch
+    {
+        await connection.DisposeAsync();
+        throw;
+    }
+}
+
+static async Task<bool> TaskEventsAvailableAsync(SqliteConnection connection)
+{
+    await using var command = connection.CreateCommand();
+    command.CommandText = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'task_events');";
+    return Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture) != 0;
 }
 
 static EventSnapshot ReadEvent(SqliteDataReader reader) => new(

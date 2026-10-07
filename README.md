@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.1
+# TaskList Stats v2.1.2
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -380,14 +380,24 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.1
+## Current release: v2.1.2
+
+### v2.1.2
+
+- Consolidate normal read-only SQLite connection creation and PRAGMA setup into one helper shared by snapshot and event-history endpoints.
+- Consolidate task_events availability detection so both endpoints use one schema-check path.
+- Normalize versioned frontend/PWA asset references to v2.1.2 instead of carrying mixed historical cache-busting values.
+- Remove duplicate release-history headings introduced by earlier README updates.
+- Keep the existing purpose-based frontend modules; the cleanup audit found no unreferenced JavaScript functions or safely removable source/runtime files.
+- Update project/frontend metadata to v2.1.2.
+- Add no monkey patches or new runtime/frontend dependencies.
+
+### v2.1.1
 
 ### v2.1.1
 
 - Clarify History Explorer's description that every recorded event is displayed on its own row so each event's timestamp can be seen individually.
 - Advance project/frontend version metadata and the PWA shell cache to v2.1.1.
-
-### v2.1.0
 
 ### v2.1.0
 
@@ -404,8 +414,6 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 
 ### v2.0.19
 
-### v2.0.19
-
 - Remove the full `task_events` scan and event-history payload from the normal `/api/snapshot` startup path.
 - Add an authenticated read-only `/api/events` endpoint and load event history only when History Explorer, Compare, Activity Sessions, Milestones, or snapshot export needs it.
 - Reuse the loaded event array in browser memory instead of fetching it again while the current snapshot remains active.
@@ -418,8 +426,6 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 
 ### v2.0.18
 
-### v2.0.18
-
 - Add native single-file runtime logging at `logs/console.log` while preserving the normal interactive console output.
 - Capture the ASP.NET/.NET logging pipeline, including startup/shutdown, request status/timing, warnings, errors, and exceptions, without requiring a `cmd.exe` redirection wrapper.
 - Keep exactly one log file: when it would exceed 10 MiB, truncate that same file and continue writing rather than creating rotated copies.
@@ -427,8 +433,6 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 - Ignore the runtime `logs/` directory in Git and document logging behavior, retention, and Task Scheduler use.
 - Update project/frontend version metadata to v2.0.18.
 - Add no monkey patches or new runtime/frontend dependencies.
-
-### v2.0.17
 
 ### v2.0.17
 
