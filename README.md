@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.7
+# TaskList Stats v2.1.8
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -188,7 +188,7 @@ There is intentionally no automatic **System** theme; theme selection is strictl
 
 Tables use 14px text, a 1.45 line height, and larger cell padding across all tabs. Activity Session rows and Compare's custom table layout use matching spacing.
 
-**File → Highlight rows on hover** is a checkbox enabled by default. Its setting is saved per browser. When enabled, table body rows highlight using the same Light/Dark colors as TaskList; headers, statistic cards, heatmap cells, and Milestones tiles are unaffected. Hover follows actual mouse/trackpad pointer movement, including over links and buttons inside rows and on touchscreen laptops. Moving outside a row, leaving the page, disabling the option, or using touch/pen input clears the highlight. Synthetic mouse events after touch are briefly suppressed. Theme styles load directly with the page, using the same stylesheet loading approach as TaskList.
+**File → Highlight rows on hover** is a square checkbox enabled by default. Clicking it toggles the setting and dismisses the File menu, just like selecting an option in View. Its setting is saved per browser. When enabled, table body rows highlight using the same Light/Dark colors as TaskList; headers, statistic cards, heatmap cells, and Milestones tiles are unaffected. Hover follows actual mouse/trackpad pointer movement, including over links and buttons inside rows and on touchscreen laptops. Moving outside a row, leaving the page, disabling the option, or using touch/pen input clears the highlight. Synthetic mouse events after touch are briefly suppressed. Theme styles load directly with the page, using the same stylesheet loading approach as TaskList.
 
 ## TaskList deep links
 
@@ -378,7 +378,15 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.7
+## Current release: v2.1.8
+
+### v2.1.8
+
+- Dismiss the File menu after toggling Highlight rows on hover, matching View-menu selection behavior.
+- Show the hover option as a square checkbox with a checkmark when enabled and an empty box when disabled; use the menu's text color in both themes and on hover/focus.
+- Restrict selection dots to radio menu items, preserving View and dropdown selections and list-filter checkmarks.
+- Preserve saved hover preferences and the working pointer-based row highlighting.
+- Update release metadata/documentation to v2.1.8.
 
 ### v2.1.7
 

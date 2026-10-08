@@ -370,6 +370,7 @@ function initializeRowHover() {
     enabled = !enabled;
     try { localStorage.setItem(storageKey, String(enabled)); } catch {}
     applyPreference();
+    closeMenus();
   });
 
   function clearTouchHover() {
