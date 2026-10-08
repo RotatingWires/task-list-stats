@@ -19,6 +19,14 @@ const oneDecimal = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+const HEATMAP_EVENT_OPTIONS = [
+  ['created', 'Created'],
+  ['completed', 'Completed'],
+  ['cancelled', 'Cancelled'],
+  ['reopened', 'Reopened'],
+  ['activity', 'All activity']
+];
+
 const STATISTIC_TOOLTIPS = new Map([
   ['Universal ID', 'The permanent global ID assigned across every TaskList list. Universal IDs are never reused, even after deletion.'],
   ['Type', 'Whether this item is a top-level root task or a subtask nested under another item.'],
@@ -52,6 +60,18 @@ function parseDate(value) {
 
 function hasConfirmedClockTime(value) {
   return typeof value === 'string' && /T\d{2}:\d{2}/.test(value);
+}
+
+function* heatmapDates(items, mode, { requireClockTime = false } = {}) {
+  const events = mode === 'activity'
+    ? HEATMAP_EVENT_OPTIONS.map(([value]) => value).filter(value => value !== 'activity')
+    : [mode];
+  for (const item of items) {
+    for (const event of events) {
+      const date = item[`${event}Date`];
+      if (date && (!requireClockTime || hasConfirmedClockTime(item[`${event}At`]))) yield date;
+    }
+  }
 }
 
 function localDayKey(date) {

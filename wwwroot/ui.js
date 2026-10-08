@@ -318,6 +318,7 @@ $('#heatmapYear').addEventListener('change',()=>{
   renderMonthCalendar(scopedItems());
 });
 $('#heatmapMode').addEventListener('change',()=>renderYearHeatmap(scopedItems()));
+$('#monthYearHeatmapMode').addEventListener('change',()=>renderMonthYearHeatmap(scopedItems()));
 $('#calendarMonth').addEventListener('input',()=>renderMonthCalendar(scopedItems()));
 $('#calendarMonth').addEventListener('change',()=>renderMonthCalendar(scopedItems()));
 $('#hourHeatmapMode').addEventListener('change',()=>renderWeekdayHourHeatmap(scopedItems()));
@@ -343,8 +344,9 @@ function initializeTouchHelp() {
 
 const STATIC_SINGLE_SELECT_OPTIONS = {
   trendGroup: [['day', 'Day'], ['week', 'Week'], ['month', 'Month']],
-  heatmapMode: [['created', 'Created'], ['completed', 'Completed'], ['cancelled', 'Cancelled'], ['reopened', 'Reopened'], ['activity', 'All activity']],
-  hourHeatmapMode: [['created', 'Created'], ['completed', 'Completed']],
+  heatmapMode: HEATMAP_EVENT_OPTIONS,
+  monthYearHeatmapMode: HEATMAP_EVENT_OPTIONS,
+  hourHeatmapMode: HEATMAP_EVENT_OPTIONS,
   historyEventType: [['all', 'All events'], ['Created', 'Created'], ['Completed', 'Completed'], ['Cancelled', 'Cancelled'], ['Reopened', 'Reopened'], ['Deleted', 'Deleted']],
   historyOrder: [['newest', 'Newest first'], ['oldest', 'Oldest first']],
   compareMode: [['lists', 'Lists'], ['periods', 'Time periods']],

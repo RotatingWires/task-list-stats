@@ -51,11 +51,7 @@ function renderPatterns() {
 function renderWeekdayHourHeatmap(items) {
   const mode = $('#hourHeatmapMode').value;
   const matrix = Array.from({length:7},()=>Array(24).fill(0));
-  for (const item of items) {
-    const d = mode === 'completed' ? item.completedDate : item.createdDate;
-    const raw = mode === 'completed' ? item.completedAt : item.createdAt;
-    if (d && hasConfirmedClockTime(raw)) matrix[d.getDay()][d.getHours()]++;
-  }
+  for (const date of heatmapDates(items, mode, { requireClockTime: true })) matrix[date.getDay()][date.getHours()]++;
   const max = Math.max(0, ...matrix.flat());
   const grid = document.createElement('div'); grid.className='wh-grid';
   const corner=document.createElement('div'); grid.append(corner);

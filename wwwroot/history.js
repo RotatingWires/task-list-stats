@@ -179,12 +179,7 @@ function renderCalendar() {
 
 function dailyMap(items, mode) {
   const map = new Map();
-  for (const item of items) {
-    if ((mode === 'created' || mode === 'activity') && item.createdDate) increment(map, localDayKey(item.createdDate));
-    if ((mode === 'completed' || mode === 'activity') && item.completedDate) increment(map, localDayKey(item.completedDate));
-    if ((mode === 'cancelled' || mode === 'activity') && item.cancelledDate) increment(map, localDayKey(item.cancelledDate));
-    if ((mode === 'reopened' || mode === 'activity') && item.reopenedDate) increment(map, localDayKey(item.reopenedDate));
-  }
+  for (const date of heatmapDates(items, mode)) increment(map, localDayKey(date));
   return map;
 }
 
@@ -274,9 +269,10 @@ function renderMonthCalendar(items) {
 }
 
 function renderMonthYearHeatmap(items) {
-  const years = [...new Set(items.map(x=>x.createdDate?.getFullYear()).filter(Boolean))].sort((a,b)=>a-b);
+  const dates = [...heatmapDates(items, $('#monthYearHeatmapMode').value)];
+  const years = [...new Set(dates.map(date => date.getFullYear()))].sort((a,b)=>a-b);
   const counts = new Map();
-  for (const item of items) if (item.createdDate) increment(counts, monthKey(item.createdDate));
+  for (const date of dates) increment(counts, monthKey(date));
   const max = Math.max(0, ...counts.values());
   const grid = document.createElement('div');
   grid.className = 'month-year-grid';
