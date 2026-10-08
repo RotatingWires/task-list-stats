@@ -9,6 +9,7 @@
   --theme-note: #ffffe1;
   --theme-link: #0000a0;
   --theme-link-visited: #551a8b;
+  --theme-row-hover: #e5ecf8;
   --theme-title: #000080;
   --theme-title-text: #fff;
   --chart-surface: #fff;
@@ -45,6 +46,7 @@
   --theme-note: #3b3825;
   --theme-link: #91adff;
   --theme-link-visited: #c69cff;
+  --theme-row-hover: #2d3850;
   --theme-title: #111858;
   --theme-title-text: #fff;
   --chart-surface: #191919;
@@ -221,6 +223,11 @@ td,
 .session-event-row,
 #compareTable tr {
   border-bottom-color: var(--theme-divider);
+}
+
+html.row-hover-enabled.mouse-hover-capable table tbody tr:hover,
+html.row-hover-enabled.mouse-hover-capable table tbody tr:hover > td {
+  background: var(--theme-row-hover);
 }
 
 .chart-frame { background: var(--chart-surface); }

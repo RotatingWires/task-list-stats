@@ -342,6 +342,38 @@ function initializeTouchHelp() {
   $('#workspace')?.addEventListener('scroll', hide, { passive: true });
 }
 
+function initializeRowHover() {
+  const root = document.documentElement;
+  const button = $('#highlightRowsButton');
+  const storageKey = 'task-list-stats-highlight-rows';
+  let enabled = true;
+  try { enabled = localStorage.getItem(storageKey) !== 'false'; } catch {}
+
+  function applyPreference() {
+    root.classList.toggle('row-hover-enabled', enabled);
+    button.setAttribute('aria-checked', String(enabled));
+  }
+  applyPreference();
+
+  button.addEventListener('click', event => {
+    event.stopPropagation();
+    enabled = !enabled;
+    try { localStorage.setItem(storageKey, String(enabled)); } catch {}
+    applyPreference();
+  });
+
+  // Match TaskList's actual-mouse detection on touchscreen laptops.
+  let ignoreSyntheticMouseUntil = 0;
+  document.addEventListener('touchstart', () => {
+    ignoreSyntheticMouseUntil = performance.now() + 1200;
+    root.classList.remove('mouse-hover-capable');
+  }, { passive: true, capture: true });
+  document.addEventListener('mousemove', () => {
+    if (performance.now() >= ignoreSyntheticMouseUntil)
+      root.classList.add('mouse-hover-capable');
+  }, { passive: true });
+}
+
 const STATIC_SINGLE_SELECT_OPTIONS = {
   trendGroup: [['day', 'Day'], ['week', 'Week'], ['month', 'Month']],
   heatmapMode: HEATMAP_EVENT_OPTIONS,
@@ -387,6 +419,7 @@ let appStarted = false;
 async function startApp() {
   if (appStarted) return;
   appStarted = true;
+  initializeRowHover();
   try {
     await import('/theme.js');
     await window.TaskTheme?.ready;

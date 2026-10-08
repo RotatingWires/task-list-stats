@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.5
+# TaskList Stats v2.1.6
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -184,6 +184,12 @@ The dark theme keeps the Windows 95 raised/recessed look instead of replacing it
 
 There is intentionally no automatic **System** theme; theme selection is strictly Light or Dark.
 
+## Table readability and row hover
+
+Tables use 14px text, a 1.45 line height, and larger cell padding across all tabs. Activity Session rows and Compare's custom table layout use matching spacing.
+
+**File → Highlight rows on hover.** is a checkbox enabled by default. Its setting is saved per browser. When enabled, table body rows highlight using the same Light/Dark colors as TaskList; headers, statistic cards, heatmap cells, and Milestones tiles are unaffected. Hover activates after actual mouse/trackpad movement, including on touchscreen laptops. Touch input clears hover mode and briefly suppresses synthetic mouse events to avoid sticky highlighting.
+
 ## TaskList deep links
 
 Task IDs shown in Stats link back to the main TaskList app using the task's Universal ID:
@@ -210,7 +216,7 @@ Current counts, creation/completion records, completion behavior, open-task agin
 
 ### Trends
 
-Created / Completed / Cancelled history, approximate backlog history, busiest months, completion-speed months, and year-over-year monthly creation comparison.
+Created / Completed / Cancelled history, approximate backlog history, busiest months, and completion-speed months. The Calendar Month × Year Heatmap provides the cross-year monthly comparison.
 
 The backlog chart remains approximate because it reconstructs older state from timestamps stored on current task rows.
 
@@ -225,7 +231,7 @@ The backlog chart remains approximate because it reconstructs older state from t
 
 Calendar day drill-down only renders event categories that actually contain tasks for the selected day. Empty categories are omitted instead of showing placeholder boxes.
 
-Every heatmap uses the same event choices and defaults to Created. Each selection is independent: the Year Activity and Month × Year heatmaps can show different event types. All activity sums the available Created, Completed, Cancelled, and Reopened timestamps, so one task can contribute more than once. These heatmaps use timestamps from the current snapshot, including the existing current-status rules for Completed and Cancelled, without loading event history. The Month × Year rows follow the years present in the selected event timestamps, including years with completions or reopens but no creations.
+Every heatmap uses the same event choices and defaults to Created. Each selection is independent: the Year Activity and Month × Year heatmaps can show different event types. All activity sums the available Created, Completed, Cancelled, and Reopened timestamps, so one task can contribute more than once. These heatmaps use timestamps from the current snapshot, including the existing current-status rules for Completed and Cancelled, without loading event history. The Month × Year rows follow the years present in the selected event timestamps, including years with completions or reopens but no creations. It shows all represented years, not only the current year; a new year appears automatically once the selected event type has timestamps in that year.
 
 ### Lists
 
@@ -257,7 +263,7 @@ Compare either two list scopes or two date ranges. Time-period mode uses one com
 
 Groups timestamped events into inferred sessions using a 15-, 30-, or 60-minute maximum gap. This is an inference from event timing, not a time tracker.
 
-Session rows show their event mix. Click the event count to open the session's events in chronological order.
+Session rows show their event mix. Click the event count to open the session's events newest first, matching the session list. Events at the same timestamp use descending event ID as a stable tie-breaker. The detail view sorts a copy; session grouping and start/end times remain based on chronological event order.
 
 ### Milestones
 
@@ -372,7 +378,18 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.5
+## Current release: v2.1.6
+
+### v2.1.6
+
+- Show Activity Session detail events newest first, with descending event ID for equal timestamps, while preserving session inference and time ranges.
+- Add a saved File-menu checkbox for table row hover, enabled by default, using TaskList's Light/Dark hover colors.
+- Detect actual mouse movement and clear hover mode on touch instead of relying on pointer-capability media queries.
+- Increase table text size, line height, and cell spacing, including custom Session and Compare rows; leave Milestones tiles and other cards unchanged.
+- Remove the redundant Trends Year-Over-Year Monthly Comparison markup and renderer because Calendar's Month × Year Heatmap already shows all represented years.
+- Remove Fun's redundant table-size overrides now covered by the shared table styles.
+- Update release metadata/documentation to v2.1.6.
+- Add no monkey patches or new runtime/frontend dependencies.
 
 ### v2.1.5
 

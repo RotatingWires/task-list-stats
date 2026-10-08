@@ -74,8 +74,6 @@ function renderTrends() {
     ]);
   }
   setTable($('#monthSpeedTable'), ['Fast month', 'Avg', 'Slow month', 'Avg'], speedRows);
-
-  renderYearComparison(items);
 }
 
 function approximateBacklog(items) {
@@ -116,14 +114,6 @@ function approximateBacklog(items) {
     cursor.setMonth(cursor.getMonth() + 1);
   }
   return { labels, values };
-}
-
-function renderYearComparison(items) {
-  const years = [...new Set(items.map(x=>x.createdDate?.getFullYear()).filter(Boolean))].sort((a,b)=>b-a).slice(0,6).reverse();
-  const counts = new Map();
-  for (const item of items) if (item.createdDate) increment(counts, monthKey(item.createdDate));
-  const rows = years.map(year => [String(year), ...MONTHS.map((_, m) => numberFmt.format(counts.get(`${year}-${String(m+1).padStart(2,'0')}`) || 0))]);
-  setTable($('#yearComparisonTable'), ['Year', ...MONTHS], rows, Array.from({length:12}, (_,i)=>i+1));
 }
 
 function parseCalendarMonth(value) {
