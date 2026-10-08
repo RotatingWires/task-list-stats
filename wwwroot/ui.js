@@ -394,9 +394,6 @@ async function startApp() {
   initializeTouchHelp();
   initializeAnalysisTabs();
   await loadSnapshot();
-  try {
-    await import('/milestones.js');
-  } catch {}
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp, { once: true }); else startApp();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
