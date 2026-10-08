@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.6
+# TaskList Stats v2.1.7
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -188,7 +188,7 @@ There is intentionally no automatic **System** theme; theme selection is strictl
 
 Tables use 14px text, a 1.45 line height, and larger cell padding across all tabs. Activity Session rows and Compare's custom table layout use matching spacing.
 
-**File → Highlight rows on hover.** is a checkbox enabled by default. Its setting is saved per browser. When enabled, table body rows highlight using the same Light/Dark colors as TaskList; headers, statistic cards, heatmap cells, and Milestones tiles are unaffected. Hover activates after actual mouse/trackpad movement, including on touchscreen laptops. Touch input clears hover mode and briefly suppresses synthetic mouse events to avoid sticky highlighting.
+**File → Highlight rows on hover** is a checkbox enabled by default. Its setting is saved per browser. When enabled, table body rows highlight using the same Light/Dark colors as TaskList; headers, statistic cards, heatmap cells, and Milestones tiles are unaffected. Hover follows actual mouse/trackpad pointer movement, including over links and buttons inside rows and on touchscreen laptops. Moving outside a row, leaving the page, disabling the option, or using touch/pen input clears the highlight. Synthetic mouse events after touch are briefly suppressed. Theme styles load directly with the page, using the same stylesheet loading approach as TaskList.
 
 ## TaskList deep links
 
@@ -378,7 +378,18 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.6
+## Current release: v2.1.7
+
+### v2.1.7
+
+- Fix table row hover by tracking mouse/trackpad pointer movement directly, including links and buttons inside rows, instead of gating CSS :hover on a separate mouse-capability class.
+- Clear row highlighting when leaving rows/the page, disabling the checkbox, or using touch/pen input; preserve the saved setting and synthetic-mouse suppression.
+- Load theme.css directly in both application and login pages, matching TaskList, and delete the obsolete dynamic stylesheet loader and readiness waits.
+- Remove the period from File → Highlight rows on hover.
+- Verify that the redundant Trends monthly year comparison markup, renderer, and call sites remain fully removed; Calendar retains the Month × Year Heatmap.
+- Preserve TaskList's Light/Dark hover colors, table readability improvements, and newest-first session detail order.
+- Update release metadata/documentation to v2.1.7.
+- Add no monkey patches or new runtime/frontend dependencies.
 
 ### v2.1.6
 

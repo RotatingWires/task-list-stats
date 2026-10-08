@@ -347,11 +347,21 @@ function initializeRowHover() {
   const button = $('#highlightRowsButton');
   const storageKey = 'task-list-stats-highlight-rows';
   let enabled = true;
+  let hoveredRow = null;
+  let ignoreSyntheticMouseUntil = 0;
   try { enabled = localStorage.getItem(storageKey) !== 'false'; } catch {}
+
+  function highlightRow(row) {
+    if (row === hoveredRow) return;
+    hoveredRow?.classList.remove('row-hover');
+    hoveredRow = row;
+    hoveredRow?.classList.add('row-hover');
+  }
 
   function applyPreference() {
     root.classList.toggle('row-hover-enabled', enabled);
     button.setAttribute('aria-checked', String(enabled));
+    if (!enabled) highlightRow(null);
   }
   applyPreference();
 
@@ -362,16 +372,30 @@ function initializeRowHover() {
     applyPreference();
   });
 
-  // Match TaskList's actual-mouse detection on touchscreen laptops.
-  let ignoreSyntheticMouseUntil = 0;
-  document.addEventListener('touchstart', () => {
+  function clearTouchHover() {
     ignoreSyntheticMouseUntil = performance.now() + 1200;
-    root.classList.remove('mouse-hover-capable');
+    highlightRow(null);
+  }
+
+  // Track the actual row under a mouse/trackpad without depending on CSS :hover
+  // or the device's reported hover capability. Capture also covers row controls.
+  document.addEventListener('pointermove', event => {
+    if (event.pointerType !== 'mouse') { clearTouchHover(); return; }
+    const row = enabled && performance.now() >= ignoreSyntheticMouseUntil
+      ? event.target.closest?.('table > tbody > tr') ?? null
+      : null;
+    highlightRow(row);
   }, { passive: true, capture: true });
-  document.addEventListener('mousemove', () => {
-    if (performance.now() >= ignoreSyntheticMouseUntil)
-      root.classList.add('mouse-hover-capable');
-  }, { passive: true });
+  document.addEventListener('pointerdown', event => {
+    if (event.pointerType !== 'mouse') clearTouchHover();
+  }, { passive: true, capture: true });
+  document.addEventListener('pointerup', event => {
+    if (event.pointerType !== 'mouse') clearTouchHover();
+  }, { passive: true, capture: true });
+  document.addEventListener('pointerout', event => {
+    if (!event.relatedTarget) highlightRow(null);
+  }, { passive: true, capture: true });
+  window.addEventListener('blur', () => highlightRow(null));
 }
 
 const STATIC_SINGLE_SELECT_OPTIONS = {
@@ -422,7 +446,6 @@ async function startApp() {
   initializeRowHover();
   try {
     await import('/theme.js');
-    await window.TaskTheme?.ready;
   } catch {}
   Fun.initialize();
   initializeCustomSingleSelects();

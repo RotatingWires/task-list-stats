@@ -5,28 +5,6 @@
 const STORAGE_KEY = 'task-ui-theme';
 const VALID = new Set(['light', 'dark']);
 
-function ensureStylesheet() {
-  const existing = document.querySelector('link[data-task-theme-styles]');
-  if (existing) {
-    if (existing.sheet) return Promise.resolve();
-    return new Promise(resolve => {
-      existing.addEventListener('load', resolve, { once: true });
-      existing.addEventListener('error', resolve, { once: true });
-    });
-  }
-
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = '/theme.css';
-  link.dataset.taskThemeStyles = '';
-  const ready = new Promise(resolve => {
-    link.addEventListener('load', resolve, { once: true });
-    link.addEventListener('error', resolve, { once: true });
-  });
-  document.head.append(link);
-  return ready;
-}
-
 function readPreference() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -71,10 +49,8 @@ window.addEventListener('storage', event => {
   if (event.key === STORAGE_KEY) applyTheme(readPreference(), false);
 });
 
-const ready = ensureStylesheet();
 applyTheme(readPreference(), false);
 window.TaskTheme = {
-  ready,
   getPreference,
   setPreference
 };

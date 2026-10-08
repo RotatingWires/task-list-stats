@@ -8,13 +8,14 @@
   <link rel="icon" href="/icons/stats.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="analysis-tabs.css">
+  <link rel="stylesheet" href="/theme.css">
   <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
   <main class="window" id="appWindow">
     <header class="titlebar"><span class="title-left">TaskList Stats</span><span class="title-center" id="titleScope">All lists</span><span class="title-buttons" aria-hidden="true">_ □ ×</span></header>
     <nav class="menubar" aria-label="Application menu">
-      <div class="menu-wrap"><button id="fileMenuButton" type="button" aria-haspopup="menu" aria-expanded="false">File</button><div id="fileMenu" class="menu-dropdown" role="menu" hidden><button type="button" id="refreshButton" role="menuitem"><span></span><span class="menu-label">Refresh</span></button><button type="button" id="exportButton" role="menuitem"><span></span><span class="menu-label">Export snapshot JSON...</span></button><button type="button" id="highlightRowsButton" role="menuitemcheckbox" aria-checked="true"><span class="menu-check" aria-hidden="true"></span><span class="menu-label">Highlight rows on hover.</span></button><div class="menu-separator" role="separator"></div><button type="button" id="logoutButton" role="menuitem"><span></span><span class="menu-label">Log Out</span></button></div></div>
+      <div class="menu-wrap"><button id="fileMenuButton" type="button" aria-haspopup="menu" aria-expanded="false">File</button><div id="fileMenu" class="menu-dropdown" role="menu" hidden><button type="button" id="refreshButton" role="menuitem"><span></span><span class="menu-label">Refresh</span></button><button type="button" id="exportButton" role="menuitem"><span></span><span class="menu-label">Export snapshot JSON...</span></button><button type="button" id="highlightRowsButton" role="menuitemcheckbox" aria-checked="true"><span class="menu-check" aria-hidden="true"></span><span class="menu-label">Highlight rows on hover</span></button><div class="menu-separator" role="separator"></div><button type="button" id="logoutButton" role="menuitem"><span></span><span class="menu-label">Log Out</span></button></div></div>
       <div class="menu-wrap"><button id="viewMenuButton" type="button" aria-haspopup="menu" aria-expanded="false">View</button><div id="viewMenu" class="menu-dropdown" role="menu" hidden></div></div>
       <div class="menu-wrap"><button id="helpMenuButton" type="button" aria-haspopup="menu" aria-expanded="false">Help</button><div id="helpMenu" class="menu-dropdown" role="menu" hidden><button type="button" id="aboutButton" role="menuitem"><span></span><span class="menu-label">About TaskList Stats</span></button></div></div>
     </nav>
