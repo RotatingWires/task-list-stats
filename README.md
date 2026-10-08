@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.4
+# TaskList Stats v2.1.5
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -219,11 +219,13 @@ The backlog chart remains approximate because it reconstructs older state from t
 - Year Activity Heatmap with Created / Completed / Cancelled / Reopened / All activity modes
 - typed Month Detail using `m/yy` or `m/yyyy`
 - Month Calendar with three-letter weekday headings
-- Month × Year creation heatmap
+- Month × Year Heatmap with its own Created / Completed / Cancelled / Reopened / All activity selector
 - seasonality chart
 - clickable days that open the exact Created / Completed / Cancelled tasks for that date
 
 Calendar day drill-down only renders event categories that actually contain tasks for the selected day. Empty categories are omitted instead of showing placeholder boxes.
+
+Every heatmap uses the same event choices and defaults to Created. Each selection is independent: the Year Activity and Month × Year heatmaps can show different event types. All activity sums the available Created, Completed, Cancelled, and Reopened timestamps, so one task can contribute more than once. These heatmaps use timestamps from the current snapshot, including the existing current-status rules for Completed and Cancelled, without loading event history. The Month × Year rows follow the years present in the selected event timestamps, including years with completions or reopens but no creations.
 
 ### Lists
 
@@ -232,6 +234,8 @@ Per-list current counts, completion percentage, completion duration, share of cu
 ### Patterns
 
 Day-of-week and hour-of-day creation/completion charts, weekday × hour heatmap, Workload Rhythm, and Exam / Test Windows.
+
+The Weekday × Hour Heatmap has the same independent Created / Completed / Cancelled / Reopened / All activity dropdown as both Calendar heatmaps. It includes only confirmed clock times for the selected events; date-only values contribute to the Calendar heatmaps but never become artificial midnight activity in the hour heatmap.
 
 Workload Rhythm includes busiest creation weekday/hour and busiest completion weekday/hour using the same populations as the corresponding Patterns charts.
 
@@ -368,7 +372,17 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.4
+## Current release: v2.1.5
+
+### v2.1.5
+
+- Give Year Activity, Month × Year, and Weekday × Hour heatmaps the same Created / Completed / Cancelled / Reopened / All activity choices through one shared option list.
+- Add an independent event dropdown to Month × Year and remove the fixed Created Tasks title suffix.
+- Expand Weekday × Hour beyond Created/Completed while preserving exclusion of date-only timestamps.
+- Share timestamp selection across all heatmaps and derive Month × Year rows from the selected event years.
+- Preserve current-status semantics, list scope, and existing lazy event-history loading.
+- Update release metadata/documentation to v2.1.5.
+- Add no monkey patches or new runtime/frontend dependencies.
 
 ### v2.1.4
 
