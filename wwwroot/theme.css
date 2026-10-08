@@ -225,8 +225,8 @@ td,
   border-bottom-color: var(--theme-divider);
 }
 
-html.row-hover-enabled.mouse-hover-capable table tbody tr:hover,
-html.row-hover-enabled.mouse-hover-capable table tbody tr:hover > td {
+html.row-hover-enabled table > tbody > tr.row-hover,
+html.row-hover-enabled table > tbody > tr.row-hover > td {
   background: var(--theme-row-hover);
 }
 

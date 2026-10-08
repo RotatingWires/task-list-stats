@@ -60,7 +60,6 @@ async function request(url, options = {}) {
 async function initialize() {
   try {
     await import('/theme.js');
-    await window.TaskTheme?.ready;
   } catch {}
 
   try {
