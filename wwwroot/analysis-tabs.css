@@ -103,7 +103,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: baseline;
-  padding: 4px 2px;
+  padding: 7px 8px;
   border-bottom: 1px solid #d0d0d0;
 }
 #compareTable tr:last-child { border-bottom: 0; }
@@ -162,7 +162,7 @@
   border-bottom: 2px solid #fff;
 }
 
-/* Activity Sessions uses the same compact timeline language as Milestones. */
+/* Activity Sessions uses table rows with an expandable event list. */
 #sessionsTable {
   min-width: 0;
   table-layout: fixed;
@@ -174,7 +174,7 @@
 }
 #sessionsTable tr:last-child td { border-bottom: 0; }
 .session-row {
-  padding: 8px 10px;
+  padding: 10px 12px;
   min-width: 0;
 }
 .session-heading {
@@ -191,7 +191,7 @@
 }
 .session-detail {
   margin-top: 3px;
-  font-size: 12px;
+  font-size: 13px;
   color: #333;
   overflow-wrap: anywhere;
 }

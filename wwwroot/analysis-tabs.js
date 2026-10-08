@@ -364,7 +364,7 @@ function openSessionEvents(session) {
 
   const list = document.createElement('div');
   list.className = 'session-event-list';
-  const ordered = [...session.events].sort((a, b) => a.eventDate - b.eventDate || a.id - b.id);
+  const ordered = [...session.events].sort((a, b) => b.eventDate - a.eventDate || b.id - a.id);
   list.replaceChildren(...ordered.map(makeSessionEventRow));
 
   $('#sessionEventsBody').replaceChildren(summary, list);
@@ -398,7 +398,7 @@ function makeSessionRow(session) {
   eventButton.type = 'button';
   eventButton.className = 'session-event-count';
   eventButton.textContent = `${numberFmt.format(session.events.length)} event${session.events.length === 1 ? '' : 's'}`;
-  eventButton.title = 'Open this session and view its recorded events in chronological order.';
+  eventButton.title = 'Open this session and view its recorded events newest first.';
   eventButton.addEventListener('click', () => openSessionEvents(session));
   detail.append(eventButton);
 
