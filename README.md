@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.13
+# TaskList Stats v2.1.14
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -99,7 +99,8 @@ wwwroot/
   overview.js             Overview records, completion behavior, and aging
   history.js              Trends, backlog, Calendar, Calendar drill-down, Lists
   patterns.js             Patterns plus Trees & Titles
-  analysis-tabs.js        History Explorer, Compare, Activity Sessions, Milestones
+  analysis-tabs.js        History Explorer, Compare, Activity Sessions
+  milestones.js           on-demand Milestones view, grouping, thresholds, and SVG icons
   fun.js                  Fun workspace
   charts.js               Canvas chart drawing and chart tooltip interactions
   ui.js                   navigation, custom selects, filtering, startup/session UI
@@ -281,9 +282,9 @@ The permanent Milestones timeline is computed from event history and is independ
 
 Milestones have a **Sort by** dropdown with Chronological, Year, Type, and List choices. It uses the same selected-circle indicator as View and closes after choosing an option. Chronological is the default and keeps month-and-year sections, such as October 2026, newest first. Year groups by the year earned, newest first. Type groups Created, Completed, Cancelled, Reopened, Deleted, Recorded events, and Universal ID milestones separately. List groups by the list attached to the event that earned the milestone, alphabetically. Milestones remain newest first within each group. Sorting respects the selected list scope and shows only groups containing milestones.
 
-Milestone tiles are square by default and capped at 320px wide, so a single milestone stays compact instead of filling the month section. Tiles shrink on narrow screens and can grow taller for long content. Titles use 18px text, task details use 16px, and timestamps use 14px; titles and timestamps are stacked for easier reading.
+Milestone tiles are square by default and capped at 320px wide, so a single milestone stays compact instead of filling the month section. Tiles shrink on narrow screens and can grow taller for long content. Titles use 22px text, task details use 18px, and timestamps use 16px; titles and timestamps are stacked for easier reading.
 
-Each tile has a 72px icon directly beneath its title: a document with a plus for Created, a checked box for Completed, a circled X for Cancelled, a return arrow for Reopened, a trash bin for Deleted, a history list with a clock for Recorded events, and a hash mark for Universal ID. Icons match the title color in Light/Dark themes and use inline SVG, so they need no extra downloads. Decorative icons are excluded from screen-reader and keyboard navigation.
+Each tile has a 72px icon directly beneath its title: a document with a plus for Created, a checked box for Completed, a circled X for Cancelled, a return arrow for Reopened, a trash bin for Deleted, a history list with a clock for Recorded events, and a hash mark for Universal ID. Icons match the title color in Light/Dark themes and use inline SVG, so they need no image-file downloads. The milestone view and SVG definitions load together only when the Milestones tab is first opened; subsequent visits reuse the loaded module. Decorative icons are excluded from screen-reader and keyboard navigation.
 
 ### Fun
 
@@ -328,7 +329,7 @@ TaskList v1.5 introduced an append-only `task_events` history log. Created, Comp
 
 For older task data, TaskList reconstructs event rows from timestamps it already had. That older reconstruction can be incomplete when a task changed state repeatedly before the event log existed. Because older TaskList versions did not store deletion timestamps, tasks deleted before v1.5.10 cannot be given a trustworthy historical Deleted event.
 
-The Stats **About** dialog contains the same user-facing explanation.
+The Stats **Help** button opens About immediately, matching TaskList. Its wide, rectangular dialog uses 16px text for the event-history explanation and places about.lehighradio.com above the application/version label at the bottom, as TaskList does. Short paragraphs explain missing dates and older history without implementation details.
 
 ## Exporting a snapshot
 
@@ -340,7 +341,7 @@ Treat exports as private because they can contain task titles, descriptions, lis
 
 The service worker caches the application shell, shared theme assets, and login/setup assets; uses network-first `cache: 'no-store'` behavior for current same-origin static assets; always fetches `/api/*` from the network; and uses cached files only as an offline fallback.
 
-The cache name is stable rather than release-numbered. Successful online asset loads replace the cached copy, so normal frontend updates do not require duplicated version strings in asset URLs or cache names. On activation, obsolete files are removed from the stable shell cache, including the retired milestone popup assets. The shell cache does not contain the live TaskList snapshot.
+The cache name is stable rather than release-numbered. Successful online asset loads replace the cached copy, so normal frontend updates do not require duplicated version strings in asset URLs or cache names. On activation, obsolete files are removed from the stable shell cache, including the retired milestone popup assets. The shell cache does not contain the live TaskList snapshot. The on-demand milestones.js module is excluded from installation precaching, cached after its first use, and retained during cache cleanup for later offline visits.
 
 ## Security and privacy
 
@@ -386,7 +387,18 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.13
+## Current release: v2.1.14
+
+### v2.1.14
+
+- Make Help open About directly, deleting the old second-level Help menu, its event handler, and its CSS.
+- Match TaskList's About layout with a wide rectangular dialog, readable 16px event-history paragraphs, and about.lehighradio.com followed by the application/version label at the bottom.
+- Remove the chart-library/ORM/read-only implementation paragraph from Help; target the dedicated version span so the event-history heading remains intact.
+- Size shared single-select menus to their options and wrap long labels within the viewport, fixing Chronological truncation when Year is selected.
+- Increase milestone titles to 22px, details to 18px, timestamps to 16px, and group headings to 18px while retaining content-based tile growth.
+- Move milestone computation, grouping, rendering, and SVG definitions into one dynamically imported module loaded only when the Milestones tab opens. Remove their original eager definitions and event handler.
+- Cache the milestone module after first use without including it in installation precaching; retain it during service-worker cache cleanup.
+- Update release metadata/documentation to v2.1.14.
 
 ### v2.1.13
 

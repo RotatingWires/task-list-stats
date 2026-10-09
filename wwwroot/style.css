@@ -363,10 +363,17 @@ tr:last-child td { border-bottom: 0; }
 .inline-select-menu { min-width: 110px; }
 .compact-retro-select { min-width: 110px; padding: 4px 8px; }
 .single-select-dropdown {
+  width: max-content;
   min-width: 100%;
   max-width: min(280px, calc(100vw - 32px));
   max-height: min(50vh, 320px);
   overflow-y: auto;
+}
+.single-select-dropdown .menu-label {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .wrap-row { flex-wrap: wrap; }
 .small-row { margin-bottom: 5px; }
@@ -514,6 +521,35 @@ tr:last-child td { border-bottom: 0; }
 .dialog-body { padding: 12px; line-height: 1.4; }
 .dialog-buttons { display: flex; justify-content: flex-end; padding: 0 12px 12px; }
 
+.about-dialog {
+  width: min(680px, calc(100vw - 24px));
+  max-width: min(680px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 3px;
+  font-size: 16px;
+  background: var(--face);
+  border: 2px solid var(--black);
+  box-shadow: 1px 1px 0 var(--shadow);
+}
+.about-dialog .dialog-window {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 34px);
+  border: 0;
+  box-shadow: none;
+}
+.about-dialog .dialog-title { margin: 0; }
+.about-dialog .dialog-body {
+  display: grid;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  line-height: 1.5;
+}
+.about-dialog .dialog-body p { margin: 0; }
+.about-dialog .dialog-title,
+.about-dialog .dialog-buttons { flex: 0 0 auto; }
+
 .backlog-note { margin: 0 2px 7px; }
 
 .subtabs {
@@ -586,9 +622,6 @@ tr:last-child td { border-bottom: 0; }
   cursor: pointer;
 }
 .task-id-link:visited { color: #551a8b; }
-#helpMenu { width: max-content; min-width: 0; max-width: calc(100vw - 20px); }
-#helpMenu button { grid-template-columns: 18px max-content; width: auto; min-width: 0; }
-#helpMenu .menu-label { overflow: visible; text-overflow: clip; white-space: nowrap; }
 #fileMenu { width: max-content; min-width: 0; max-width: calc(100vw - 20px); }
 #fileMenu button { grid-template-columns: 18px 1fr; width: 100%; min-width: 0; }
 #fileMenu .menu-label { overflow: visible; text-overflow: clip; white-space: nowrap; }

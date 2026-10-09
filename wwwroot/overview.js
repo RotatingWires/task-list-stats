@@ -60,7 +60,7 @@ function applyReleaseLabel(version) {
   document.title = `TaskList Stats v${version}`;
   const title = document.querySelector('.title-left');
   if (title) title.textContent = `TaskList Stats v${version}`;
-  const about = document.querySelector('#aboutDialog strong');
+  const about = document.querySelector('#aboutVersion');
   if (about) about.textContent = `TaskList Stats v${version}`;
 }
 
