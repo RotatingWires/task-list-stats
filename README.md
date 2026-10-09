@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.11
+# TaskList Stats v2.1.12
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -279,7 +279,7 @@ Milestones are calculated automatically from the available event history. Curren
 
 The permanent Milestones timeline is computed from event history and is independent of TaskList's live notification queue. It remains available whether or not a popup has been displayed. Stats never claims or displays celebration dialogs or confetti; live celebrations belong exclusively to TaskList.
 
-Milestones are organized into month-and-year sections, such as October 2026. Sections and their milestones run newest first, using local calendar months. Only months with earned milestones are shown, and each section retains the responsive tile layout.
+Milestones have a **Sort by** dropdown with Chronological, Year, Type, and List choices. It uses the same selected-circle indicator as View and closes after choosing an option. Chronological is the default and keeps month-and-year sections, such as October 2026, newest first. Year groups by the year earned, newest first. Type groups Created, Completed, Cancelled, Reopened, Deleted, Recorded events, and Universal ID milestones separately. List groups by the list attached to the event that earned the milestone, alphabetically. Milestones remain newest first within each group. Sorting respects the selected list scope and shows only groups containing milestones.
 
 Milestone tiles are square by default and capped at 320px wide, so a single milestone stays compact instead of filling the month section. Tiles shrink on narrow screens and can grow taller for long content. Titles use 18px text, task details use 16px, and timestamps use 14px; titles and timestamps are stacked for easier reading.
 
@@ -384,7 +384,15 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.11
+## Current release: v2.1.12
+
+### v2.1.12
+
+- Add a Milestones Sort by dropdown with Chronological, Year, Type, and List, reusing the shared radio-menu dropdown and View-style circle indicator.
+- Keep Chronological's existing newest-first month sections; add newest-first year sections, separate milestone-type sections, and alphabetical list sections, with newest-first tiles within every group.
+- Add explicit milestone type metadata so Recorded events and Universal ID milestones keep their own groups instead of inheriting the triggering task event's type.
+- Replace month-only rendering and CSS names with one grouped renderer while preserving square tiles, larger text, list scope, thresholds, and unavailable-history handling.
+- Update release metadata/documentation to v2.1.12.
 
 ### v2.1.11
 

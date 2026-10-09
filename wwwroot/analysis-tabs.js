@@ -459,7 +459,7 @@ function milestoneEventRecords(events, eventType, thresholds = null, labelPrefix
     if (typed.length < threshold) continue;
     const event = typed[threshold - 1];
     const base = milestoneLabel(threshold, eventType.toLowerCase());
-    records.push({ label: labelPrefix ? `${labelPrefix} — ${base}` : base, event });
+    records.push({ label: labelPrefix ? `${labelPrefix} — ${base}` : base, type: eventType, event });
   }
   return records;
 }
@@ -474,7 +474,7 @@ function milestoneUniversalIdRecords(events) {
   return continuingMilestoneThresholds(MILESTONE_UID_BASE_THRESHOLDS, highestCreatedUid)
     .map(threshold => {
       const event = createdByUid.get(threshold);
-      return event ? { label: `Universal ID #${numberFmt.format(threshold)}`, event } : null;
+      return event ? { label: `Universal ID #${numberFmt.format(threshold)}`, type: 'Universal ID', event } : null;
     })
     .filter(Boolean);
 }
@@ -513,10 +513,10 @@ function milestoneYearRecords(events) {
     for (const eventType of ['Created', 'Completed']) {
       const typed = yearEvents.filter(event => event.eventType === eventType).sort((a,b)=>a.eventDate-b.eventDate || a.id-b.id);
       if (!typed.length) continue;
-      records.push({ label: `${year} — First ${eventType.toLowerCase()}`, event: typed[0] });
+      records.push({ label: `${year} — First ${eventType.toLowerCase()}`, type: eventType, event: typed[0] });
       for (const threshold of continuingMilestoneThresholds(MILESTONE_YEAR_BASE_THRESHOLDS, typed.length)) {
         if (typed.length < threshold) continue;
-        records.push({ label: `${year} — ${ordinal(threshold)} ${eventType.toLowerCase()}`, event: typed[threshold - 1] });
+        records.push({ label: `${year} — ${ordinal(threshold)} ${eventType.toLowerCase()}`, type: eventType, event: typed[threshold - 1] });
       }
     }
   }
@@ -525,6 +525,32 @@ function milestoneYearRecords(events) {
 
 function milestoneWhen(event) {
   return hasConfirmedClockTime(event.eventAt) ? formatDateTime(event.eventDate) : formatDate(event.eventDate);
+}
+
+function milestoneGroups(records, mode) {
+  const groups = new Map();
+  for (const record of records) {
+    const date = record.event.eventDate;
+    let key, label;
+    switch (mode) {
+      case 'year': key = date.getFullYear(); label = String(key); break;
+      case 'type': key = record.type; label = key; break;
+      case 'list': key = record.event.listId; label = listName(key); break;
+      default:
+        key = monthKey(date);
+        label = date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    }
+    if (!groups.has(key)) groups.set(key, { key, label, records: [] });
+    groups.get(key).records.push(record);
+  }
+  const ordered = [...groups.values()];
+  if (mode === 'type') {
+    const types = [...ANALYSIS_EVENT_TYPES, 'Recorded events', 'Universal ID'];
+    ordered.sort((a, b) => types.indexOf(a.key) - types.indexOf(b.key));
+  } else if (mode === 'list') {
+    ordered.sort((a, b) => a.label.localeCompare(b.label) || a.key - b.key);
+  }
+  return ordered;
 }
 
 function makeMilestoneRow(record) {
@@ -581,26 +607,23 @@ function renderMilestones() {
   ];
   for (const threshold of continuingMilestoneThresholds(MILESTONE_EVENT_BASE_THRESHOLDS, events.length)) {
     if (events.length < threshold) continue;
-    records.push({ label: milestoneLabel(threshold, 'recorded event'), event: events[threshold - 1] });
+    records.push({ label: milestoneLabel(threshold, 'recorded event'), type: 'Recorded events', event: events[threshold - 1] });
   }
   records.sort((a, b) => b.event.eventDate - a.event.eventDate || b.event.id - a.event.id || a.label.localeCompare(b.label));
-  const months = new Map();
-  for (const record of records) {
-    const key = monthKey(record.event.eventDate);
-    if (!months.has(key)) {
-      const section = document.createElement('section');
-      section.className = 'milestone-month';
-      const title = document.createElement('h3');
-      title.className = 'milestone-month-title';
-      title.textContent = record.event.eventDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-      const grid = document.createElement('div');
-      grid.className = 'milestone-month-grid';
-      section.append(title, grid);
-      months.set(key, { section, grid });
-    }
-    months.get(key).grid.append(makeMilestoneRow(record));
+  const sections = [];
+  for (const group of milestoneGroups(records, $('#milestoneSort').value)) {
+    const section = document.createElement('section');
+    section.className = 'milestone-group';
+    const title = document.createElement('h3');
+    title.className = 'milestone-group-title';
+    title.textContent = group.label;
+    const grid = document.createElement('div');
+    grid.className = 'milestone-group-grid';
+    grid.replaceChildren(...group.records.map(makeMilestoneRow));
+    section.append(title, grid);
+    sections.push(section);
   }
-  timeline.replaceChildren(...Array.from(months.values(), month => month.section));
+  timeline.replaceChildren(...sections);
 }
 
 function initializeAnalysisTabs() {
@@ -621,4 +644,5 @@ function initializeAnalysisTabs() {
     $(`#${id}`).addEventListener('change', () => { if (state.activeTab === 'compare') renderCompare(); });
 
   $('#sessionGap').addEventListener('change', () => { if (state.activeTab === 'sessions') renderActivitySessions(); });
+  $('#milestoneSort').addEventListener('change', () => { if (state.activeTab === 'milestones') renderMilestones(); });
 }
