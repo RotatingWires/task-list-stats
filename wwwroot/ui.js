@@ -407,7 +407,8 @@ const STATIC_SINGLE_SELECT_OPTIONS = {
   historyEventType: [['all', 'All events'], ['Created', 'Created'], ['Completed', 'Completed'], ['Cancelled', 'Cancelled'], ['Reopened', 'Reopened'], ['Deleted', 'Deleted']],
   historyOrder: [['newest', 'Newest first'], ['oldest', 'Oldest first']],
   compareMode: [['lists', 'Lists'], ['periods', 'Time periods']],
-  sessionGap: [['15', '15 minutes'], ['30', '30 minutes'], ['60', '60 minutes']]
+  sessionGap: [['15', '15 minutes'], ['30', '30 minutes'], ['60', '60 minutes']],
+  milestoneSort: [['chronological', 'Chronological'], ['year', 'Year'], ['type', 'Type'], ['list', 'List']]
 };
 
 function singleSelectParts(id) {
