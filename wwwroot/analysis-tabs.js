@@ -5,6 +5,15 @@ const MILESTONE_EVENT_BASE_THRESHOLDS = [1, 100, 500, 1000, 2000, 3000, 5000, 10
 const MILESTONE_UID_BASE_THRESHOLDS = [1, 100, 500, 1000, 2000, 2500, 3000, 5000, 10000];
 const MILESTONE_LIST_BASE_THRESHOLDS = [100, 500, 1000, 2000, 5000];
 const MILESTONE_YEAR_BASE_THRESHOLDS = [100, 500, 1000, 2000];
+const MILESTONE_ICON_PATHS = {
+  Created: 'M5 3h9l5 5v13H5z M14 3v5h5 M9 14h6 M12 11v6',
+  Completed: 'M4 4h16v16H4z M8 12l3 3 5-6',
+  Cancelled: 'M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0 M9 9l6 6 M15 9l-6 6',
+  Reopened: 'M4 10a8 8 0 1 1 1 8 M4 10V4 M4 10h6',
+  Deleted: 'M4 7h16 M9 7V4h6v3 M6 7l1 14h10l1-14 M10 10v7 M14 10v7',
+  'Recorded events': 'M7 4h13 M7 8h13 M7 12h1 M3 4h.01 M3 8h.01 M3 12h.01 M21 17a5 5 0 1 1-10 0a5 5 0 1 1 10 0 M16 14v3l2 1',
+  'Universal ID': 'M10 3L8 21 M16 3l-2 18 M4 9h17 M3 15h17'
+};
 
 function continuingMilestoneThresholds(baseThresholds, maximum) {
   const thresholds = [...baseThresholds];
@@ -553,6 +562,18 @@ function milestoneGroups(records, mode) {
   return ordered;
 }
 
+function makeMilestoneIcon(type) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'milestone-icon');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', MILESTONE_ICON_PATHS[type]);
+  svg.append(path);
+  return svg;
+}
+
 function makeMilestoneRow(record) {
   const row = document.createElement('div');
   row.className = 'milestone-row';
@@ -563,7 +584,7 @@ function makeMilestoneRow(record) {
   const when = document.createElement('span');
   when.className = 'milestone-when';
   when.textContent = milestoneWhen(record.event);
-  heading.append(name, when);
+  heading.append(name, makeMilestoneIcon(record.type), when);
 
   const detail = document.createElement('div');
   detail.className = 'milestone-detail';

@@ -163,6 +163,18 @@
   overflow-wrap: anywhere;
 }
 .milestone-heading strong { color: #000080; }
+.milestone-icon {
+  display: block;
+  width: 72px;
+  height: 72px;
+  max-width: 100%;
+  color: var(--theme-link);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .milestone-when { font-size: 14px; font-weight: 400; }
 .milestone-detail {
   font-size: 16px;

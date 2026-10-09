@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.12
+# TaskList Stats v2.1.13
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -283,6 +283,8 @@ Milestones have a **Sort by** dropdown with Chronological, Year, Type, and List 
 
 Milestone tiles are square by default and capped at 320px wide, so a single milestone stays compact instead of filling the month section. Tiles shrink on narrow screens and can grow taller for long content. Titles use 18px text, task details use 16px, and timestamps use 14px; titles and timestamps are stacked for easier reading.
 
+Each tile has a 72px icon directly beneath its title: a document with a plus for Created, a checked box for Completed, a circled X for Cancelled, a return arrow for Reopened, a trash bin for Deleted, a history list with a clock for Recorded events, and a hash mark for Universal ID. Icons match the title color in Light/Dark themes and use inline SVG, so they need no extra downloads. Decorative icons are excluded from screen-reader and keyboard navigation.
+
 ### Fun
 
 Task Roulette, Forgotten Task, Time Machine, Productivity Jackpot, Personal Records, On This Day, Déjà Vu, Slowest Task, Night Owl, Early Bird, Same-Day Speedrun, and Cleanup Day.
@@ -384,7 +386,14 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.12
+## Current release: v2.1.13
+
+### v2.1.13
+
+- Add a distinct inline SVG icon for each of the seven milestone types, directly below the tile title and above its timestamp.
+- Render icons at 72px using the title's Light/Dark color, with matching rounded strokes and no external assets or dependencies.
+- Keep icons decorative and unfocusable while preserving milestone text, sorting, square tile sizing, and event attribution.
+- Update release metadata/documentation to v2.1.13.
 
 ### v2.1.12
 
