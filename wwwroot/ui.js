@@ -1,4 +1,4 @@
-const EVENT_HISTORY_TABS = new Set(['history', 'compare', 'sessions', 'milestones']);
+const EVENT_HISTORY_TABS = new Set(['taskFlow', 'compare', 'sessions', 'milestones']);
 let milestonesView = null;
 
 async function ensureMilestonesLoaded() {
@@ -95,7 +95,7 @@ function renderAll() {
     lists: renderLists,
     patterns: renderPatterns,
     trees: renderTrees,
-    history: renderHistoryExplorer,
+    taskFlow: renderTaskFlow,
     compare: renderCompare,
     sessions: renderActivitySessions,
     milestones: () => milestonesView?.renderMilestones(),
@@ -163,7 +163,7 @@ function populateListFilter() {
   }
 }
 
-function menuRadioButton(value, label, checked, onClick) {
+function menuRadioButton(label, checked, onClick) {
   const button=document.createElement('button');
   button.type='button';
   button.setAttribute('role','menuitemradio');
@@ -176,13 +176,10 @@ function menuRadioButton(value, label, checked, onClick) {
 }
 
 function populateViewMenu() {
-  const labels = [
-    ['overview','Overview'],['trends','Trends'],['calendar','Calendar'],['lists','Lists'],['patterns','Patterns'],['trees','Trees & Titles'],
-    ['history','History Explorer'],['compare','Compare'],['sessions','Activity Sessions'],['milestones','Milestones'],['fun','Fun']
-  ];
   const menu=$('#viewMenu'); menu.replaceChildren();
-  for(const [value,label] of labels){
-    menu.append(menuRadioButton(value,label,value===state.activeTab,()=>{switchTab(value);populateViewMenu();}));
+  for(const tab of $$('.tabs [role="tab"]')){
+    const value=tab.dataset.tab;
+    menu.append(menuRadioButton(tab.textContent,value===state.activeTab,()=>{switchTab(value);populateViewMenu();}));
   }
 
   const separator=document.createElement('div'); separator.className='menu-separator'; separator.setAttribute('role','separator');
@@ -191,7 +188,7 @@ function populateViewMenu() {
 
   const preference=window.TaskTheme?.getPreference?.() ?? 'light';
   for(const [value,label] of [['light','Light'],['dark','Dark']]){
-    menu.append(menuRadioButton(value,label,value===preference,event=>{
+    menu.append(menuRadioButton(label,value===preference,event=>{
       event.stopPropagation();
       window.TaskTheme?.setPreference?.(value);
       populateViewMenu();
@@ -410,8 +407,8 @@ const STATIC_SINGLE_SELECT_OPTIONS = {
   heatmapMode: HEATMAP_EVENT_OPTIONS,
   monthYearHeatmapMode: HEATMAP_EVENT_OPTIONS,
   hourHeatmapMode: HEATMAP_EVENT_OPTIONS,
-  historyEventType: [['all', 'All events'], ['Created', 'Created'], ['Completed', 'Completed'], ['Cancelled', 'Cancelled'], ['Reopened', 'Reopened'], ['Deleted', 'Deleted']],
-  historyOrder: [['newest', 'Newest first'], ['oldest', 'Oldest first']],
+  taskFlowEventType: [['all', 'All events'], ...ANALYSIS_EVENT_TYPES.map(type => [type, type])],
+  taskFlowOrder: [['newest', 'Newest first'], ['oldest', 'Oldest first']],
   compareMode: [['lists', 'Lists'], ['periods', 'Time periods']],
   sessionGap: [['15', '15 minutes'], ['30', '30 minutes'], ['60', '60 minutes']],
   milestoneSort: [['chronological', 'Chronological'], ['year', 'Year'], ['type', 'Type'], ['list', 'List']]
@@ -429,9 +426,8 @@ function setSingleSelectOptions(id, options, preferredValue = null) {
   parts.button.disabled = false; const wanted = preferredValue == null ? parts.input.value : String(preferredValue); const selected = normalized.find(option => option.value === wanted) ?? normalized[0];
   parts.input.value = selected.value; parts.label.textContent = selected.label;
   for (const option of normalized) {
-    const button = document.createElement('button'); button.type = 'button'; button.dataset.value = option.value; button.setAttribute('role','menuitemradio'); button.setAttribute('aria-checked', option.value === selected.value ? 'true' : 'false');
-    const check=document.createElement('span'); check.className='menu-check'; const text=document.createElement('span'); text.className='menu-label'; text.textContent=option.label; button.append(check,text);
-    button.addEventListener('click', event => { event.stopPropagation(); const changed = parts.input.value !== option.value; parts.input.value = option.value; parts.label.textContent = option.label; for (const choice of parts.menu.querySelectorAll('[data-value]')) choice.setAttribute('aria-checked', choice.dataset.value === option.value ? 'true' : 'false'); parts.menu.hidden = true; parts.button.setAttribute('aria-expanded','false'); parts.button.focus(); if (changed) parts.input.dispatchEvent(new Event('change',{bubbles:true})); });
+    const button = menuRadioButton(option.label, option.value === selected.value, event => { event.stopPropagation(); const changed = parts.input.value !== option.value; parts.input.value = option.value; parts.label.textContent = option.label; for (const choice of parts.menu.querySelectorAll('[data-value]')) choice.setAttribute('aria-checked', choice.dataset.value === option.value ? 'true' : 'false'); parts.menu.hidden = true; parts.button.setAttribute('aria-expanded','false'); parts.button.focus(); if (changed) parts.input.dispatchEvent(new Event('change',{bubbles:true})); });
+    button.dataset.value = option.value;
     parts.menu.append(button);
   }
 }
