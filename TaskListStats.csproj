@@ -5,7 +5,7 @@
     <RootNamespace>TaskListStats</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>2.1.8</Version>
+    <Version>2.1.9</Version>
     <Product>TaskList Stats</Product>
   </PropertyGroup>
   <ItemGroup>

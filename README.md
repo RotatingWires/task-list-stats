@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.8
+# TaskList Stats v2.1.9
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -265,6 +265,8 @@ Groups timestamped events into inferred sessions using a 15-, 30-, or 60-minute 
 
 Session rows show their event mix. Click the event count to open the session's events newest first, matching the session list. Events at the same timestamp use descending event ID as a stable tie-breaker. The detail view sorts a copy; session grouping and start/end times remain based on chronological event order.
 
+The detail dialog's OK button sits 6px lower, matching the Calendar dialog's button placement, including when session events scroll.
+
 ### Milestones
 
 Milestones are calculated automatically from the available event history. Current milestone families include:
@@ -276,6 +278,8 @@ Milestones are calculated automatically from the available event history. Curren
 - yearly first creation/completion plus 100, 500, 1,000, and 2,000 round-number thresholds, then every 5,000 events indefinitely within that year
 
 The permanent Milestones timeline is computed from event history and is independent of TaskList's live notification queue. It remains available whether or not a popup has been displayed. Stats never claims or displays celebration dialogs or confetti; live celebrations belong exclusively to TaskList.
+
+Milestones are organized into month-and-year sections, such as October 2026. Sections and their milestones run newest first, using local calendar months. Only months with earned milestones are shown, and each section retains the responsive tile layout.
 
 ### Fun
 
@@ -378,7 +382,15 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.8
+## Current release: v2.1.9
+
+### v2.1.9
+
+- Move the Activity Session event dialog's OK button down 6px, matching Calendar, without shifting the event list or changing its scrolling area.
+- Replace the flat Milestones timeline with month-and-year sections, newest month first and newest milestones first within each section.
+- Group by the event's local calendar month, preserving all milestone families, list scope, date-only display, and stable event/label tie-breakers.
+- Move the responsive tile grid into each month section and remove obsolete flat-grid styling.
+- Update release metadata/documentation to v2.1.9.
 
 ### v2.1.8
 
