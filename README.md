@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.9
+# TaskList Stats v2.1.10
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -281,6 +281,8 @@ The permanent Milestones timeline is computed from event history and is independ
 
 Milestones are organized into month-and-year sections, such as October 2026. Sections and their milestones run newest first, using local calendar months. Only months with earned milestones are shown, and each section retains the responsive tile layout.
 
+Milestone tiles are square by default and capped at 320px wide, so a single milestone stays compact instead of filling the month section. Tiles shrink on narrow screens and can grow taller for long content. Titles use 18px text, task details use 16px, and timestamps use 14px; titles and timestamps are stacked for easier reading.
+
 ### Fun
 
 Task Roulette, Forgotten Task, Time Machine, Productivity Jackpot, Personal Records, On This Day, Déjà Vu, Slowest Task, Night Owl, Early Bird, Same-Day Speedrun, and Cleanup Day.
@@ -382,7 +384,15 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.9
+## Current release: v2.1.10
+
+### v2.1.10
+
+- Replace stretching milestone grid columns with compact columns capped at 320px, including months with only one milestone.
+- Make milestone tiles square by default, with room to grow vertically for long content and shrink to fit narrow screens.
+- Stack milestone titles and timestamps; increase title text to 18px, task details to 16px, and timestamps to 14px with more padding and spacing.
+- Increase month headings to 16px and remove superseded mobile overrides for the old milestone layout.
+- Update release metadata/documentation to v2.1.10.
 
 ### v2.1.9
 
