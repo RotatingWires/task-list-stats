@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.10
+# TaskList Stats v2.1.11
 
 **TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
 
@@ -271,11 +271,11 @@ The detail dialog's OK button sits 6px lower, matching the Calendar dialog's but
 
 Milestones are calculated automatically from the available event history. Current milestone families include:
 
-- global Created / Completed / Cancelled / Reopened / Deleted thresholds, continuing every 5,000 events after 10,000
-- overall recorded-event thresholds, continuing every 5,000 events after 10,000
-- Universal ID milestones such as #100, #500, #1,000, #2,500, #5,000, #10,000, then every 5,000 IDs indefinitely
-- per-list creation/completion thresholds at 100, 500, 1,000, 2,000, and 5,000, then every 5,000 events indefinitely
-- yearly first creation/completion plus 100, 500, 1,000, and 2,000 round-number thresholds, then every 5,000 events indefinitely within that year
+- global Created / Completed / Cancelled / Reopened / Deleted thresholds at 1, 100, 500, 1,000, 2,000, 3,000, 5,000, and 10,000, then every 500 events (10,500, 11,000, 11,500, ...)
+- overall recorded-event thresholds on the same global schedule, continuing every 500 events after 10,000
+- Universal ID milestones at #1, #100, #500, #1,000, #2,000, #2,500, #3,000, #5,000, and #10,000, then every 500 IDs (#10,500, #11,000, #11,500, ...)
+- per-list creation/completion thresholds at 100, 500, 1,000, 2,000, and 5,000, then every 500 events (5,500, 6,000, 6,500, ...)
+- yearly first creation/completion plus 100, 500, 1,000, and 2,000 round-number thresholds, then every 500 events within that year (2,500, 3,000, 3,500, ...)
 
 The permanent Milestones timeline is computed from event history and is independent of TaskList's live notification queue. It remains available whether or not a popup has been displayed. Stats never claims or displays celebration dialogs or confetti; live celebrations belong exclusively to TaskList.
 
@@ -384,7 +384,15 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.10
+## Current release: v2.1.11
+
+### v2.1.11
+
+- Continue all milestone families every 500 after their existing early thresholds: global events/recorded events/Universal IDs after 10,000, per-list events after 5,000, and yearly events after 2,000.
+- Derive continuation starts from the final base threshold and remove the old 5,000-step start argument and call-site overrides.
+- Match TaskList v1.5.19 notification schedules while retaining all existing early thresholds, event/list/year scope, chronological computation, and milestone tile grouping.
+- Show newly qualifying historical milestones in Stats; TaskList preserves its existing-history baseline and only celebrates future qualifying inserts.
+- Update release metadata/documentation to v2.1.11.
 
 ### v2.1.10
 
