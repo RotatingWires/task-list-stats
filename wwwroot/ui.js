@@ -1,4 +1,9 @@
 const EVENT_HISTORY_TABS = new Set(['history', 'compare', 'sessions', 'milestones']);
+let milestonesView = null;
+
+async function ensureMilestonesLoaded() {
+  if (!milestonesView) milestonesView = await import('/milestones.js');
+}
 
 function activeTabNeedsEvents(name = state.activeTab) {
   return EVENT_HISTORY_TABS.has(name);
@@ -93,7 +98,7 @@ function renderAll() {
     history: renderHistoryExplorer,
     compare: renderCompare,
     sessions: renderActivitySessions,
-    milestones: renderMilestones,
+    milestones: () => milestonesView?.renderMilestones(),
     fun: () => Fun.render()
   };
   renderers[state.activeTab]?.();
@@ -118,13 +123,14 @@ function switchTab(name) {
   requestAnimationFrame(async () => {
     try {
       if (activeTabNeedsEvents(name)) await ensureEventsLoaded();
+      if (name === 'milestones') await ensureMilestonesLoaded();
       renderAll();
       $('#databaseStatus').textContent =
         `${numberFmt.format(state.snapshot.items.length)} current items • ${eventHistoryStatusText()}`;
     } catch (error) {
       const panel = $('#errorPanel');
       panel.hidden = false;
-      panel.textContent = `Could not load event history: ${error.message}`;
+      panel.textContent = `${name === 'milestones' ? 'Could not load Milestones' : 'Could not load event history'}: ${error.message}`;
       renderAll();
     }
   });
@@ -268,6 +274,7 @@ async function loadSnapshot() {
     populateViewMenu();
 
     if (activeTabNeedsEvents()) await ensureEventsLoaded();
+    if (state.activeTab === 'milestones') await ensureMilestonesLoaded();
 
     $('#databaseStatus').textContent =
       `${numberFmt.format(state.snapshot.items.length)} current items • ${eventHistoryStatusText()}`;
@@ -302,12 +309,11 @@ async function downloadSnapshot() {
 
 $('#fileMenuButton').addEventListener('click',e=>{e.stopPropagation();toggleMenu($('#fileMenuButton'),$('#fileMenu'));});
 $('#viewMenuButton').addEventListener('click',e=>{e.stopPropagation();populateViewMenu();toggleMenu($('#viewMenuButton'),$('#viewMenu'));});
-$('#helpMenuButton').addEventListener('click',e=>{e.stopPropagation();toggleMenu($('#helpMenuButton'),$('#helpMenu'));});
+$('#aboutMenu').addEventListener('click',()=>{closeMenus();$('#aboutDialog').showModal();});
 $('#listFilterButton').addEventListener('click',e=>{e.stopPropagation();toggleMenu($('#listFilterButton'),$('#listFilterMenu'));});
 $('#refreshButton').addEventListener('click',()=>{closeMenus();loadSnapshot();});
 $('#exportButton').addEventListener('click',()=>{closeMenus();downloadSnapshot();});
 $('#logoutButton').addEventListener('click', logout);
-$('#aboutButton').addEventListener('click',()=>{closeMenus();$('#aboutDialog').showModal();});
 $$('.tabs [role="tab"]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
 $('#trendGroup').addEventListener('change',renderTrends);
 $('#heatmapYear').addEventListener('change',()=>{
