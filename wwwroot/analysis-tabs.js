@@ -109,25 +109,25 @@ function setAnalysisEmpty(table, message) {
   setTable(table, ['Message'], [[message]]);
 }
 
-function renderHistoryExplorer() {
-  const table = $('#historyExplorerTable');
-  const summary = $('#historyExplorerSummary');
+function renderTaskFlow() {
+  const table = $('#taskFlowTable');
+  const summary = $('#taskFlowSummary');
   if (!eventLogReady()) {
     summary.textContent = eventHistoryUnavailableMessage('this database');
     setAnalysisEmpty(table, eventHistoryUnavailableMessage('this database'));
     return;
   }
 
-  const range = readAnalysisRange($('#historyDateRange').value);
+  const range = readAnalysisRange($('#taskFlowDateRange').value);
   if (range.error) {
     summary.textContent = range.error;
     setAnalysisEmpty(table, range.error);
     return;
   }
 
-  const type = $('#historyEventType').value;
-  const query = $('#historyQuery').value.trim().toLowerCase();
-  const ascending = $('#historyOrder').value === 'oldest';
+  const type = $('#taskFlowEventType').value;
+  const query = $('#taskFlowQuery').value.trim().toLowerCase();
+  const ascending = $('#taskFlowOrder').value === 'oldest';
 
   let events = scopedRecordedEvents().filter(event => event.eventDate && inDateRange(event.eventDate, range));
   if (type !== 'all') events = events.filter(event => event.eventType === type);
@@ -428,13 +428,13 @@ function initializeAnalysisTabs() {
   const ago30 = new Date(now.getTime() - 29 * 86_400_000);
   const ago31 = new Date(now.getTime() - 30 * 86_400_000);
   const ago60 = new Date(now.getTime() - 59 * 86_400_000);
-  if (!$('#historyDateRange').value) $('#historyDateRange').value = formatAnalysisInputRange(ago30, today);
+  if (!$('#taskFlowDateRange').value) $('#taskFlowDateRange').value = formatAnalysisInputRange(ago30, today);
   if (!$('#compareRangeA').value) $('#compareRangeA').value = formatAnalysisInputRange(ago30, today);
   if (!$('#compareRangeB').value) $('#compareRangeB').value = formatAnalysisInputRange(ago60, ago31);
 
-  $('#historyQuery').addEventListener('input', () => { if (state.activeTab === 'history') renderHistoryExplorer(); });
-  for (const id of ['historyDateRange', 'historyEventType', 'historyOrder'])
-    $(`#${id}`).addEventListener('change', () => { if (state.activeTab === 'history') renderHistoryExplorer(); });
+  $('#taskFlowQuery').addEventListener('input', () => { if (state.activeTab === 'taskFlow') renderTaskFlow(); });
+  for (const id of ['taskFlowDateRange', 'taskFlowEventType', 'taskFlowOrder'])
+    $(`#${id}`).addEventListener('change', () => { if (state.activeTab === 'taskFlow') renderTaskFlow(); });
 
   for (const id of ['compareMode', 'compareListA', 'compareListB', 'compareRangeA', 'compareRangeB'])
     $(`#${id}`).addEventListener('change', () => { if (state.activeTab === 'compare') renderCompare(); });

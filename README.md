@@ -1,9 +1,9 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.14
+# TaskList Stats v2.1.15
 
-**TaskList Stats** is a separate statistics and history explorer for the self-hosted **TaskList** database.
+**TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
 TaskList stays focused on creating and managing tasks. TaskList Stats reads the same SQLite database and provides charts, records, calendars, hierarchy analysis, event history, comparisons, inferred activity sessions, milestones, and Fun views without adding that weight to the main TaskList app.
 
@@ -40,7 +40,7 @@ Both the snapshot and event-history readers open the TaskList SQLite database wi
 - `Cache=Private`
 - `PRAGMA query_only = ON`
 
-The server reads current TaskList lists/items into the initial snapshot and the browser performs the statistics against that snapshot. The append-only `task_events` history is intentionally excluded from initial startup and is loaded from `/api/events` only when History Explorer, Compare, Activity Sessions, Milestones, or snapshot export actually needs it.
+The server reads current TaskList lists/items into the initial snapshot and the browser performs the statistics against that snapshot. The append-only `task_events` history is intentionally excluded from initial startup and is loaded from `/api/events` only when Task Flow, Compare, Activity Sessions, Milestones, or snapshot export actually needs it.
 
 After the first event-history load, Stats keeps the events in browser memory across normal **Refresh** operations. When event history is needed again, the browser sends the last event ID plus an opaque cursor derived from that last event. The server validates that cursor against the current database and returns only rows with a larger event ID. Those new rows are appended to the in-memory event set, so a refresh after five new TaskList events transfers five event rows instead of the entire history.
 
@@ -99,7 +99,7 @@ wwwroot/
   overview.js             Overview records, completion behavior, and aging
   history.js              Trends, backlog, Calendar, Calendar drill-down, Lists
   patterns.js             Patterns plus Trees & Titles
-  analysis-tabs.js        History Explorer, Compare, Activity Sessions
+  analysis-tabs.js        Task Flow, Compare, Activity Sessions
   milestones.js           on-demand Milestones view, grouping, thresholds, and SVG icons
   fun.js                  Fun workspace
   charts.js               Canvas chart drawing and chart tooltip interactions
@@ -250,7 +250,7 @@ Workload Rhythm includes busiest creation weekday/hour and busiest completion we
 
 Nesting depth, largest task trees, deepest tasks, title categories, common words, and reopened tasks.
 
-### History Explorer
+### Task Flow
 
 Chronological event history with one compact typed date-range field, event type, ordering, text/list/ID filtering, status transitions, and TaskList deep links. Ranges use the same `10/3 - 10/8` style as TaskList Search, with `m/d`, `m/d/yy`, or `m/d/yyyy` accepted on either side.
 
@@ -387,7 +387,18 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.14
+## Current release: v2.1.15
+
+### v2.1.15
+
+- Combine the Help event-history explanation into one paragraph without removing its content.
+- Rename Task Flow throughout the tab, navigation, renderer, control IDs, CSS, Help, and documentation; remove the former internal feature names.
+- Read View navigation labels from the existing tab buttons instead of maintaining a duplicate label list.
+- Reuse the owning radio-menu button helper for single-select dropdowns, remove its unused value argument, and derive Task Flow event choices from the shared event-type constants.
+- Preserve lazy/incremental event loading, deferred milestone code/icons, read-only database access, sorting, filtering, and touch-aware row hover.
+- Cleanup audit found no other safely removable source files or unused frontend functions; retain necessary migration/compatibility behavior.
+- Update release metadata/documentation to v2.1.15.
+- Add no monkey patches or new runtime/frontend dependencies.
 
 ### v2.1.14
 
@@ -510,7 +521,7 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 
 ### v2.1.1
 
-- Clarify History Explorer's description that every recorded event is displayed on its own row so each event's timestamp can be seen individually.
+- Clarify Task Flow's description that every recorded event is displayed on its own row so each event's timestamp can be seen individually.
 - Advance project/frontend version metadata and the PWA shell cache to v2.1.1.
 
 ### v2.1.0
@@ -520,7 +531,7 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 - Extend `/api/events` with an `afterId` cursor path so refreshes transfer only newly appended `task_events` rows.
 - Validate an opaque SHA-256 cursor derived from the last cached event before accepting an incremental continuation.
 - Automatically fall back to a full event-history replacement in the same response if the TaskList database was restored, replaced, truncated, or the cached cursor no longer matches.
-- Keep the normal startup snapshot free of event-history rows, and continue loading history only for History Explorer, Compare, Activity Sessions, Milestones, or snapshot export.
+- Keep the normal startup snapshot free of event-history rows, and continue loading history only for Task Flow, Compare, Activity Sessions, Milestones, or snapshot export.
 - Keep event caching memory-only; a full page/browser restart still starts clean and performs one lazy full-history load when needed.
 - Cache-bust the changed app/UI scripts and advance the PWA shell cache.
 - Update project/frontend metadata and documentation to v2.1.0.
@@ -529,7 +540,7 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 ### v2.0.19
 
 - Remove the full `task_events` scan and event-history payload from the normal `/api/snapshot` startup path.
-- Add an authenticated read-only `/api/events` endpoint and load event history only when History Explorer, Compare, Activity Sessions, Milestones, or snapshot export needs it.
+- Add an authenticated read-only `/api/events` endpoint and load event history only when Task Flow, Compare, Activity Sessions, Milestones, or snapshot export needs it.
 - Reuse the loaded event array in browser memory instead of fetching it again while the current snapshot remains active.
 - Reset lazy event state on Refresh so event-dependent views reload history against the newly refreshed current snapshot.
 - Keep all normal Stats database access read-only and preserve the separate narrow milestone acknowledgement write path.
@@ -559,8 +570,8 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 
 ### v2.0.16
 
-- Add Deleted as a first-class event throughout History Explorer and event-based analysis for TaskList v1.5.10+ databases.
-- Add Deleted to the History Explorer event filter and display transitions such as Open → Deleted, Done → Deleted, or Cancelled → Deleted.
+- Add Deleted as a first-class event throughout Task Flow and event-based analysis for TaskList v1.5.10+ databases.
+- Add Deleted to the Task Flow event filter and display transitions such as Open → Deleted, Done → Deleted, or Cancelled → Deleted.
 - Keep deleted task IDs non-clickable when the current item no longer exists while preserving their list/display ID, title snapshot, Universal ID, and event history.
 - Add Deleted counts to Compare and the Milestones summary, and include Deleted in the global permanent milestone family.
 - Teach the shared milestone celebration dialog how to label Deleted milestones rather than treating an unknown event kind as a Universal-ID milestone.
@@ -629,7 +640,7 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 
 ### v2.0.8
 
-- Replace separate From/To fields in History Explorer and Compare with compact typed date-range controls.
+- Replace separate From/To fields in Task Flow and Compare with compact typed date-range controls.
 
 ### v2.0.7 / v2.0.6
 
@@ -639,7 +650,7 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 
 ### v2.0.x highlights
 
-- Add History Explorer, Compare, Activity Sessions, Milestones, Calendar drill-down, responsive analysis controls, improved chart tooltips, and the current Fun workspace.
+- Add Task Flow, Compare, Activity Sessions, Milestones, Calendar drill-down, responsive analysis controls, improved chart tooltips, and the current Fun workspace.
 - Remove retired Search / Explorer, Flow, Insights, Ancient Task, and Task Graveyard features from the actual source instead of merely hiding them.
 
 Earlier release-by-release details remain available in Git commit history.

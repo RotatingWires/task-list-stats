@@ -76,7 +76,7 @@
   -webkit-overflow-scrolling: touch;
 }
 .analysis-table-wrap table { min-width: 680px; }
-#historyExplorerTable { min-width: 600px; }
+#taskFlowTable { min-width: 600px; }
 .compare-panels {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
