@@ -122,6 +122,18 @@
 
 .milestone-timeline {
   display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.milestone-month { min-width: 0; }
+.milestone-month-title {
+  margin: 0 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--theme-divider);
+  font-size: 14px;
+}
+.milestone-month-grid {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: 8px;
   min-width: 0;
@@ -152,7 +164,6 @@
   overflow-wrap: anywhere;
 }
 .milestone-empty {
-  grid-column: 1 / -1;
   padding: 12px;
   color: #555;
   background: #fff;
@@ -233,6 +244,7 @@
   overflow: auto;
   padding: 10px 12px;
 }
+.session-events-dialog .dialog-buttons button { transform: translateY(6px); }
 .session-dialog-summary {
   margin: 0 0 8px;
   font-size: 12px;
@@ -331,7 +343,7 @@
   }
   .analysis-table-wrap { max-height: 55vh; }
   .compare-panels { grid-template-columns: 1fr; }
-  .milestone-timeline { grid-template-columns: 1fr; }
+  .milestone-month-grid { grid-template-columns: 1fr; }
   .milestone-heading,
   .session-heading,
   .session-event-heading {

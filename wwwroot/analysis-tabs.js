@@ -583,8 +583,24 @@ function renderMilestones() {
     if (events.length < threshold) continue;
     records.push({ label: milestoneLabel(threshold, 'recorded event'), event: events[threshold - 1] });
   }
-  records.sort((a, b) => a.event.eventDate - b.event.eventDate || a.event.id - b.event.id || a.label.localeCompare(b.label));
-  timeline.replaceChildren(...records.map(makeMilestoneRow));
+  records.sort((a, b) => b.event.eventDate - a.event.eventDate || b.event.id - a.event.id || a.label.localeCompare(b.label));
+  const months = new Map();
+  for (const record of records) {
+    const key = monthKey(record.event.eventDate);
+    if (!months.has(key)) {
+      const section = document.createElement('section');
+      section.className = 'milestone-month';
+      const title = document.createElement('h3');
+      title.className = 'milestone-month-title';
+      title.textContent = record.event.eventDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+      const grid = document.createElement('div');
+      grid.className = 'milestone-month-grid';
+      section.append(title, grid);
+      months.set(key, { section, grid });
+    }
+    months.get(key).grid.append(makeMilestoneRow(record));
+  }
+  timeline.replaceChildren(...Array.from(months.values(), month => month.section));
 }
 
 function initializeAnalysisTabs() {
