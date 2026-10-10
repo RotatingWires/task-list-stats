@@ -519,7 +519,7 @@ tr:last-child td { border-bottom: 0; }
 }
 .dialog-title { background: var(--blue); color: #fff; font-weight: 700; padding: 5px 7px; margin: 3px; }
 .dialog-body { padding: 12px; line-height: 1.4; }
-.dialog-buttons { display: flex; justify-content: flex-end; padding: 0 12px 12px; }
+.dialog-buttons { display: flex; justify-content: flex-end; padding: 6px 12px; }
 
 .about-dialog {
   width: min(680px, calc(100vw - 24px));
