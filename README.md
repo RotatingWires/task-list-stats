@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.15
+# TaskList Stats v2.1.16
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -266,7 +266,7 @@ Groups timestamped events into inferred sessions using a 15-, 30-, or 60-minute 
 
 Session rows show their event mix. Click the event count to open the session's events newest first, matching the session list. Events at the same timestamp use descending event ID as a stable tie-breaker. The detail view sorts a copy; session grouping and start/end times remain based on chronological event order.
 
-The detail dialog's OK button sits 6px lower, matching the Calendar dialog's button placement, including when session events scroll.
+All dialog buttons use shared footer spacing of 6px above and below. Activity Session and Calendar retain their lower OK placement, including when content scrolls, and Help uses the same default.
 
 ### Milestones
 
@@ -387,7 +387,15 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.15
+## Current release: v2.1.16
+
+### v2.1.16
+
+- Make lower dialog buttons the shared default using 6px top/bottom footer padding, preserving the standard footer height.
+- Remove Activity Session and Calendar button transforms; preserve their existing lower placement through shared layout and apply that spacing to Help.
+- Keep content scrolling, title/footer placement, dialog actions, lazy event/milestone loading, and read-only database behavior.
+- Update release metadata/documentation to v2.1.16.
+- Add no monkey patches or new runtime/frontend dependencies.
 
 ### v2.1.15
 

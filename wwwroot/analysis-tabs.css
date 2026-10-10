@@ -263,7 +263,6 @@
   overflow: auto;
   padding: 10px 12px;
 }
-.session-events-dialog .dialog-buttons button { transform: translateY(6px); }
 .session-dialog-summary {
   margin: 0 0 8px;
   font-size: 12px;
@@ -338,7 +337,6 @@
 .calendar-detail-dialog .dialog-title,
 .calendar-detail-dialog .dialog-buttons { flex: 0 0 auto; }
 .calendar-detail-dialog .dialog-buttons { background: var(--face); }
-.calendar-detail-dialog .dialog-buttons button { transform: translateY(6px); }
 .calendar-detail-scope {
   font-size: 12px;
   font-weight: 700;
