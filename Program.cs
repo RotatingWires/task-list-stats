@@ -192,6 +192,16 @@ api.MapGet("/snapshot", async () =>
             while (await reader.ReadAsync()) lists.Add(new ListSnapshot(reader.GetInt64(0), reader.GetString(1), reader.GetString(2)));
         }
 
+        var deletedLists = new List<DeletedListSnapshot>();
+        if (await TableExistsAsync(connection, "deleted_lists"))
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = "SELECT id, name FROM deleted_lists ORDER BY id;";
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                deletedLists.Add(new DeletedListSnapshot(reader.GetInt64(0), reader.GetString(1)));
+        }
+
         var items = new List<ItemSnapshot>();
         await using (var command = connection.CreateCommand())
         {
@@ -208,7 +218,7 @@ api.MapGet("/snapshot", async () =>
             }
         }
 
-        var eventLogAvailable = await TaskEventsAvailableAsync(connection);
+        var eventLogAvailable = await TableExistsAsync(connection, "task_events");
 
         long highestUniversalId = 0;
         await using (var command = connection.CreateCommand())
@@ -218,7 +228,7 @@ api.MapGet("/snapshot", async () =>
         }
 
         var fileInfo = new FileInfo(dbPath);
-        return Results.Ok(new StatsSnapshot(appVersion, DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, items, eventLogAvailable, []));
+        return Results.Ok(new StatsSnapshot(appVersion, DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, deletedLists, items, eventLogAvailable, []));
     }
     catch (SqliteException ex)
     {
@@ -242,7 +252,7 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
         await using var connection = await OpenReadOnlyConnectionAsync(dbPath);
 
         var requestedAfterId = Math.Max(0, afterId ?? 0);
-        if (!await TaskEventsAvailableAsync(connection))
+        if (!await TableExistsAsync(connection, "task_events"))
             return Results.Ok(new EventBatch(requestedAfterId > 0, 0, null, []));
 
         var resetRequired = false;
@@ -357,10 +367,11 @@ static async Task<SqliteConnection> OpenReadOnlyConnectionAsync(string dbPath)
     }
 }
 
-static async Task<bool> TaskEventsAvailableAsync(SqliteConnection connection)
+static async Task<bool> TableExistsAsync(SqliteConnection connection, string tableName)
 {
     await using var command = connection.CreateCommand();
-    command.CommandText = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'task_events');";
+    command.CommandText = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = $tableName);";
+    command.Parameters.AddWithValue("$tableName", tableName);
     return Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture) != 0;
 }
 
@@ -466,7 +477,8 @@ record LoginRequest(string? Password);
 record SetupRequest(string? SetupToken, string? Password, string? ConfirmPassword);
 record PasswordFile(int Version, int Iterations, string Salt, string Hash);
 record ListSnapshot(long Id, string Name, string CreatedAt);
+record DeletedListSnapshot(long Id, string Name);
 record ItemSnapshot(long UniversalId, long ListId, string DisplayId, string? ParentDisplayId, string Title, string Description, string Status, string CreatedAt, string? UpdatedAt, string? CompletedAt, string? CancelledAt, string? ReopenedAt);
 record EventSnapshot(long Id, long UniversalId, string EventType, string EventAt, string? FromStatus, string? ToStatus, long ListId, string DisplayId, string? ParentDisplayId, string Title, string Source);
 record EventBatch(bool ResetRequired, long LastEventId, string? Cursor, List<EventSnapshot> Events);
-record StatsSnapshot(string Version, string GeneratedAtUtc, string DatabaseLastWriteUtc, long HighestUniversalId, List<ListSnapshot> Lists, List<ItemSnapshot> Items, bool EventLogAvailable, List<EventSnapshot> Events);
+record StatsSnapshot(string Version, string GeneratedAtUtc, string DatabaseLastWriteUtc, long HighestUniversalId, List<ListSnapshot> Lists, List<DeletedListSnapshot> DeletedLists, List<ItemSnapshot> Items, bool EventLogAvailable, List<EventSnapshot> Events);

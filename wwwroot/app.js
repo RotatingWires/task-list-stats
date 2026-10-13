@@ -179,7 +179,10 @@ function maxEntry(map) {
 }
 
 function listName(id) {
-  return state.snapshot?.lists.find(x => x.id === id)?.name ?? `List ${id}`;
+  const current = state.snapshot?.lists.find(x => x.id === id);
+  if (current) return current.name;
+  const deleted = state.snapshot?.deletedLists?.find(x => x.id === id);
+  return deleted ? `${deleted.name} (deleted)` : `Deleted list #${id} (name unavailable)`;
 }
 
 const TASKLIST_ORIGIN = 'http://tasklist.lehighradio.com:8711';
@@ -199,6 +202,7 @@ function taskLink(item, label = `#${item.displayId}`) {
 
 function normalizeSnapshot(raw) {
   raw.lists = raw.lists ?? [];
+  raw.deletedLists = raw.deletedLists ?? [];
   raw.events = raw.events ?? [];
   raw.items = (raw.items ?? []).map(item => ({
     ...item,
