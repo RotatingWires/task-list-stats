@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.16
+# TaskList Stats v2.1.17
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -329,7 +329,9 @@ TaskList v1.5 introduced an append-only `task_events` history log. Created, Comp
 
 For older task data, TaskList reconstructs event rows from timestamps it already had. That older reconstruction can be incomplete when a task changed state repeatedly before the event log existed. Because older TaskList versions did not store deletion timestamps, tasks deleted before v1.5.10 cannot be given a trustworthy historical Deleted event.
 
-The Stats **Help** button opens About immediately, matching TaskList. Its wide, rectangular dialog uses 16px text for the event-history explanation and places about.lehighradio.com above the application/version label at the bottom, as TaskList does. Short paragraphs explain missing dates and older history without implementation details.
+TaskList v1.5.24 and newer save list names at deletion. Stats reads this optional `deleted_lists` history without writing to TaskList's database and labels saved names “(deleted)” across historical views. Lists deleted before name preservation show “Deleted list #ID (name unavailable)” because their original names cannot be recovered. Older databases remain supported, and deleted lists are not added to current-list counts or selectors.
+
+The Stats **Help** button opens About immediately, matching TaskList. Its wide, rectangular dialog uses 16px text for the event-history explanation and places about.lehighradio.com above the application/version label at the bottom, as TaskList does. The event-history paragraph explains missing dates, unavailable list names, and older history.
 
 ## Exporting a snapshot
 
@@ -387,7 +389,15 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.16
+## Current release: v2.1.17
+
+### v2.1.17
+
+- Show preserved deleted list names in Task Flow, Activity Sessions, and milestone history with a “(deleted)” label.
+- Mark older deleted list names as unavailable rather than substituting a generic current-list name.
+- Explain deleted list-name availability in About alongside the existing date/history limitations.
+- Read the optional name-history table without changing the read-only connection or lazy event loading; support older TaskList databases.
+- Update project/frontend version metadata and documentation to v2.1.17.
 
 ### v2.1.16
 
