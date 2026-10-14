@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.17
+# TaskList Stats v2.1.18
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -65,6 +65,45 @@ The plaintext password is never stored. `auth.json` contains a random salt and P
 Successful login creates the `TaskListStats.Auth` cookie. It is HttpOnly, SameSite=Strict, persistent for up to 30 days, sliding while active, and marked Secure when the request itself uses HTTPS.
 
 Use **File → Log Out** to clear the session. Setup and login are rate-limited to 5 attempts per source IP per minute.
+
+## HTTP endpoints
+
+The default base URL is `http://localhost:8712`. Request and response bodies are JSON unless stated otherwise. Stats uses its own `TaskListStats.Auth` cookie; a TaskList login cookie does not authenticate Stats. Login/setup set an HttpOnly, SameSite=Strict cookie with a 30-day sliding lifetime, marked Secure when the request uses HTTPS. Send that cookie on authenticated requests.
+
+| Method | Path | Request | Response / effect |
+| --- | --- | --- | --- |
+| GET | `/api/auth/status` | None; public. | `{version, configured, authenticated}`. |
+| POST | `/api/auth/setup` | Public JSON: `{setupToken, password, confirmPassword}`. | First-run setup using the token printed by this server. Password must be at least 8 characters and match confirmation. Saves the Stats password hash and signs in; returns `{authenticated: true}`. Returns 409 if already configured, 401 for an invalid token, or 400 for an invalid password. |
+| POST | `/api/auth/login` | Public JSON: `{password}`. | Signs in and returns `{authenticated: true}`; 401 for an incorrect password, 409 if setup has not been completed. |
+| POST | `/api/auth/logout` | Authenticated; no body. | Clears the Stats session cookie; 204 with no response body. |
+| GET | `/api/health` | Authenticated; no body. | `{ok, version, databaseFound, databaseFile}`. `ok` indicates whether the configured database file exists, not whether every query can succeed. |
+| GET | `/api/snapshot` | Authenticated; no body. | Current lists/items and database metadata, described below. Reads TaskList through a read-only SQLite connection. |
+| GET | `/api/events` | Authenticated; optional `afterId` and `cursor` query parameters. | `{resetRequired, lastEventId, cursor, events}`; full or incremental history, described below. Reads through a read-only SQLite connection. |
+
+Setup and login share a limit of 5 attempts per observed source IP per minute; excess attempts return 429. Protected endpoints return 401 without a valid Stats cookie. Missing/unreadable TaskList databases return 503 problem details for snapshot/history requests. Validation and malformed JSON/query values can return 400. Authentication errors may have no JSON body; errors returned with `error` use that field, while database problems use `title` and `detail`.
+
+### Snapshot fields
+
+`/api/snapshot` returns `{version, generatedAtUtc, databaseLastWriteUtc, highestUniversalId, lists, deletedLists, items, eventLogAvailable, events}`. Timestamps are strings. `databaseLastWriteUtc` is the main database file's last-write time, not an event-history cursor. `highestUniversalId` includes IDs allocated to entries that have since been deleted.
+
+- `lists`: `{id, name, createdAt}` for every surviving list, including archived lists. The snapshot does not include list descriptions or an archive flag.
+- `deletedLists`: `{id, name}` from TaskList's deleted-list name ledger; an empty array when that table is unavailable in an older database.
+- `items`: flat `{universalId, listId, displayId, parentDisplayId, title, description, status, createdAt, updatedAt, completedAt, cancelledAt, reopenedAt}` rows. `parentDisplayId` is null for roots; optional timestamps can be null. Status is `Open`, `Done`, or `Cancelled`. No server-side list/date/status filters are applied.
+- `eventLogAvailable`: whether `task_events` exists. `events` is always empty in this endpoint; history is loaded separately.
+
+### Incremental event history
+
+Start with `GET /api/events`. Its `events` array contains all current recorded events ordered by event ID ascending. Each event is `{id, universalId, eventType, eventAt, fromStatus, toStatus, listId, displayId, parentDisplayId, title, source}`. Status/parent fields can be null. List/display IDs and titles describe the entry when the event was recorded.
+
+Retain the returned `lastEventId` and opaque `cursor`, then request `/api/events?afterId=LAST_ID&cursor=CURSOR` to get only newer events. There is no page size or server-side history filter; an initial load can contain the entire history. Zero/negative `afterId` starts from the beginning. When no new events exist, the last event ID/cursor remain usable.
+
+For a positive `afterId`, the server checks the supplied cursor against that exact event. If the event is missing or the cursor is missing/mismatched, it returns `resetRequired: true` and the full current history. Replace the cached history in that case instead of appending. If the event table is absent, the response has `lastEventId: 0`, `cursor: null`, and `events: []`; `resetRequired` is true when a positive `afterId` was supplied.
+
+### Browser routes and API scope
+
+`/` and `/index.html` require sign-in; `/login.html` handles login/setup. Static frontend/PWA assets are served separately. Other authenticated non-file GET paths fall back to the application HTML, so an unknown GET path should not be treated as a JSON endpoint.
+
+All analytics, list filtering, Task Flow, activity sessions, milestones, and the JSON snapshot download are computed/assembled in the browser from these read-only APIs. Stats has no task-writing, list-writing, milestone-consume, or ZIP-restore endpoint.
 
 ## Technology stack
 
@@ -389,7 +428,12 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.17
+## Current release: v2.1.18
+
+### v2.1.18
+
+- Document every HTTP endpoint, cookie authentication, snapshot fields, incremental event cursors, error responses, and browser routes.
+- Update project/frontend version metadata; preserve read-only TaskList access.
 
 ### v2.1.17
 
