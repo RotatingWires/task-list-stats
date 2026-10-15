@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.19
+# TaskList Stats v2.1.20
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -440,7 +440,11 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 
 Run `node tests/frontend.test.cjs` for frontend regression tests using the actual JavaScript and disposable DOM fixtures. Coverage includes all 11 workspaces in multiple scopes, moved/renamed/deleted-list identities, undated events, milestone groups and threshold attribution, status-flow counts, year boundaries, and concurrent snapshot/history refreshes. The neighboring TaskList checkout also has SQL integrity and cross-app milestone parity tests; see its [audit coverage](https://github.com/RotatingWires/task-list/blob/main/tests/AUDIT.md). Node is only needed for these tests, not to run Stats.
 
-## Current release: v2.1.19
+## Current release: v2.1.20
+
+### v2.1.20
+
+- Clarify in Help that dates marked “Unknown” may come from tasks imported from another application; keep the event-history explanation in one paragraph.
 
 ### v2.1.19
 
