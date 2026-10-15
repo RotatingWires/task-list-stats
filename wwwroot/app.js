@@ -8,7 +8,8 @@ const state = {
   eventsLoading: null,
   eventsNeedRefresh: false,
   lastEventId: 0,
-  eventCursor: null
+  eventCursor: null,
+  snapshotLoading: null
 };
 
 const $ = selector => document.querySelector(selector);
@@ -48,11 +49,15 @@ const STOPWORDS = new Set([
 
 function parseDate(value) {
   if (!value || typeof value !== 'string' || value.toLowerCase() === 'unknown') return null;
-  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (dateOnly) {
-    const [, year, month, day] = dateOnly;
-    const d = new Date(Number(year), Number(month) - 1, Number(day));
-    return Number.isNaN(d.getTime()) ? null : d;
+  const isoDate = /^(\d{4})-(\d{2})-(\d{2})(?=$|T)/.exec(value);
+  if (isoDate) {
+    const [, year, month, day] = isoDate;
+    const d = new Date(0);
+    d.setHours(0, 0, 0, 0);
+    d.setFullYear(Number(year), Number(month) - 1, Number(day));
+    if (d.getFullYear() !== Number(year) || d.getMonth() !== Number(month) - 1 || d.getDate() !== Number(day))
+      return null;
+    if (value.length === 10) return d;
   }
   const d = new Date(value);
   return Number.isNaN(d.getTime()) ? null : d;

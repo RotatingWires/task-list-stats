@@ -183,6 +183,7 @@ api.MapGet("/snapshot", async () =>
     try
     {
         await using var connection = await OpenReadOnlyConnectionAsync(dbPath);
+        using var readTransaction = connection.BeginTransaction(deferred: true);
 
         var lists = new List<ListSnapshot>();
         await using (var command = connection.CreateCommand())
@@ -250,10 +251,19 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
     try
     {
         await using var connection = await OpenReadOnlyConnectionAsync(dbPath);
+        using var readTransaction = connection.BeginTransaction(deferred: true);
 
         var requestedAfterId = Math.Max(0, afterId ?? 0);
         if (!await TableExistsAsync(connection, "task_events"))
             return Results.Ok(new EventBatch(requestedAfterId > 0, 0, null, []));
+
+        var historyRevision = string.Empty;
+        if (await TableExistsAsync(connection, "task_history_state"))
+        {
+            await using var history = connection.CreateCommand();
+            history.CommandText = "SELECT revision FROM task_history_state WHERE id=1;";
+            historyRevision = Convert.ToString(await history.ExecuteScalarAsync(), CultureInfo.InvariantCulture) ?? string.Empty;
+        }
 
         var resetRequired = false;
         EventSnapshot? anchor = null;
@@ -275,7 +285,7 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
 
             if (anchor is null ||
                 string.IsNullOrWhiteSpace(cursor) ||
-                !string.Equals(EventCursor(anchor), cursor, StringComparison.OrdinalIgnoreCase))
+                !string.Equals(EventCursor(anchor, historyRevision), cursor, StringComparison.OrdinalIgnoreCase))
             {
                 resetRequired = true;
                 requestedAfterId = 0;
@@ -310,7 +320,7 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
         return Results.Ok(new EventBatch(
             resetRequired,
             lastEvent?.Id ?? 0,
-            lastEvent is null ? null : EventCursor(lastEvent),
+            lastEvent is null ? null : EventCursor(lastEvent, historyRevision),
             events));
     }
     catch (SqliteException ex)
@@ -388,9 +398,10 @@ static EventSnapshot ReadEvent(SqliteDataReader reader) => new(
     reader.GetString(9),
     reader.GetString(10));
 
-static string EventCursor(EventSnapshot item)
+static string EventCursor(EventSnapshot item, string historyRevision)
 {
     var payload = string.Join('\u001F',
+        historyRevision,
         item.Id.ToString(CultureInfo.InvariantCulture),
         item.UniversalId.ToString(CultureInfo.InvariantCulture),
         item.EventType,
