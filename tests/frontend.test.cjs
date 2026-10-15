@@ -54,6 +54,66 @@ for (const mode of ['chronological', 'year', 'type', 'list']) {
   });
 }
 
+test('Type separates overall, yearly, and list milestones with numeric progression', () => {
+  const f = fixture();
+  f.snapshot({ lists: [{ id: 1, name: 'Zulu' }, { id: 2, name: 'Alpha' }],
+    deletedLists: [{ id: 3, name: 'Archived list' }],
+    events: Array.from({ length: 500 }, (_, i) => event(i + 1, {
+      listId: i < 100 || i >= 400 ? 1 : i < 200 ? 2 : i < 300 ? 1 : 3,
+      eventAt: i < 100 ? 'Unknown' : i < 200 || i >= 300 ? '2026-10-14' : '2025-01-01',
+    })) });
+  const records = ' [...milestoneEventRecords(allRecordedEvents(),"Created"), ...milestoneYearRecords(allRecordedEvents()), ...milestonePerListRecords(allRecordedEvents())]';
+  f.run('const typeRecords = ' + records + '; typeRecords.reverse();');
+  const before = f.json('typeRecords.map(r=>r.label)');
+  assert.deepEqual(f.json('milestoneTypeGroups(typeRecords).map(g=>({label:g.label,thresholds:g.records.map(r=>r.threshold)}))'), [
+    { label: 'Overall', thresholds: [1, 100, 500] },
+    { label: 'Year — 2026', thresholds: [1, 100] },
+    { label: 'Year — 2025', thresholds: [1, 100] },
+    { label: 'List — Alpha', thresholds: [100] },
+    { label: 'List — Archived list (deleted)', thresholds: [100] },
+    { label: 'List — Zulu', thresholds: [100] },
+  ]);
+  assert.deepEqual(f.json('typeRecords.map(r=>r.label)'), before);
+  assert.equal(f.run('milestoneTypeGroups(typeRecords)[0].records[1].event.eventDate'), null);
+  f.get('#milestoneSort').value = 'type';
+  f.run('renderMilestones()');
+  const created = f.get('#milestonesTimeline').children[0];
+  assert.equal(created.children[0].textContent, 'Created');
+  assert.deepEqual(created.children.slice(1).map(section => section.children[0].textContent),
+    ['Overall', 'Year — 2026', 'Year — 2025', 'List — Alpha', 'List — Archived list (deleted)', 'List — Zulu']);
+  const yearTiles = created.children[2].querySelectorAll('.milestone-row');
+  assert.deepEqual(yearTiles.map(tile=>tile.querySelector('strong').textContent), ['First created', '100th created']);
+  assert.match(created.children[1].textContent, /Unknown date/);
+});
+
+test('Type respects list scope and does not combine identically named lists', () => {
+  const f = fixture();
+  f.snapshot({ lists: [{id:2,name:'same'}], deletedLists: [{id:1,name:'same'}],
+    events: Array.from({length:200}, (_,i)=>event(i+1,{listId:i<100?1:2,eventAt:'Unknown'})) });
+  assert.deepEqual(f.json('milestoneTypeGroups(milestonePerListRecords(allRecordedEvents())).map(g=>g.scopeValue)'), [2, 1]);
+  f.run('state.selectedListIds.add(2)');
+  f.get('#milestoneSort').value = 'type';
+  f.run('renderMilestones()');
+  const text = f.get('#milestonesTimeline').textContent;
+  assert.match(text, /Overall/);
+  assert.match(text, /List — same/);
+  assert.doesNotMatch(text, /\(deleted\)|Year —/);
+  assert.equal(f.get('#milestonesTimeline').children[0].querySelectorAll('.milestone-subgroup').length, 2);
+});
+
+test('other milestone sorts keep full tile labels and do not add Type subsections', () => {
+  const f = fixture();
+  f.snapshot({events:Array.from({length:100},(_,i)=>event(i+1))});
+  for (const mode of ['chronological', 'year', 'list']) {
+    f.get('#milestoneSort').value = mode;
+    f.run('renderMilestones()');
+    const timeline = f.get('#milestonesTimeline');
+    assert.equal(timeline.querySelectorAll('.milestone-subgroup').length, 0);
+    assert.match(timeline.textContent, /A — 100th created/);
+    assert.match(timeline.textContent, /2026 — 100th created/);
+  }
+});
+
 test('all-time Task Flow includes unknown dates; explicit date ranges exclude them', () => {
   const f = fixture();
   f.snapshot({ events: [event(1, { eventAt: 'Unknown' }), event(2)] });

@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.20
+# TaskList Stats v2.1.21
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -327,7 +327,7 @@ The permanent Milestones timeline is computed from event history and is independ
 
 Global/list/recorded-event milestones include undated records and identify the threshold-crossing event by event-record order, matching TL's counter increments. Backdated imports therefore count without pretending they were inserted earlier. A milestone with no usable timestamp shows “Unknown date” and appears in an Unknown date section for Chronological/Year grouping. Yearly event milestones require valid dates and use UTC years for timestamps; date-only imports use their written year. Calendar charts and displayed event times keep their normal local-time presentation. Universal-ID milestones can also show unknown dates when the creation record is undated.
 
-Milestones have a **Sort by** dropdown with Chronological, Year, Type, and List choices. It uses the same selected-circle indicator as View and closes after choosing an option. Chronological is the default and keeps month-and-year sections, such as October 2026, newest first. Year groups by the year earned, newest first. Type groups Created, Completed, Cancelled, Reopened, Deleted, Recorded events, and Universal ID milestones separately. List groups by the list attached to the event that earned the milestone, alphabetically. Milestones remain newest first within each group. Sorting respects the selected list scope and shows only groups containing milestones.
+Milestones have a **Sort by** dropdown with Chronological, Year, Type, and List choices. It uses the same selected-circle indicator as View and closes after choosing an option. Chronological is the default and keeps month-and-year sections, such as October 2026, newest first. Year groups by the year earned, newest first. Type groups Created, Completed, Cancelled, Reopened, Deleted, Recorded events, and Universal ID milestones separately. Within each type, Overall milestones come first, followed by separate year sections (newest year first), then separate list sections (alphabetically). Milestones progress from the smallest threshold to the largest within each of those sections, including milestones with unknown dates. Tile titles omit the year/list prefix already supplied by the section heading. List groups by the list attached to the event that earned the milestone, alphabetically. Chronological, Year, and List keep milestones newest first within each group. Sorting respects the selected list scope and shows only groups containing milestones.
 
 Milestone tiles are square by default and capped at 320px wide, so a single milestone stays compact instead of filling the month section. Tiles shrink on narrow screens and can grow taller for long content. Titles use 22px text, task details use 18px, and timestamps use 16px; titles and timestamps are stacked for easier reading.
 
@@ -440,7 +440,12 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 
 Run `node tests/frontend.test.cjs` for frontend regression tests using the actual JavaScript and disposable DOM fixtures. Coverage includes all 11 workspaces in multiple scopes, moved/renamed/deleted-list identities, undated events, milestone groups and threshold attribution, status-flow counts, year boundaries, and concurrent snapshot/history refreshes. The neighboring TaskList checkout also has SQL integrity and cross-app milestone parity tests; see its [audit coverage](https://github.com/RotatingWires/task-list/blob/main/tests/AUDIT.md). Node is only needed for these tests, not to run Stats.
 
-## Current release: v2.1.20
+## Current release: v2.1.21
+
+### v2.1.21
+
+- Organize Type-sorted milestones into Overall, individual year, and individual list sections, with thresholds in ascending order.
+- Shorten Type-view tile titles by removing the year/list prefix repeated in the section heading; preserve other sorts and milestone calculations.
 
 ### v2.1.20
 
