@@ -38,7 +38,7 @@ function milestoneLabel(threshold, noun) {
   return `${ordinal(threshold)} ${noun}`;
 }
 
-function milestoneEventRecords(events, eventType, thresholds = null, labelPrefix = '') {
+function milestoneEventRecords(events, eventType, thresholds = null, labelPrefix = '', listId = null) {
   const typed = events.filter(event => event.eventType === eventType).sort((a,b)=>a.id-b.id);
   const activeThresholds = thresholds ?? continuingMilestoneThresholds(MILESTONE_EVENT_BASE_THRESHOLDS, typed.length);
   const records = [];
@@ -46,7 +46,8 @@ function milestoneEventRecords(events, eventType, thresholds = null, labelPrefix
     if (typed.length < threshold) continue;
     const event = typed[threshold - 1];
     const base = milestoneLabel(threshold, eventType.toLowerCase());
-    records.push({ label: labelPrefix ? `${labelPrefix} — ${base}` : base, type: eventType, event });
+    records.push({ label: labelPrefix ? `${labelPrefix} — ${base}` : base, type: eventType, event,
+      threshold, scope: listId === null ? 'global' : 'list', scopeValue: listId });
   }
   return records;
 }
@@ -63,7 +64,8 @@ function milestoneUniversalIdRecords(events) {
   return continuingMilestoneThresholds(MILESTONE_UID_BASE_THRESHOLDS, highestCreatedUid)
     .map(threshold => {
       const event = createdByUid.get(threshold);
-      return event ? { label: `Universal ID #${numberFmt.format(threshold)}`, type: 'Universal ID', event } : null;
+      return event ? { label: `Universal ID #${numberFmt.format(threshold)}`, type: 'Universal ID', event,
+        threshold, scope: 'global', scopeValue: null } : null;
     })
     .filter(Boolean);
 }
@@ -81,13 +83,15 @@ function milestonePerListRecords(events) {
         listEvents,
         'Created',
         continuingMilestoneThresholds(MILESTONE_LIST_BASE_THRESHOLDS, createdCount),
-        prefix
+        prefix,
+        listId
       ),
       ...milestoneEventRecords(
         listEvents,
         'Completed',
         continuingMilestoneThresholds(MILESTONE_LIST_BASE_THRESHOLDS, completedCount),
-        prefix
+        prefix,
+        listId
       )
     );
   }
@@ -108,10 +112,12 @@ function milestoneYearRecords(events) {
     for (const eventType of ['Created', 'Completed']) {
       const typed = yearEvents.filter(event => event.eventType === eventType).sort((a,b)=>a.id-b.id);
       if (!typed.length) continue;
-      records.push({ label: `${year} — First ${eventType.toLowerCase()}`, type: eventType, event: typed[0] });
+      records.push({ label: `${year} — First ${eventType.toLowerCase()}`, type: eventType, event: typed[0],
+        threshold: 1, scope: 'year', scopeValue: year });
       for (const threshold of continuingMilestoneThresholds(MILESTONE_YEAR_BASE_THRESHOLDS, typed.length)) {
         if (typed.length < threshold) continue;
-        records.push({ label: `${year} — ${ordinal(threshold)} ${eventType.toLowerCase()}`, type: eventType, event: typed[threshold - 1] });
+        records.push({ label: `${year} — ${ordinal(threshold)} ${eventType.toLowerCase()}`, type: eventType, event: typed[threshold - 1],
+          threshold, scope: 'year', scopeValue: year });
       }
     }
   }
@@ -149,6 +155,26 @@ function milestoneGroups(records, mode) {
   return ordered;
 }
 
+function milestoneTypeGroups(records) {
+  const groups = new Map();
+  for (const record of records) {
+    const key = `${record.scope}:${record.scopeValue ?? ''}`;
+    if (!groups.has(key)) {
+      const label = record.scope === 'year' ? `Year — ${record.scopeValue}`
+        : record.scope === 'list' ? `List — ${listName(record.scopeValue)}` : 'Overall';
+      groups.set(key, { scope: record.scope, scopeValue: record.scopeValue, label, records: [] });
+    }
+    groups.get(key).records.push(record);
+  }
+  const ordered = [...groups.values()];
+  const scopes = ['global', 'year', 'list'];
+  ordered.sort((a, b) => scopes.indexOf(a.scope) - scopes.indexOf(b.scope)
+    || (a.scope === 'year' ? b.scopeValue - a.scopeValue
+      : a.scope === 'list' ? a.label.localeCompare(b.label) || a.scopeValue - b.scopeValue : 0));
+  for (const group of ordered) group.records.sort((a, b) => a.threshold - b.threshold);
+  return ordered;
+}
+
 function makeMilestoneIcon(type) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('class', 'milestone-icon');
@@ -161,13 +187,14 @@ function makeMilestoneIcon(type) {
   return svg;
 }
 
-function makeMilestoneRow(record) {
+function makeMilestoneRow(record, groupedByType = false) {
   const row = document.createElement('div');
   row.className = 'milestone-row';
   const heading = document.createElement('div');
   heading.className = 'milestone-heading';
   const name = document.createElement('strong');
-  name.textContent = record.label;
+  name.textContent = groupedByType && record.scope !== 'global'
+    ? milestoneLabel(record.threshold, record.type.toLowerCase()) : record.label;
   const when = document.createElement('span');
   when.className = 'milestone-when';
   when.textContent = milestoneWhen(record.event);
@@ -183,6 +210,13 @@ function makeMilestoneRow(record) {
   detail.append(tail);
   row.append(heading, detail);
   return row;
+}
+
+function makeMilestoneGrid(records, groupedByType = false) {
+  const grid = document.createElement('div');
+  grid.className = 'milestone-group-grid';
+  grid.replaceChildren(...records.map(record => makeMilestoneRow(record, groupedByType)));
+  return grid;
 }
 
 export function renderMilestones() {
@@ -215,20 +249,32 @@ export function renderMilestones() {
   ];
   for (const threshold of continuingMilestoneThresholds(MILESTONE_EVENT_BASE_THRESHOLDS, events.length)) {
     if (events.length < threshold) continue;
-    records.push({ label: milestoneLabel(threshold, 'recorded event'), type: 'Recorded events', event: events[threshold - 1] });
+    records.push({ label: milestoneLabel(threshold, 'recorded event'), type: 'Recorded events', event: events[threshold - 1],
+      threshold, scope: 'global', scopeValue: null });
   }
   records.sort((a, b) => compareEventDates(a.event, b.event) || a.label.localeCompare(b.label));
   const sections = [];
-  for (const group of milestoneGroups(records, $('#milestoneSort').value)) {
+  const mode = $('#milestoneSort').value;
+  for (const group of milestoneGroups(records, mode)) {
     const section = document.createElement('section');
     section.className = 'milestone-group';
     const title = document.createElement('h3');
     title.className = 'milestone-group-title';
     title.textContent = group.label;
-    const grid = document.createElement('div');
-    grid.className = 'milestone-group-grid';
-    grid.replaceChildren(...group.records.map(makeMilestoneRow));
-    section.append(title, grid);
+    section.append(title);
+    if (mode === 'type') {
+      for (const scope of milestoneTypeGroups(group.records)) {
+        const subsection = document.createElement('section');
+        subsection.className = 'milestone-subgroup';
+        const subtitle = document.createElement('h4');
+        subtitle.className = 'milestone-subgroup-title';
+        subtitle.textContent = scope.label;
+        subsection.append(subtitle, makeMilestoneGrid(scope.records, true));
+        section.append(subsection);
+      }
+    } else {
+      section.append(makeMilestoneGrid(group.records));
+    }
     sections.push(section);
   }
   timeline.replaceChildren(...sections);

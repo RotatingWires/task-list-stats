@@ -139,6 +139,8 @@
   gap: 12px;
   min-width: 0;
 }
+.milestone-subgroup { margin-top: 16px; min-width: 0; }
+.milestone-subgroup-title { margin: 0 0 8px; font-size: 16px; }
 .milestone-row {
   min-width: 0;
   min-height: min-content;
