@@ -39,7 +39,7 @@ function milestoneLabel(threshold, noun) {
 }
 
 function milestoneEventRecords(events, eventType, thresholds = null, labelPrefix = '') {
-  const typed = events.filter(event => event.eventType === eventType).sort((a,b)=>a.eventDate-b.eventDate || a.id-b.id);
+  const typed = events.filter(event => event.eventType === eventType).sort((a,b)=>a.id-b.id);
   const activeThresholds = thresholds ?? continuingMilestoneThresholds(MILESTONE_EVENT_BASE_THRESHOLDS, typed.length);
   const records = [];
   for (const threshold of activeThresholds) {
@@ -52,12 +52,14 @@ function milestoneEventRecords(events, eventType, thresholds = null, labelPrefix
 }
 
 function milestoneUniversalIdRecords(events) {
-  const createdByUid = new Map(
-    events
-      .filter(event => event.eventType === 'Created')
-      .map(event => [event.universalId, event])
-  );
-  const highestCreatedUid = Math.max(0, ...createdByUid.keys());
+  const createdByUid = new Map();
+  let highestCreatedUid = 0;
+  for (const event of events) {
+    if (event.eventType !== 'Created') continue;
+    const existing = createdByUid.get(event.universalId);
+    if (!existing || event.id < existing.id) createdByUid.set(event.universalId, event);
+    highestCreatedUid = Math.max(highestCreatedUid, event.universalId);
+  }
   return continuingMilestoneThresholds(MILESTONE_UID_BASE_THRESHOLDS, highestCreatedUid)
     .map(threshold => {
       const event = createdByUid.get(threshold);
@@ -92,13 +94,19 @@ function milestonePerListRecords(events) {
   return records;
 }
 
+function milestoneEventYear(event) {
+  if (!event.eventDate || !/^\d{4}-\d{2}-\d{2}(?=$|T)/.test(event.eventAt)) return null;
+  return /^\d{4}-\d{2}-\d{2}$/.test(event.eventAt)
+    ? Number(event.eventAt.slice(0, 4)) : event.eventDate.getUTCFullYear();
+}
+
 function milestoneYearRecords(events) {
   const records = [];
-  const years = [...new Set(events.map(event => event.eventDate?.getFullYear()).filter(Boolean))].sort((a,b)=>a-b);
+  const years = [...new Set(events.map(milestoneEventYear).filter(year => year !== null))].sort((a,b)=>a-b);
   for (const year of years) {
-    const yearEvents = events.filter(event => event.eventDate?.getFullYear() === year);
+    const yearEvents = events.filter(event => milestoneEventYear(event) === year);
     for (const eventType of ['Created', 'Completed']) {
-      const typed = yearEvents.filter(event => event.eventType === eventType).sort((a,b)=>a.eventDate-b.eventDate || a.id-b.id);
+      const typed = yearEvents.filter(event => event.eventType === eventType).sort((a,b)=>a.id-b.id);
       if (!typed.length) continue;
       records.push({ label: `${year} — First ${eventType.toLowerCase()}`, type: eventType, event: typed[0] });
       for (const threshold of continuingMilestoneThresholds(MILESTONE_YEAR_BASE_THRESHOLDS, typed.length)) {
@@ -111,6 +119,7 @@ function milestoneYearRecords(events) {
 }
 
 function milestoneWhen(event) {
+  if (!event.eventDate) return 'Unknown date';
   return hasConfirmedClockTime(event.eventAt) ? formatDateTime(event.eventDate) : formatDate(event.eventDate);
 }
 
@@ -120,12 +129,12 @@ function milestoneGroups(records, mode) {
     const date = record.event.eventDate;
     let key, label;
     switch (mode) {
-      case 'year': key = date.getFullYear(); label = String(key); break;
+      case 'year': key = date ? date.getFullYear() : 'unknown'; label = date ? String(key) : 'Unknown date'; break;
       case 'type': key = record.type; label = key; break;
       case 'list': key = record.event.listId; label = listName(key); break;
       default:
-        key = monthKey(date);
-        label = date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+        key = date ? monthKey(date) : 'unknown';
+        label = date ? date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'Unknown date';
     }
     if (!groups.has(key)) groups.set(key, { key, label, records: [] });
     groups.get(key).records.push(record);
@@ -178,7 +187,7 @@ function makeMilestoneRow(record) {
 
 export function renderMilestones() {
   const timeline = $('#milestonesTimeline');
-  const events = eventLogReady() ? scopedRecordedEvents().filter(event => event.eventDate).sort((a,b)=>a.eventDate-b.eventDate || a.id-b.id) : [];
+  const events = eventLogReady() ? [...scopedRecordedEvents()].sort((a,b)=>a.id-b.id) : [];
   renderCards($('#milestoneCards'), [
     { label: 'Highest Universal ID', value: numberFmt.format(state.snapshot?.highestUniversalId || 0) },
     { label: 'Recorded events in scope', value: numberFmt.format(events.length) },
@@ -208,7 +217,7 @@ export function renderMilestones() {
     if (events.length < threshold) continue;
     records.push({ label: milestoneLabel(threshold, 'recorded event'), type: 'Recorded events', event: events[threshold - 1] });
   }
-  records.sort((a, b) => b.event.eventDate - a.event.eventDate || b.event.id - a.event.id || a.label.localeCompare(b.label));
+  records.sort((a, b) => compareEventDates(a.event, b.event) || a.label.localeCompare(b.label));
   const sections = [];
   for (const group of milestoneGroups(records, $('#milestoneSort').value)) {
     const section = document.createElement('section');

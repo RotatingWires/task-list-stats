@@ -79,7 +79,7 @@
 
       <section class="tab-panel analysis-panel" data-panel="milestones" hidden>
         <div class="section-title">Milestones</div>
-        <div class="analysis-note">Automatic round-number milestones for overall events, Universal IDs, individual lists, and calendar years. Entries without a confirmed clock time show a date only.</div>
+        <div class="analysis-note">Automatic round-number milestones for overall events, Universal IDs, individual lists, and calendar years. Undated events still count and show Unknown date. Yearly milestones use UTC years for timestamps. Entries with a date but no clock time show the date only.</div>
         <div id="milestoneCards" class="stat-grid compact"></div>
         <fieldset class="groupbox"><legend>Milestone Timeline</legend><div class="control-row small-row"><span class="control-label">Sort by:</span><input type="hidden" id="milestoneSort" value="chronological"><div class="menu-wrap inline-select-menu" data-single-select="milestoneSort"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-label="Milestone sorting" aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Chronological</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div><div id="milestonesTimeline" class="milestone-timeline"></div></fieldset>
       </section>

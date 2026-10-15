@@ -93,8 +93,15 @@ function readAnalysisRange(value) {
 }
 
 function inDateRange(date, range) {
-  if (!date || range.error) return false;
+  if (range.error) return false;
+  if (!date) return !range.from && !range.to;
   return (!range.from || date >= range.from) && (!range.to || date <= range.to);
+}
+
+function compareEventDates(a, b, ascending = false) {
+  if (Boolean(a.eventDate) !== Boolean(b.eventDate)) return a.eventDate ? -1 : 1;
+  const difference = (a.eventDate ? a.eventDate - b.eventDate : 0) || a.id - b.id;
+  return ascending ? difference : -difference;
 }
 
 function formatAnalysisInputDate(date) {
@@ -129,7 +136,7 @@ function renderTaskFlow() {
   const query = $('#taskFlowQuery').value.trim().toLowerCase();
   const ascending = $('#taskFlowOrder').value === 'oldest';
 
-  let events = scopedRecordedEvents().filter(event => event.eventDate && inDateRange(event.eventDate, range));
+  let events = scopedRecordedEvents().filter(event => inDateRange(event.eventDate, range));
   if (type !== 'all') events = events.filter(event => event.eventType === type);
   if (query) {
     events = events.filter(event =>
@@ -138,13 +145,13 @@ function renderTaskFlow() {
       String(event.universalId).includes(query) ||
       listName(event.listId).toLowerCase().includes(query));
   }
-  events.sort((a, b) => ascending ? (a.eventDate - b.eventDate || a.id - b.id) : (b.eventDate - a.eventDate || b.id - a.id));
+  events.sort((a, b) => compareEventDates(a, b, ascending));
 
   const total = events.length;
   const shown = events.slice(0, 500);
   summary.textContent = `${numberFmt.format(total)} matching recorded events${total > shown.length ? ` • showing first ${numberFmt.format(shown.length)}` : ''}`;
   setTable(table, ['When', 'Event', 'List', 'ID', 'Task', 'Transition'], shown.map(event => [
-    hasConfirmedClockTime(event.eventAt) ? formatDateTime(event.eventDate) : formatDate(event.eventDate),
+    event.eventDate ? (hasConfirmedClockTime(event.eventAt) ? formatDateTime(event.eventDate) : formatDate(event.eventDate)) : 'Unknown',
     event.eventType,
     listName(event.listId),
     eventTaskNode(event),
@@ -178,11 +185,23 @@ function compareItemsForList(value) {
 function compareEventCounts(events) {
   const counts = Object.fromEntries(ANALYSIS_EVENT_TYPES.map(type => [type, 0]));
   for (const event of events) if (Object.hasOwn(counts, event.eventType)) counts[event.eventType]++;
+  let net = 0;
+  for (const event of events) {
+    if (event.eventType === 'Created') net++;
+    else if (event.eventType === 'Deleted') {
+      if (event.fromStatus === 'Open') net--;
+    } else if (['Completed', 'Cancelled', 'Reopened'].includes(event.eventType)) {
+      const fromOpen = event.fromStatus === 'Open' ||
+        (event.source === 'legacy' && !event.fromStatus && event.eventType !== 'Reopened');
+      const toOpen = event.toStatus === 'Open' || event.eventType === 'Reopened';
+      net += Number(toOpen) - Number(fromOpen);
+    }
+  }
   return {
     ...counts,
     total: events.length,
     unique: new Set(events.map(event => event.universalId)).size,
-    net: counts.Created + counts.Reopened - counts.Completed - counts.Cancelled
+    net
   };
 }
 
@@ -195,7 +214,7 @@ function compareMetricRows(counts, items = null) {
     ['Cancelled transitions', numberFmt.format(counts.Cancelled)],
     ['Reopened transitions', numberFmt.format(counts.Reopened)],
     ['Deleted', numberFmt.format(counts.Deleted)],
-    ['Net recorded flow', counts.net > 0 ? `+${numberFmt.format(counts.net)}` : numberFmt.format(counts.net)]
+    ['Net recorded open flow', counts.net > 0 ? `+${numberFmt.format(counts.net)}` : numberFmt.format(counts.net)]
   ];
   if (items) {
     rows.push(
@@ -268,7 +287,7 @@ function renderCompare() {
     ['Completed transitions', a.Completed - b.Completed],
     ['Cancelled transitions', a.Cancelled - b.Cancelled],
     ['Reopened transitions', a.Reopened - b.Reopened],
-    ['Net recorded flow', a.net - b.net]
+    ['Net recorded open flow', a.net - b.net]
   ];
   if (aItems && bItems) {
     differences.push(

@@ -38,11 +38,12 @@ async function ensureEventsLoaded() {
     state.lastEventId > 0 &&
     typeof state.eventCursor === 'string' &&
     state.eventCursor.length > 0;
+  const snapshot = state.snapshot;
 
   $('#databaseStatus').textContent =
     `${numberFmt.format(state.snapshot.items.length)} current items • ${canIncrement ? 'checking for new events...' : 'loading event history...'}`;
 
-  state.eventsLoading = (async () => {
+  const loading = (async () => {
     const query = canIncrement
       ? `?afterId=${encodeURIComponent(state.lastEventId)}&cursor=${encodeURIComponent(state.eventCursor)}`
       : '';
@@ -61,6 +62,7 @@ async function ensureEventsLoaded() {
     }
 
     const batch = await response.json();
+    if (state.snapshot !== snapshot) return;
     const incoming = Array.isArray(batch.events) ? batch.events : [];
 
     if (!state.eventsLoaded || batch.resetRequired) {
@@ -74,11 +76,12 @@ async function ensureEventsLoaded() {
     state.eventsLoaded = true;
     state.eventsNeedRefresh = false;
   })();
+  state.eventsLoading = loading;
 
   try {
-    await state.eventsLoading;
+    await loading;
   } finally {
-    state.eventsLoading = null;
+    if (state.eventsLoading === loading) state.eventsLoading = null;
   }
 }
 
@@ -233,54 +236,62 @@ async function frontendReleaseVersion(fallback = '') {
 }
 
 async function loadSnapshot() {
-  $('#loadingPanel').hidden = false;
-  $('#errorPanel').hidden = true;
-  $('#databaseStatus').textContent = 'Loading database...';
+  if (state.snapshotLoading) return state.snapshotLoading;
+  state.snapshotLoading = (async () => {
+    $('#loadingPanel').hidden = false;
+    $('#errorPanel').hidden = true;
+    $('#databaseStatus').textContent = 'Loading database...';
 
-  const cachedEvents = state.eventsLoaded ? (state.snapshot?.events ?? []) : [];
-  const cachedLastEventId = state.lastEventId;
-  const cachedEventCursor = state.eventCursor;
-  const hadLoadedEvents = state.eventsLoaded;
+    const cachedEvents = state.eventsLoaded ? (state.snapshot?.events ?? []) : [];
+    const cachedLastEventId = state.lastEventId;
+    const cachedEventCursor = state.eventCursor;
+    const hadLoadedEvents = state.eventsLoaded;
 
+    try {
+      const response = await fetch('/api/snapshot', { cache: 'no-store', credentials: 'same-origin' });
+      if (response.status === 401) { window.location.replace(loginUrl()); return; }
+      if (!response.ok) {
+        let message = `Server returned ${response.status}`;
+        try { const body = await response.json(); message = body.detail || body.title || message; } catch {}
+        throw new Error(message);
+      }
+
+      state.snapshot = normalizeSnapshot(await response.json());
+      state.eventsLoading = null;
+
+      if (state.snapshot.eventLogAvailable && hadLoadedEvents) {
+        state.snapshot.events = cachedEvents;
+        state.eventsLoaded = true;
+        state.eventsNeedRefresh = true;
+        state.lastEventId = cachedLastEventId;
+        state.eventCursor = cachedEventCursor;
+      } else {
+        resetEventCache();
+      }
+
+      applyReleaseLabel(await frontendReleaseVersion(state.snapshot.version));
+      const validListIds = new Set(state.snapshot.lists.map(list => list.id));
+      state.selectedListIds = new Set([...state.selectedListIds].filter(id => validListIds.has(id)));
+      populateListFilter();
+      populateViewMenu();
+
+      if (activeTabNeedsEvents()) await ensureEventsLoaded();
+      if (state.activeTab === 'milestones') await ensureMilestonesLoaded();
+
+      $('#databaseStatus').textContent =
+        `${numberFmt.format(state.snapshot.items.length)} current items • ${eventHistoryStatusText()}`;
+      $('#loadingPanel').hidden = true;
+      renderAll();
+    } catch (error) {
+      $('#loadingPanel').hidden = true;
+      const panel = $('#errorPanel'); panel.hidden = false; panel.textContent = error.message;
+      $('#databaseStatus').textContent = 'Database unavailable';
+    }
+  })();
   try {
-    const response = await fetch('/api/snapshot', { cache: 'no-store', credentials: 'same-origin' });
-    if (response.status === 401) { window.location.replace(loginUrl()); return; }
-    if (!response.ok) {
-      let message = `Server returned ${response.status}`;
-      try { const body = await response.json(); message = body.detail || body.title || message; } catch {}
-      throw new Error(message);
-    }
-
-    state.snapshot = normalizeSnapshot(await response.json());
-    state.eventsLoading = null;
-
-    if (state.snapshot.eventLogAvailable && hadLoadedEvents) {
-      state.snapshot.events = cachedEvents;
-      state.eventsLoaded = true;
-      state.eventsNeedRefresh = true;
-      state.lastEventId = cachedLastEventId;
-      state.eventCursor = cachedEventCursor;
-    } else {
-      resetEventCache();
-    }
-
-    applyReleaseLabel(await frontendReleaseVersion(state.snapshot.version));
-    const validListIds = new Set(state.snapshot.lists.map(list => list.id));
-    state.selectedListIds = new Set([...state.selectedListIds].filter(id => validListIds.has(id)));
-    populateListFilter();
-    populateViewMenu();
-
-    if (activeTabNeedsEvents()) await ensureEventsLoaded();
-    if (state.activeTab === 'milestones') await ensureMilestonesLoaded();
-
-    $('#databaseStatus').textContent =
-      `${numberFmt.format(state.snapshot.items.length)} current items • ${eventHistoryStatusText()}`;
-    $('#loadingPanel').hidden = true;
-    renderAll();
-  } catch (error) {
-    $('#loadingPanel').hidden = true;
-    const panel = $('#errorPanel'); panel.hidden = false; panel.textContent = error.message;
-    $('#databaseStatus').textContent = 'Database unavailable';
+    await state.snapshotLoading;
+  } finally {
+    state.snapshotLoading = null;
   }
 }
 

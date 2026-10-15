@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.18
+# TaskList Stats v2.1.19
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -98,6 +98,8 @@ Start with `GET /api/events`. Its `events` array contains all current recorded e
 Retain the returned `lastEventId` and opaque `cursor`, then request `/api/events?afterId=LAST_ID&cursor=CURSOR` to get only newer events. There is no page size or server-side history filter; an initial load can contain the entire history. Zero/negative `afterId` starts from the beginning. When no new events exist, the last event ID/cursor remain usable.
 
 For a positive `afterId`, the server checks the supplied cursor against that exact event. If the event is missing or the cursor is missing/mismatched, it returns `resetRequired: true` and the full current history. Replace the cached history in that case instead of appending. If the event table is absent, the response has `lastEventId: 0`, `cursor: null`, and `events: []`; `resetRequired` is true when a positive `afterId` was supplied.
+
+With TaskList v1.6.9 or newer, the opaque cursor also includes the server-owned history revision, which changes on ZIP restore even if the final event is identical. Older TaskList schemas use the event anchor alone. Snapshot/history reads each use one deferred read transaction so concurrent changes cannot mix lists, tasks, revision state, and event rows from different database states. Concurrent snapshot refreshes coalesce, and late history responses cannot modify a replacement snapshot.
 
 ### Browser routes and API scope
 
@@ -293,11 +295,15 @@ Nesting depth, largest task trees, deepest tasks, title categories, common words
 
 Chronological event history with one compact typed date-range field, event type, ordering, text/list/ID filtering, status transitions, and TaskList deep links. Ranges use the same `10/3 - 10/8` style as TaskList Search, with `m/d`, `m/d/yy`, or `m/d/yyyy` accepted on either side.
 
+Without a date range, undated events remain visible as “Unknown” after dated rows in either sort direction. Choosing an explicit range excludes events that cannot be placed in that range. Moving tasks preserves their original event attribution; historical task links follow the permanent Universal ID to the current list and visible number.
+
 Created events display as `Created → Open` rather than showing a missing previous status, while normal state changes continue to display their actual transitions.
 
 ### Compare
 
 Compare either two list scopes or two date ranges. Time-period mode uses one compact typed range for Period A and one for Period B. The Difference section reports `A - B` for the same metrics.
+
+Net recorded open flow follows actual status transitions: deleting an Open task reduces it, while Done → Cancelled and Cancelled → Done leave it unchanged. Legacy reconstructed closing transitions use their recorded/inferred Open origin. This measures recorded flow; current item counts remain a separate measure, particularly after moves or gaps in historical tracking.
 
 ### Activity Sessions
 
@@ -318,6 +324,8 @@ Milestones are calculated automatically from the available event history. Curren
 - yearly first creation/completion plus 100, 500, 1,000, and 2,000 round-number thresholds, then every 500 events within that year (2,500, 3,000, 3,500, ...)
 
 The permanent Milestones timeline is computed from event history and is independent of TaskList's live notification queue. It remains available whether or not a popup has been displayed. Stats never claims or displays celebration dialogs or confetti; live celebrations belong exclusively to TaskList.
+
+Global/list/recorded-event milestones include undated records and identify the threshold-crossing event by event-record order, matching TL's counter increments. Backdated imports therefore count without pretending they were inserted earlier. A milestone with no usable timestamp shows “Unknown date” and appears in an Unknown date section for Chronological/Year grouping. Yearly event milestones require valid dates and use UTC years for timestamps; date-only imports use their written year. Calendar charts and displayed event times keep their normal local-time presentation. Universal-ID milestones can also show unknown dates when the creation record is undated.
 
 Milestones have a **Sort by** dropdown with Chronological, Year, Type, and List choices. It uses the same selected-circle indicator as View and closes after choosing an option. Chronological is the default and keeps month-and-year sections, such as October 2026, newest first. Year groups by the year earned, newest first. Type groups Created, Completed, Cancelled, Reopened, Deleted, Recorded events, and Universal ID milestones separately. List groups by the list attached to the event that earned the milestone, alphabetically. Milestones remain newest first within each group. Sorting respects the selected list scope and shows only groups containing milestones.
 
@@ -428,7 +436,19 @@ Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
 
 Check the selected list scope, task vs subtask expectations, date-only vs full timestamp history, current status vs preserved old terminal timestamps, and whether the value comes from event history or approximate backlog reconstruction.
 
-## Current release: v2.1.18
+## Development checks
+
+Run `node tests/frontend.test.cjs` for frontend regression tests using the actual JavaScript and disposable DOM fixtures. Coverage includes all 11 workspaces in multiple scopes, moved/renamed/deleted-list identities, undated events, milestone groups and threshold attribution, status-flow counts, year boundaries, and concurrent snapshot/history refreshes. The neighboring TaskList checkout also has SQL integrity and cross-app milestone parity tests; see its [audit coverage](https://github.com/RotatingWires/task-list/blob/main/tests/AUDIT.md). Node is only needed for these tests, not to run Stats.
+
+## Current release: v2.1.19
+
+### v2.1.19
+
+- Include undated events in global/list milestone counts and all-time Task Flow, with explicit unknown dates and safe grouping/sorting.
+- Match TL's milestone event-record ordering and UTC yearly counters, including backdated imports; avoid argument-limit failures on large UID histories.
+- Correct net open-flow counts for closed-to-closed transitions and deletion of open tasks; reject invalid ISO calendar dates.
+- Include TL's restore revision in history cursors, keep each database read consistent, and prevent overlapping refreshes from mixing snapshots or event caches.
+- Add frontend regression coverage across workspaces, scopes, histories, dates, identity changes, and asynchronous refreshes.
 
 ### v2.1.18
 
