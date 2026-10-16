@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.22
+# TaskList Stats v2.1.23
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -299,7 +299,7 @@ Without a date range, undated events remain visible as “Unknown” after dated
 
 Created events display as `Created → Open` rather than showing a missing previous status, while normal state changes continue to display their actual transitions.
 
-The Task Flow table fills the space below its controls and scrolls inside that space, keeping the status bar visible.
+On roomy desktop windows, the Task Flow table fills the space below its controls and scrolls inside that space. Laptop, short, and narrow windows scroll the workspace instead, letting the controls move out of the way and keeping the table at its natural height. Horizontal table scrolling remains available, and the status bar stays visible.
 
 ### Compare
 
@@ -313,7 +313,7 @@ Groups timestamped events into inferred sessions using a 15-, 30-, or 60-minute 
 
 Session rows show their event mix. Click the event count to open the session's events newest first, matching the session list. Events at the same timestamp use descending event ID as a stable tie-breaker. The detail view sorts a copy; session grouping and start/end times remain based on chronological event order.
 
-Recent Inferred Sessions fits the space remaining below the controls and summary cards, with scrolling inside the list. Both this list and Task Flow retain a usable minimum height; very small screens can still scroll the workspace to reach all controls and rows.
+On roomy desktop windows, Recent Inferred Sessions fits the space below the controls and summary cards, with scrolling inside the list. On laptop and mobile layouts, the list grows naturally and shares the workspace scrollbar with its controls and cards, avoiding a tiny list with a second vertical scrollbar. Both this view and Task Flow use the fitted layout only when the viewport is wider than 780px and taller than 800px; browser zoom and display scaling affect the available viewport.
 
 All dialog buttons use shared footer spacing of 6px above and below. Activity Session and Calendar retain their lower OK placement, including when content scrolls, and Help uses the same default.
 
@@ -444,7 +444,15 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 
 Run `node tests/frontend.test.cjs` for frontend regression tests using the actual JavaScript and disposable DOM fixtures. Coverage includes all 11 workspaces in multiple scopes, moved/renamed/deleted-list identities, undated events, milestone groups and threshold attribution, status-flow counts, year boundaries, and concurrent snapshot/history refreshes. The neighboring TaskList checkout also has SQL integrity and cross-app milestone parity tests; see its [audit coverage](https://github.com/RotatingWires/task-list/blob/main/tests/AUDIT.md). Node is only needed for these tests, not to run Stats.
 
-## Current release: v2.1.22
+Optional browser layout checks use Python and Playwright with Firefox installed: `python3 tests/browser_layout.py`. The checks run the actual frontend with synthetic API data across nine viewport sizes in both themes. They verify that roomy desktop windows fit both lists above the status bar, while laptop/mobile layouts use the workspace as their only vertical scroller and let the lists fill the visible area after scrolling past the controls. Use `--browser chromium` or `--browser webkit` to select another installed Playwright browser. These are development tools only.
+
+## Current release: v2.1.23
+
+### v2.1.23
+
+- Keep Task Flow and Activity Sessions flowing with the workspace on laptop, short, and narrow viewports, removing tiny nested vertical scroll areas.
+- Preserve fitted lists and the fixed status bar on roomy desktop windows, and keep horizontal table scrolling available.
+- Add browser regression checks for the scrolling behavior across laptop/mobile/desktop sizes and both themes.
 
 ### v2.1.22
 
