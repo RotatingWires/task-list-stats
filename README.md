@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.21
+# TaskList Stats v2.1.22
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -299,6 +299,8 @@ Without a date range, undated events remain visible as “Unknown” after dated
 
 Created events display as `Created → Open` rather than showing a missing previous status, while normal state changes continue to display their actual transitions.
 
+The Task Flow table fills the space below its controls and scrolls inside that space, keeping the status bar visible.
+
 ### Compare
 
 Compare either two list scopes or two date ranges. Time-period mode uses one compact typed range for Period A and one for Period B. The Difference section reports `A - B` for the same metrics.
@@ -310,6 +312,8 @@ Net recorded open flow follows actual status transitions: deleting an Open task 
 Groups timestamped events into inferred sessions using a 15-, 30-, or 60-minute maximum gap. This is an inference from event timing, not a time tracker.
 
 Session rows show their event mix. Click the event count to open the session's events newest first, matching the session list. Events at the same timestamp use descending event ID as a stable tie-breaker. The detail view sorts a copy; session grouping and start/end times remain based on chronological event order.
+
+Recent Inferred Sessions fits the space remaining below the controls and summary cards, with scrolling inside the list. Both this list and Task Flow retain a usable minimum height; very small screens can still scroll the workspace to reach all controls and rows.
 
 All dialog buttons use shared footer spacing of 6px above and below. Activity Session and Calendar retain their lower OK placement, including when content scrolls, and Help uses the same default.
 
@@ -440,7 +444,12 @@ Check the selected list scope, task vs subtask expectations, date-only vs full t
 
 Run `node tests/frontend.test.cjs` for frontend regression tests using the actual JavaScript and disposable DOM fixtures. Coverage includes all 11 workspaces in multiple scopes, moved/renamed/deleted-list identities, undated events, milestone groups and threshold attribution, status-flow counts, year boundaries, and concurrent snapshot/history refreshes. The neighboring TaskList checkout also has SQL integrity and cross-app milestone parity tests; see its [audit coverage](https://github.com/RotatingWires/task-list/blob/main/tests/AUDIT.md). Node is only needed for these tests, not to run Stats.
 
-## Current release: v2.1.21
+## Current release: v2.1.22
+
+### v2.1.22
+
+- Size Task Flow and Recent Inferred Sessions from the remaining workspace height, replacing their shared viewport-height cap.
+- Let Task Flow use the space above the status bar and keep Activity Sessions scrolling inside its list on desktop/laptop screens; retain workspace scrolling when narrow or short screens need it.
 
 ### v2.1.21
 
