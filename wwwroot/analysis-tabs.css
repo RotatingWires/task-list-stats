@@ -77,6 +77,24 @@
 }
 .analysis-table-wrap table { min-width: 680px; }
 #taskFlowTable { min-width: 600px; }
+.viewport-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.viewport-panel > * { flex-shrink: 0; }
+.viewport-panel > .analysis-table-wrap,
+.viewport-panel > .sessions-list {
+  flex: 1 0 100px;
+  min-height: 0;
+}
+.viewport-panel .analysis-table-wrap { max-height: none; }
+.sessions-list {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  margin-bottom: 0;
+}
+.sessions-list > .analysis-table-wrap { min-height: 0; }
 .compare-panels {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
