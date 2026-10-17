@@ -30,6 +30,18 @@ It can answer questions such as:
 - What round-number, Universal-ID, per-list, and yearly milestones have been reached?
 - Which exact tasks were created, completed, or cancelled on a Calendar day?
 
+<img width="2560" height="1299" alt="image" src="https://github.com/user-attachments/assets/74e1c4ea-e0a9-4f17-a4c2-7798a00a0289" />
+<img width="2560" height="1299" alt="image" src="https://github.com/user-attachments/assets/2907f0f1-2aa5-4b15-8dd1-9313f57b121b" />
+<img width="2560" height="1300" alt="image" src="https://github.com/user-attachments/assets/4d19265e-db65-42f8-aa5d-7fc32c5ef778" />
+<img width="2560" height="1299" alt="image" src="https://github.com/user-attachments/assets/d4bbb7d6-a504-43de-9840-b0e12b822144" />
+<img width="2560" height="1299" alt="image" src="https://github.com/user-attachments/assets/7664cdb2-e455-4f8b-ae4a-ab49ea522695" />
+<img width="2558" height="1301" alt="image" src="https://github.com/user-attachments/assets/570682fa-ee2d-4922-878c-a9398002d0f2" />
+<img width="2560" height="1296" alt="image" src="https://github.com/user-attachments/assets/06f6885c-fdc1-452b-a39f-d7a9385df762" />
+<img width="2560" height="1296" alt="image" src="https://github.com/user-attachments/assets/3a1a6686-f5f4-4720-a819-dda6741d4aa7" />
+
+
+
+
 ## TaskList database access
 
 TaskList Stats does **not** create, update, or delete TaskList data.
