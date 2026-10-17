@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.23
+# TaskList Stats v2.1.24
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -285,6 +285,8 @@ Day-of-week and hour-of-day creation/completion charts, weekday × hour heatmap,
 
 The Weekday × Hour Heatmap has the same independent Created / Completed / Cancelled / Reopened / All activity dropdown as both Calendar heatmaps. It includes only confirmed clock times for the selected events; date-only values contribute to the Calendar heatmaps but never become artificial midnight activity in the hour heatmap.
 
+The heatmap uses compact 22px-high rows, saving vertical space while keeping the same hour-column widths, labels, and count text size.
+
 Workload Rhythm includes busiest creation weekday/hour and busiest completion weekday/hour using the same populations as the corresponding Patterns charts.
 
 ### Trees & Titles
@@ -446,7 +448,11 @@ Run `node tests/frontend.test.cjs` for frontend regression tests using the actua
 
 Optional browser layout checks use Python and Playwright with Firefox installed: `python3 tests/browser_layout.py`. The checks run the actual frontend with synthetic API data across nine viewport sizes in both themes. They verify that roomy desktop windows fit both lists above the status bar, while laptop/mobile layouts use the workspace as their only vertical scroller and let the lists fill the visible area after scrolling past the controls. Use `--browser chromium` or `--browser webkit` to select another installed Playwright browser. These are development tools only.
 
-## Current release: v2.1.23
+## Current release: v2.1.24
+
+### v2.1.24
+
+- Shorten the Patterns weekday × hour heatmap rows from 34px to 22px, reducing the page height by 84px while retaining the existing label/count text sizes and column widths.
 
 ### v2.1.23
 
