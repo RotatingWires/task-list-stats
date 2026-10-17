@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.24
+# TaskList Stats v2.1.25
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -448,7 +448,12 @@ Run `node tests/frontend.test.cjs` for frontend regression tests using the actua
 
 Optional browser layout checks use Python and Playwright with Firefox installed: `python3 tests/browser_layout.py`. The checks run the actual frontend with synthetic API data across nine viewport sizes in both themes. They verify that roomy desktop windows fit both lists above the status bar, while laptop/mobile layouts use the workspace as their only vertical scroller and let the lists fill the visible area after scrolling past the controls. Use `--browser chromium` or `--browser webkit` to select another installed Playwright browser. These are development tools only.
 
-## Current release: v2.1.24
+## Current release: v2.1.25
+
+### v2.1.25
+
+- Match TaskList's title-bar height, insets, typography, centered context, and decorative window symbols on desktop and mobile.
+- Keep the list scope visible on narrow screens, truncate long title labels within their columns, and remove redundant login-title overrides.
 
 ### v2.1.24
 

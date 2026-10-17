@@ -94,16 +94,6 @@ body.login-page {
     box-shadow: 1px 1px 0 var(--shadow);
   }
 
-  .login-page .titlebar {
-    margin: 0;
-    grid-template-columns: 1fr minmax(0, auto) 1fr;
-  }
-
-  .login-page .title-center {
-    display: block;
-    max-width: 42vw;
-  }
-
   .login-page .login-form {
     height: auto;
     min-height: 0;
