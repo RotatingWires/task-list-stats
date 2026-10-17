@@ -37,10 +37,8 @@ It can answer questions such as:
 <img width="2560" height="1299" alt="image" src="https://github.com/user-attachments/assets/7664cdb2-e455-4f8b-ae4a-ab49ea522695" />
 <img width="2558" height="1301" alt="image" src="https://github.com/user-attachments/assets/570682fa-ee2d-4922-878c-a9398002d0f2" />
 <img width="2560" height="1296" alt="image" src="https://github.com/user-attachments/assets/06f6885c-fdc1-452b-a39f-d7a9385df762" />
+<img width="2560" height="1296" alt="image" src="https://github.com/user-attachments/assets/3c5cdbda-9990-48fe-9509-16b6eb806ee1" />
 <img width="2560" height="1296" alt="image" src="https://github.com/user-attachments/assets/3a1a6686-f5f4-4720-a819-dda6741d4aa7" />
-
-
-
 
 ## TaskList database access
 
