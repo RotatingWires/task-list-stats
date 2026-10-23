@@ -329,9 +329,9 @@
 }
 
 /* Calendar day drill-down lives with the other feature-dialog styles. */
-.calendar-day:not(.empty) { cursor: pointer; }
-.calendar-day:not(.empty):hover,
-.calendar-day:not(.empty):focus-within {
+.calendar-day.has-events { cursor: pointer; }
+.calendar-day.has-events:hover,
+.calendar-day.has-events:focus-within {
   outline: 2px dotted #000080;
   outline-offset: -3px;
 }

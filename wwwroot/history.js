@@ -250,6 +250,7 @@ function renderMonthCalendar(items) {
     const values = [
       ['created','Created',created.get(key)||0], ['done','Done',completed.get(key)||0], ['cancelled','Cancelled',cancelled.get(key)||0]
     ];
+    if (values.some(([, , count]) => count > 0)) cell.classList.add('has-events');
     for (const [cls,label,count] of values) {
       if (!count) continue;
       const line = document.createElement('div'); line.className=`calendar-count ${cls}`; line.textContent=`${label}: ${count}`; cell.append(line);
@@ -369,6 +370,7 @@ function openCalendarDayDetails(dayKey) {
     ['Completed', calendarItemsForDay(dayKey, 'completedDate')],
     ['Cancelled', calendarItemsForDay(dayKey, 'cancelledDate')]
   ].filter(([, items]) => items.length);
+  if (!categories.length) return;
 
   $('#calendarDayTitle').textContent = date.toLocaleDateString(undefined, {
     weekday: 'long',
@@ -389,7 +391,7 @@ function openCalendarDayDetails(dayKey) {
 }
 
 $('#monthCalendar').addEventListener('click', event => {
-  const cell = event.target.closest('.calendar-day:not(.empty)');
+  const cell = event.target.closest('.calendar-day.has-events');
   if (!cell || !$('#monthCalendar').contains(cell)) return;
   const dayKey = calendarDayKeyFromCell(cell);
   if (dayKey) openCalendarDayDetails(dayKey);
