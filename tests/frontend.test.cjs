@@ -2,6 +2,38 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { fixture, event, item } = require('./frontend-fixture.cjs');
 
+test('calendar days without entries do not open an empty dialog', () => {
+  const f = fixture();
+  f.snapshot({ items: [item(1, { createdAt: '2026-10-14' })] });
+  f.run("openCalendarDayDetails('2026-10-15')");
+  assert.ok(!f.get('#calendarDayDialog').open);
+  assert.equal(f.get('#calendarDayBody').children.length, 0);
+
+  f.run("state.selectedListIds.add(2); openCalendarDayDetails('2026-10-14')");
+  assert.ok(!f.get('#calendarDayDialog').open);
+});
+
+test('calendar marks only days with scoped entries clickable and keeps their drill-down', () => {
+  const f = fixture();
+  f.snapshot({ items: [
+    item(1, { createdAt: '2026-10-14', completedAt: '2026-10-15', status: 'Done' }),
+    item(2, { listId: 2, createdAt: '2026-10-16', cancelledAt: '2026-10-17', status: 'Cancelled' }),
+  ] });
+  f.get('#calendarMonth').value = '10/2026';
+  f.run('renderMonthCalendar(scopedItems())');
+  const activeDays = () => f.get('#monthCalendar').querySelectorAll('.has-events')
+    .map(cell => cell.querySelector('.calendar-date').textContent);
+  assert.deepEqual(activeDays(), ['14', '15', '16', '17']);
+
+  f.run("openCalendarDayDetails('2026-10-15')");
+  assert.ok(f.get('#calendarDayDialog').open);
+  assert.match(f.get('#calendarDayBody').textContent, /Completed \(1\)/);
+  assert.doesNotMatch(f.get('#calendarDayBody').textContent, /Created \(|Cancelled \(/);
+
+  f.run('state.selectedListIds.add(2); renderMonthCalendar(scopedItems())');
+  assert.deepEqual(activeDays(), ['16', '17']);
+});
+
 test('all creations count: the 100th undated event does not become the 100th dated event', () => {
   const f = fixture();
   f.snapshot({ events: Array.from({ length: 200 }, (_, i) => event(i + 1, { eventAt: i < 100 ? 'Unknown' : '2026-10-14' })) });

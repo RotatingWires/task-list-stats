@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.25
+# TaskList Stats v2.1.26
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -281,7 +281,7 @@ The backlog chart remains approximate because it reconstructs older state from t
 - seasonality chart
 - clickable days that open the exact Created / Completed / Cancelled tasks for that date
 
-Calendar day drill-down only renders event categories that actually contain tasks for the selected day. Empty categories are omitted instead of showing placeholder boxes.
+Only Calendar days with entries in the selected list scope are clickable. Day drill-down only renders event categories that actually contain tasks for the selected day. Empty categories are omitted instead of showing placeholder boxes, and days without entries do not open a dialog.
 
 Every heatmap uses the same event choices and defaults to Created. Each selection is independent: the Year Activity and Month × Year heatmaps can show different event types. All activity sums the available Created, Completed, Cancelled, and Reopened timestamps, so one task can contribute more than once. These heatmaps use timestamps from the current snapshot, including the existing current-status rules for Completed and Cancelled, without loading event history. The Month × Year rows follow the years present in the selected event timestamps, including years with completions or reopens but no creations. It shows all represented years, not only the current year; a new year appears automatically once the selected event type has timestamps in that year.
 
@@ -458,7 +458,12 @@ Run `node tests/frontend.test.cjs` for frontend regression tests using the actua
 
 Optional browser layout checks use Python and Playwright with Firefox installed: `python3 tests/browser_layout.py`. The checks run the actual frontend with synthetic API data across nine viewport sizes in both themes. They verify that roomy desktop windows fit both lists above the status bar, while laptop/mobile layouts use the workspace as their only vertical scroller and let the lists fill the visible area after scrolling past the controls. Use `--browser chromium` or `--browser webkit` to select another installed Playwright browser. These are development tools only.
 
-## Current release: v2.1.25
+## Current release: v2.1.26
+
+### v2.1.26
+
+- Open Calendar day details only when the selected day has entries in the current list scope; empty days no longer open an empty dialog.
+- Limit the calendar pointer and hover outline to days with entries, and cover empty, populated, and list-filtered days with frontend regression tests.
 
 ### v2.1.25
 
