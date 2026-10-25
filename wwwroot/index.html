@@ -36,7 +36,7 @@
 
       <section class="tab-panel analysis-panel viewport-panel" data-panel="taskFlow" hidden>
         <div class="section-title">Task Flow</div>
-        <div class="analysis-note">Browse recorded task state changes and deletions by date, event type, list, task, and transition. Each event is given its own row so the time for each event can be seen.</div>
+        <div class="analysis-note">Browse recorded task state changes and deletions by date, time, event type, list, task, and transition. Search time alone (9am - 5pm) or combine dates and times (10/3 - 10/8, 9am - 5pm).</div>
         <div class="analysis-controls">
           <label class="wide-control">Date/time range<input id="taskFlowRange" class="analysis-date-input" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="200" placeholder="9/1/26 - 10/1/26, 10am - 3pm"></label>
           <div class="analysis-control"><span>Event</span><input type="hidden" id="taskFlowEventType" value="all"><div class="menu-wrap inline-select-menu analysis-select-menu" data-single-select="taskFlowEventType"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>All events</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div>
@@ -49,7 +49,7 @@
 
       <section class="tab-panel analysis-panel" data-panel="compare" hidden>
         <div class="section-title">Compare</div>
-        <div class="analysis-note">Compare two list scopes or two recorded time periods side-by-side. The Difference section is A minus B; it is descriptive, not a score.</div>
+        <div class="analysis-note">Compare two list scopes or two recorded time periods side-by-side. Search time alone (9am - 5pm) or combine dates and times (10/3 - 10/8, 9am - 5pm). The Difference section is A minus B; it is descriptive, not a score.</div>
         <div class="analysis-controls">
           <div class="analysis-control"><span>Compare</span><input type="hidden" id="compareMode" value="lists"><div class="menu-wrap inline-select-menu analysis-select-menu" data-single-select="compareMode"><button type="button" class="retro-select compact-retro-select" data-single-select-button aria-haspopup="menu" aria-expanded="false"><span data-single-select-label>Lists</span><span class="select-arrow" aria-hidden="true">▼</span></button><div class="menu-dropdown single-select-dropdown" data-single-select-menu role="menu" hidden></div></div></div>
           <div id="compareListControls" class="compare-control-group">
