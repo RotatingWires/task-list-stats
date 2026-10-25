@@ -73,29 +73,51 @@ function splitAnalysisRange(value) {
 }
 
 function readAnalysisRange(value) {
-  const text = value.trim();
-  if (!text) return { from: null, to: null, error: null };
-
-  const parts = splitAnalysisRange(text);
-  if (!parts)
-    return { error: 'Use a date range like 10/3 - 10/8. Each date can be m/d, m/d/yy, or m/d/yyyy.' };
-
-  const from = parseAnalysisDate(parts[0]);
-  const to = parseAnalysisDate(parts[1]);
-  if (!from || !to)
-    return { error: 'Use a date range like 10/3 - 10/8. Each date can be m/d, m/d/yy, or m/d/yyyy.' };
-
-  from.setHours(0, 0, 0, 0);
-  to.setHours(23, 59, 59, 999);
-  if (from > to)
-    return { error: 'Start date must be on or before End date.' };
-  return { from, to, error: null };
+  const parts = value.trim().split(',');
+  if (parts.length > 2) return { error: 'Use one comma between the date and time ranges.' };
+  const [dates, times] = parts.length === 2 ? parts : parts[0].includes('/') ? [parts[0], ''] : ['', parts[0]];
+  const range = { from: null, to: null, timeStart: null, timeEnd: null, error: null };
+  if (dates.trim()) {
+    const dateParts = splitAnalysisRange(dates);
+    range.from = dateParts && parseAnalysisDate(dateParts[0]);
+    range.to = dateParts && parseAnalysisDate(dateParts[1]);
+    if (!range.from || !range.to)
+      return { error: 'Use a date range like 10/3 - 10/8. Each date can be m/d, m/d/yy, or m/d/yyyy.' };
+    range.to.setHours(23, 59, 59, 999);
+    if (range.from > range.to)
+      return { error: 'Start date must be on or before End date.' };
+  }
+  if (times.trim()) {
+    const timeParts = splitAnalysisRange(times);
+    range.timeStart = timeParts && parseAnalysisTime(timeParts[0]);
+    range.timeEnd = timeParts && parseAnalysisTime(timeParts[1]);
+    if (range.timeStart === null || range.timeEnd === null)
+      return { error: 'Use a time range like 9 AM - 9 PM or 9:10 AM - 5:30 PM. Times without AM/PM are treated as AM.' };
+  }
+  return range;
 }
 
-function inDateRange(date, range) {
+function parseAnalysisTime(value) {
+  const text = value.toLowerCase().replaceAll('.', '').replace(/\s+/g, '');
+  const match = /^(\d{1,2})(?::(\d{1,2}))?(am|pm)?$/.exec(text);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2] || 0);
+  if (hour < 1 || hour > 12 || minute > 59) return null;
+  return (hour % 12) * 60 + minute + (match[3] === 'pm' ? 720 : 0);
+}
+
+function matchesAnalysisRange(event, range) {
   if (range.error) return false;
-  if (!date) return !range.from && !range.to;
-  return (!range.from || date >= range.from) && (!range.to || date <= range.to);
+  const date = event.eventDate;
+  if (!date) return !range.from && !range.to && range.timeStart === null;
+  if ((range.from && date < range.from) || (range.to && date > range.to)) return false;
+  if (range.timeStart === null) return true;
+  if (!hasConfirmedClockTime(event.eventAt)) return false;
+  const minutes = date.getHours() * 60 + date.getMinutes();
+  return range.timeStart <= range.timeEnd
+    ? minutes >= range.timeStart && minutes <= range.timeEnd
+    : minutes >= range.timeStart || minutes <= range.timeEnd;
 }
 
 function compareEventDates(a, b, ascending = false) {
@@ -125,7 +147,7 @@ function renderTaskFlow() {
     return;
   }
 
-  const range = readAnalysisRange($('#taskFlowDateRange').value);
+  const range = readAnalysisRange($('#taskFlowRange').value);
   if (range.error) {
     summary.textContent = range.error;
     setAnalysisEmpty(table, range.error);
@@ -136,7 +158,7 @@ function renderTaskFlow() {
   const query = $('#taskFlowQuery').value.trim().toLowerCase();
   const ascending = $('#taskFlowOrder').value === 'oldest';
 
-  let events = scopedRecordedEvents().filter(event => inDateRange(event.eventDate, range));
+  let events = scopedRecordedEvents().filter(event => matchesAnalysisRange(event, range));
   if (type !== 'all') events = events.filter(event => event.eventType === type);
   if (query) {
     events = events.filter(event =>
@@ -266,8 +288,8 @@ function renderCompare() {
       return;
     }
     const all = scopedRecordedEvents();
-    aEvents = all.filter(event => inDateRange(event.eventDate, rangeA));
-    bEvents = all.filter(event => inDateRange(event.eventDate, rangeB));
+    aEvents = all.filter(event => matchesAnalysisRange(event, rangeA));
+    bEvents = all.filter(event => matchesAnalysisRange(event, rangeB));
     aLabel = 'Period A';
     bLabel = 'Period B';
     summary.textContent = 'Recorded event activity in Period A compared with Period B.';
@@ -447,12 +469,12 @@ function initializeAnalysisTabs() {
   const ago30 = new Date(now.getTime() - 29 * 86_400_000);
   const ago31 = new Date(now.getTime() - 30 * 86_400_000);
   const ago60 = new Date(now.getTime() - 59 * 86_400_000);
-  if (!$('#taskFlowDateRange').value) $('#taskFlowDateRange').value = formatAnalysisInputRange(ago30, today);
+  if (!$('#taskFlowRange').value) $('#taskFlowRange').value = formatAnalysisInputRange(ago30, today);
   if (!$('#compareRangeA').value) $('#compareRangeA').value = formatAnalysisInputRange(ago30, today);
   if (!$('#compareRangeB').value) $('#compareRangeB').value = formatAnalysisInputRange(ago60, ago31);
 
   $('#taskFlowQuery').addEventListener('input', () => { if (state.activeTab === 'taskFlow') renderTaskFlow(); });
-  for (const id of ['taskFlowDateRange', 'taskFlowEventType', 'taskFlowOrder'])
+  for (const id of ['taskFlowRange', 'taskFlowEventType', 'taskFlowOrder'])
     $(`#${id}`).addEventListener('change', () => { if (state.activeTab === 'taskFlow') renderTaskFlow(); });
 
   for (const id of ['compareMode', 'compareListA', 'compareListB', 'compareRangeA', 'compareRangeB'])

@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.26
+# TaskList Stats v2.1.27
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -305,9 +305,9 @@ Nesting depth, largest task trees, deepest tasks, title categories, common words
 
 ### Task Flow
 
-Chronological event history with one compact typed date-range field, event type, ordering, text/list/ID filtering, status transitions, and TaskList deep links. Ranges use the same `10/3 - 10/8` style as TaskList Search, with `m/d`, `m/d/yy`, or `m/d/yyyy` accepted on either side.
+Chronological event history with one **Date/time range** field, event type, ordering, text/list/ID filtering, status transitions, and TaskList deep links. Like TaskList Search and NewsReview, enter `10/3 - 10/8, 9am - 5pm`, or either range alone. The comma separates the date range from the time range. Dates accept `m/d`, `m/d/yy`, or `m/d/yyyy`; omitted years use the current year. Times use the browser's local clock with flexible 12-hour parsing; omitted AM/PM means AM. Hyphens, en dashes, and em dashes work as range separators.
 
-Without a date range, undated events remain visible as “Unknown” after dated rows in either sort direction. Choosing an explicit range excludes events that cannot be placed in that range. Moving tasks preserves their original event attribution; historical task links follow the permanent Universal ID to the current list and visible number.
+With the range field empty, undated events remain visible as “Unknown” after dated rows in either sort direction. Choosing an explicit range excludes events that cannot be placed in that range. Time-only ranges search all dates, and overnight ranges such as `10pm - 2am` match late-night and early-morning times on each selected date. A time filter excludes date-only events rather than treating them as midnight. Moving tasks preserves their original event attribution; historical task links follow the permanent Universal ID to the current list and visible number.
 
 Created events display as `Created → Open` rather than showing a missing previous status, while normal state changes continue to display their actual transitions.
 
@@ -315,7 +315,7 @@ On roomy desktop windows, the Task Flow table fills the space below its controls
 
 ### Compare
 
-Compare either two list scopes or two date ranges. Time-period mode uses one compact typed range for Period A and one for Period B. The Difference section reports `A - B` for the same metrics.
+Compare either two list scopes or two time periods. Time-period mode uses one combined date/time range field for Period A and one for Period B, with the same syntax and missing-time behavior as Task Flow. Either date or time ranges can be supplied alone, and clearing a period's field includes all recorded history. The Difference section reports `A - B` for the same metrics.
 
 Net recorded open flow follows actual status transitions: deleting an Open task reduces it, while Done → Cancelled and Cancelled → Done leave it unchanged. Legacy reconstructed closing transitions use their recorded/inferred Open origin. This measures recorded flow; current item counts remain a separate measure, particularly after moves or gaps in historical tracking.
 
@@ -458,7 +458,13 @@ Run `node tests/frontend.test.cjs` for frontend regression tests using the actua
 
 Optional browser layout checks use Python and Playwright with Firefox installed: `python3 tests/browser_layout.py`. The checks run the actual frontend with synthetic API data across nine viewport sizes in both themes. They verify that roomy desktop windows fit both lists above the status bar, while laptop/mobile layouts use the workspace as their only vertical scroller and let the lists fill the visible area after scrolling past the controls. Use `--browser chromium` or `--browser webkit` to select another installed Playwright browser. These are development tools only.
 
-## Current release: v2.1.26
+## Current release: v2.1.27
+
+### v2.1.27
+
+- Give Task Flow and both Compare periods combined date/time range fields matching NewsReview and TaskList Search.
+- Support date-only, time-only, combined, and overnight filters in local time; retain undated records with an empty filter and exclude missing clock times from time filters.
+- Give wide controls the full row on smaller screens and add frontend tests for filtering, validation, period comparison, and midnight/noon.
 
 ### v2.1.26
 

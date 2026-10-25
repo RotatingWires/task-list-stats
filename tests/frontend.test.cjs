@@ -2,6 +2,59 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { fixture, event, item } = require('./frontend-fixture.cjs');
 
+const rangeEvents = () => [
+  '2026-10-03T09:00:00', '2026-10-08T17:00:59', '2026-10-08',
+  '2026-10-09T10:00:00', 'Unknown', '2026-10-08T23:00:00',
+  '2026-10-08T01:00:00', '2026-10-03T08:59:00',
+].map((eventAt, i) => event(i + 1, { eventAt, title: 'event ' + (i + 1) }));
+
+for (const [period, expected] of [
+  ['10/3/26 - 10/8/26, 9am - 5pm', [1, 2]],
+  ['10/3/26 – 10/8/26', [1, 2, 3, 6, 7, 8]],
+  ['9am — 5pm', [1, 2, 4]],
+  ['10/8/2026 - 10/8/2026, 10pm - 2am', [6, 7]],
+  [', 9 a.m. - 5 p.m.', [1, 2, 4]],
+  ['', [1, 2, 3, 4, 5, 6, 7, 8]],
+]) {
+  test('Task Flow combined range filters ' + (period || 'all history'), () => {
+    const f = fixture();
+    f.snapshot({ events: rangeEvents() });
+    f.get('#taskFlowRange').value = period;
+    f.run('renderTaskFlow()');
+    assert.deepEqual(f.rows('#taskFlowTable').map(row => Number(row[4].slice(6))).sort((a,b)=>a-b), expected);
+  });
+}
+
+test('Compare periods independently filter daily time windows and clear to all history', () => {
+  const f = fixture();
+  f.snapshot({ events: rangeEvents() });
+  f.get('#compareMode').value = 'periods';
+  f.get('#compareRangeA').value = '10/3/26 - 10/8/26, 9am - 5pm';
+  f.get('#compareRangeB').value = '10pm - 2am';
+  f.run('renderCompare()');
+  assert.match(f.get('#compareAMetrics').textContent, /Recorded events2/);
+  assert.match(f.get('#compareBMetrics').textContent, /Recorded events2/);
+  f.get('#compareRangeB').value = '';
+  f.run('renderCompare()');
+  assert.match(f.get('#compareBMetrics').textContent, /Recorded events8/);
+});
+
+test('analysis range validation rejects bad dates, times, extra commas, and reversed dates', () => {
+  const f = fixture();
+  f.snapshot({ events: rangeEvents() });
+  for (const period of ['10/8/26 - 10/3/26', '2/30/26 - 3/1/26', '9am - 25pm',
+    '10/3/26 - 10/8/26, 9am - 5pm, extra', '10/3/26 - 10/8/26 9am - 5pm']) {
+    f.get('#taskFlowRange').value = period;
+    f.run('renderTaskFlow()');
+    assert.ok(f.run('readAnalysisRange(document.querySelector("#taskFlowRange").value).error'));
+    assert.deepEqual(f.rows('#taskFlowTable'), [[f.get('#taskFlowSummary').textContent]]);
+  }
+  assert.equal(f.run("readAnalysisRange('12am - 12am').timeStart"), 0);
+  assert.equal(f.run("readAnalysisRange('12pm - 12pm').timeStart"), 720);
+  assert.equal(f.run("readAnalysisRange('9 - 10').timeStart"), 540);
+  assert.equal(f.run("readAnalysisRange('10/3 - 10/8').from.getFullYear()"), new Date().getFullYear());
+});
+
 test('calendar days without entries do not open an empty dialog', () => {
   const f = fixture();
   f.snapshot({ items: [item(1, { createdAt: '2026-10-14' })] });
@@ -152,7 +205,7 @@ test('all-time Task Flow includes unknown dates; explicit date ranges exclude th
   f.run('renderTaskFlow()');
   assert.equal(f.rows('#taskFlowTable').length, 2);
   assert.equal(f.rows('#taskFlowTable').at(-1)[0], 'Unknown');
-  f.get('#taskFlowDateRange').value = '10/1/26 - 10/31/26';
+  f.get('#taskFlowRange').value = '10/1/26 - 10/31/26';
   f.run('renderTaskFlow()');
   assert.equal(f.rows('#taskFlowTable').length, 1);
 });
@@ -218,8 +271,8 @@ test('all-time Compare includes undated records while calendar statistics need d
   f.snapshot({ items: [item(1, { createdAt: 'Unknown' }), item(2)], events: [event(1, { eventAt: 'Unknown' }), event(2)] });
   assert.equal(f.run('compareEventCounts(scopedRecordedEvents()).Created'), 2);
   assert.equal(f.run("dailyMap(scopedItems(), 'created').size"), 1);
-  assert.equal(f.run('inDateRange(null, {from:null,to:null})'), true);
-  assert.equal(f.run('inDateRange(null, {from:new Date(),to:null})'), false);
+  assert.equal(f.run("matchesAnalysisRange({eventDate:null}, readAnalysisRange(''))"), true);
+  assert.equal(f.run("matchesAnalysisRange({eventDate:null}, readAnalysisRange('10/1 - 10/31'))"), false);
 });
 
 test('all status-pair and deletion combinations produce correct net open flow', () => {
