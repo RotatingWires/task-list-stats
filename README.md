@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.27
+# TaskList Stats v2.1.28
 
 A separate, read-only statistics dashboard for [TaskList](https://github.com/RotatingWires/task-list), with charts, calendars, task history, comparisons, activity sessions, and milestones.
 
