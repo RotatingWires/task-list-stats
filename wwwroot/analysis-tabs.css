@@ -374,6 +374,7 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  .analysis-controls .wide-control { grid-column: 1 / -1; }
   .analysis-controls label,
   .analysis-control,
   .analysis-controls .wide-control,
