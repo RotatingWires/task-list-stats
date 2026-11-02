@@ -190,9 +190,13 @@ function listName(id) {
   return deleted ? `${deleted.name} (deleted)` : `Deleted list #${id} (name unavailable)`;
 }
 
-const TASKLIST_ORIGIN = 'http://tasklist.lehighradio.com:8711';
+// TaskList normally runs on the same host at port 8711; TaskListStats:TaskListUrl in appsettings.json overrides that.
+function taskListOrigin() {
+  const configured = (state.snapshot?.taskListUrl || '').replace(/\/+$/, '');
+  return configured || `${location.protocol}//${location.hostname}:8711`;
+}
 function taskUrl(item) {
-  return `${TASKLIST_ORIGIN}/task/${encodeURIComponent(item.universalId)}`;
+  return `${taskListOrigin()}/task/${encodeURIComponent(item.universalId)}`;
 }
 function taskLink(item, label = `#${item.displayId}`) {
   const a = document.createElement('a');

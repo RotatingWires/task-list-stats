@@ -16,13 +16,12 @@ git clone https://github.com/RotatingWires/task-list-stats.git
 cd task-list-stats
 ```
 
-Set `appsettings.json` to your TaskList database path and listen address. For checkouts in neighboring folders:
+Set `appsettings.json` to your TaskList database path. For checkouts in neighboring folders:
 
 ```json
 {
   "TaskListStats": {
-    "DatabasePath": "../task-list/data/task-list.db",
-    "ListenUrl": "http://127.0.0.1:8712"
+    "DatabasePath": "../task-list/data/task-list.db"
   }
 }
 ```
@@ -32,7 +31,7 @@ dotnet restore
 dotnet run
 ```
 
-Open **http://127.0.0.1:8712**. Enter the setup token printed in the server console, choose and confirm a password of at least 8 characters, then log in. Select lists and a statistics tab; use **Refresh** for updated data.
+Stats listens on **http://127.0.0.1:8712** unless `--urls` (or `ASPNETCORE_URLS`) chooses another address. Open it in a browser. Enter the setup token printed in the server console, choose and confirm a password of at least 8 characters, then log in. Select lists and a statistics tab; use **Refresh** for updated data.
 
 The service needs read access to the TaskList database and its parent path, including WAL/SHM sidecars when present, plus write access to its own `data/auth.json` and `logs/console.log`.
 
@@ -54,8 +53,8 @@ Important distinctions:
 - **Sessions:** the cookie is HttpOnly and SameSite=Strict; use HTTPS if the network is not trusted.
 - **Exports:** snapshot JSON contains personal task data and should be protected like a database export.
 
-The quickstart uses plain HTTP on loopback. HTTP does not encrypt passwords, session cookies, or task data in transit. For LAN access, change `ListenUrl` to `http://0.0.0.0:8712` and connect using the server's actual address; use HTTPS across untrusted networks.
+The quickstart uses plain HTTP on loopback. HTTP does not encrypt passwords, session cookies, or task data in transit. For LAN access, start it with `dotnet run --urls "http://0.0.0.0:8712"` and connect using the server's actual address; use HTTPS across untrusted networks.
 
-Passwords use salted PBKDF2-HMAC-SHA256 hashes with 210,000 iterations. Sessions last up to 30 days, slide while active, and are marked Secure when the request uses HTTPS. Setup/login permits 5 attempts per source IP per minute. The setup token is console-only and excluded from file logging.
+Passwords use salted PBKDF2-HMAC-SHA256 hashes with 600,000 iterations; a hash saved with fewer iterations is upgraded the next time you log in. Sessions last up to 30 days, slide while active, and are marked Secure when the request uses HTTPS. Setup/login permits 5 attempts per source IP per minute. The setup token is console-only and excluded from file logging.
 
 See the manual for [authentication](MANUAL.md#authentication), [statistics sections](MANUAL.md#statistics-sections), [configuration overrides](MANUAL.md#requirements-and-running), and [troubleshooting](MANUAL.md#troubleshooting).

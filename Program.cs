@@ -15,10 +15,9 @@ var builder = WebApplication.CreateBuilder(args);
 var consoleLogPath = Path.Combine(builder.Environment.ContentRootPath, "logs", "console.log");
 builder.Logging.AddProvider(new SingleFileLoggerProvider(consoleLogPath, 10 * 1024 * 1024));
 
-var configuredUrl = Environment.GetEnvironmentVariable("TASKLIST_STATS_URL")
-    ?? builder.Configuration["TaskListStats:ListenUrl"]
-    ?? "http://0.0.0.0:8712";
-builder.WebHost.UseUrls(configuredUrl);
+// Loopback unless --urls, ASPNETCORE_URLS, or an appsettings "urls" value chooses another address.
+if (string.IsNullOrEmpty(builder.Configuration["urls"]))
+    builder.WebHost.UseUrls("http://127.0.0.1:8712");
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -70,6 +69,7 @@ var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) 
 var dataDir = Path.Combine(app.Environment.ContentRootPath, "data");
 Directory.CreateDirectory(dataDir);
 var authPath = Path.Combine(dataDir, "auth.json");
+const int PasswordIterations = 600_000;
 
 string? setupToken = PasswordConfigured(authPath) ? null : GenerateSetupToken();
 if (setupToken is not null)
@@ -146,8 +146,14 @@ app.MapPost("/api/auth/login", async (LoginRequest request, HttpContext context)
 {
     if (!PasswordConfigured(authPath))
         return Results.Conflict(new { error = "No password has been configured yet." });
-    if (string.IsNullOrEmpty(request.Password) || !VerifyPassword(authPath, request.Password))
+    if (string.IsNullOrEmpty(request.Password) || !VerifyPassword(authPath, request.Password, out var needsRehash))
         return Results.Unauthorized();
+
+    if (needsRehash)
+    {
+        SavePassword(authPath, request.Password);
+        app.Logger.LogInformation("Upgraded the saved password hash to {Iterations} PBKDF2 iterations.", PasswordIterations);
+    }
 
     await SignInOwner(context);
     return Results.Ok(new { authenticated = true });
@@ -229,7 +235,7 @@ api.MapGet("/snapshot", async () =>
         }
 
         var fileInfo = new FileInfo(dbPath);
-        return Results.Ok(new StatsSnapshot(appVersion, DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, deletedLists, items, eventLogAvailable, []));
+        return Results.Ok(new StatsSnapshot(appVersion, DateTimeOffset.UtcNow.ToString("O"), fileInfo.LastWriteTimeUtc.ToString("O"), highestUniversalId, lists, deletedLists, items, eventLogAvailable, [], builder.Configuration["TaskListStats:TaskListUrl"] ?? ""));
     }
     catch (SqliteException ex)
     {
@@ -443,15 +449,18 @@ static string? ValidateNewPassword(string? password, string? confirmation)
 
 static void SavePassword(string authPath, string password)
 {
-    const int iterations = 210_000;
     var salt = RandomNumberGenerator.GetBytes(16);
-    var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, HashAlgorithmName.SHA256, 32);
-    var auth = new PasswordFile(1, iterations, Convert.ToBase64String(salt), Convert.ToBase64String(hash));
-    File.WriteAllText(authPath, JsonSerializer.Serialize(auth));
+    var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, PasswordIterations, HashAlgorithmName.SHA256, 32);
+    var auth = new PasswordFile(1, PasswordIterations, Convert.ToBase64String(salt), Convert.ToBase64String(hash));
+    // Write beside the target and rename, so an interrupted rehash cannot leave a truncated auth.json.
+    var temporaryPath = authPath + ".tmp";
+    File.WriteAllText(temporaryPath, JsonSerializer.Serialize(auth));
+    File.Move(temporaryPath, authPath, overwrite: true);
 }
 
-static bool VerifyPassword(string authPath, string password)
+static bool VerifyPassword(string authPath, string password, out bool needsRehash)
 {
+    needsRehash = false;
     try
     {
         var auth = JsonSerializer.Deserialize<PasswordFile>(File.ReadAllText(authPath));
@@ -459,7 +468,9 @@ static bool VerifyPassword(string authPath, string password)
         var salt = Convert.FromBase64String(auth.Salt);
         var expected = Convert.FromBase64String(auth.Hash);
         var actual = Rfc2898DeriveBytes.Pbkdf2(password, salt, auth.Iterations, HashAlgorithmName.SHA256, expected.Length);
-        return CryptographicOperations.FixedTimeEquals(actual, expected);
+        if (!CryptographicOperations.FixedTimeEquals(actual, expected)) return false;
+        needsRehash = auth.Iterations < PasswordIterations;
+        return true;
     }
     catch
     {
@@ -492,4 +503,4 @@ record DeletedListSnapshot(long Id, string Name);
 record ItemSnapshot(long UniversalId, long ListId, string DisplayId, string? ParentDisplayId, string Title, string Description, string Status, string CreatedAt, string? UpdatedAt, string? CompletedAt, string? CancelledAt, string? ReopenedAt);
 record EventSnapshot(long Id, long UniversalId, string EventType, string EventAt, string? FromStatus, string? ToStatus, long ListId, string DisplayId, string? ParentDisplayId, string Title, string Source);
 record EventBatch(bool ResetRequired, long LastEventId, string? Cursor, List<EventSnapshot> Events);
-record StatsSnapshot(string Version, string GeneratedAtUtc, string DatabaseLastWriteUtc, long HighestUniversalId, List<ListSnapshot> Lists, List<DeletedListSnapshot> DeletedLists, List<ItemSnapshot> Items, bool EventLogAvailable, List<EventSnapshot> Events);
+record StatsSnapshot(string Version, string GeneratedAtUtc, string DatabaseLastWriteUtc, long HighestUniversalId, List<ListSnapshot> Lists, List<DeletedListSnapshot> DeletedLists, List<ItemSnapshot> Items, bool EventLogAvailable, List<EventSnapshot> Events, string TaskListUrl);

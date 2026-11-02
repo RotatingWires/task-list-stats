@@ -70,7 +70,7 @@ That file stores the Stats password hash. It is not part of the TaskList databas
 
 On first run, if `data/auth.json` does not exist, the server prints a setup token. Open Stats, enter that token, choose a password of at least 8 characters, and confirm it.
 
-The plaintext password is never stored. `auth.json` contains a random salt and PBKDF2-HMAC-SHA256 derived hash using 210,000 iterations.
+The plaintext password is never stored. `auth.json` contains a random salt and a PBKDF2-HMAC-SHA256 derived hash using 600,000 iterations, and records its iteration count. Hashes created by earlier releases with 210,000 iterations still verify; after the next successful login, Stats re-hashes the password with 600,000 iterations and replaces `auth.json` by writing a temporary file and renaming it. A wrong password never changes the file.
 
 Successful login creates the `TaskListStats.Auth` cookie. It is HttpOnly, SameSite=Strict, persistent for up to 30 days, sliding while active, and marked Secure when the request itself uses HTTPS.
 
@@ -78,7 +78,7 @@ Use **File → Log Out** to clear the session. Setup and login are rate-limited 
 
 ## HTTP endpoints
 
-The default base URL is `http://localhost:8712`. Request and response bodies are JSON unless stated otherwise. Stats uses its own `TaskListStats.Auth` cookie; a TaskList login cookie does not authenticate Stats. Login/setup set an HttpOnly, SameSite=Strict cookie with a 30-day sliding lifetime, marked Secure when the request uses HTTPS. Send that cookie on authenticated requests.
+The default base URL is `http://127.0.0.1:8712`. Request and response bodies are JSON unless stated otherwise. Stats uses its own `TaskListStats.Auth` cookie; a TaskList login cookie does not authenticate Stats. Login/setup set an HttpOnly, SameSite=Strict cookie with a 30-day sliding lifetime, marked Secure when the request uses HTTPS. Send that cookie on authenticated requests.
 
 | Method | Path | Request | Response / effect |
 | --- | --- | --- | --- |
@@ -172,7 +172,7 @@ wwwroot/
 
 `TaskListStats.csproj` contains the single authoritative application version in its `<Version>` property. The .NET SDK derives the assembly/file/informational versions from that value, so they are not repeated as separate manually maintained properties.
 
-The build target regenerates `wwwroot/version.json` from `$(Version)` for the browser's release label. The running server assembly version remains available through the auth/snapshot APIs as a fallback.
+The build target regenerates `wwwroot/version.json` from `$(Version)` for the browser's release label. It rewrites the file only when the version changes, so building does not leave the committed copy modified. The running server assembly version remains available through the auth/snapshot APIs as a fallback.
 
 Frontend asset URLs no longer carry release-number query strings. The service worker uses a stable shell-cache name and network-first requests with `cache: 'no-store'`, updating the cached copy after a successful network response and using cache only as an offline fallback. That keeps frontend freshness independent of manually duplicated release numbers.
 
@@ -199,18 +199,24 @@ Typical `appsettings.json`:
 ```json
 {
   "TaskListStats": {
-    "DatabasePath": "/srv/task-list/data/task-list.db",
-    "ListenUrl": "http://0.0.0.0:8712"
+    "DatabasePath": "/srv/task-list/data/task-list.db"
   }
 }
 ```
 
-Environment variables can override it:
+`TASKLIST_DB_PATH` overrides the database path:
 
 ```bash
 export TASKLIST_DB_PATH=/srv/task-list/data/task-list.db
-export TASKLIST_STATS_URL=http://0.0.0.0:8712
 ```
+
+Without configuration, Stats listens on loopback only, at `http://127.0.0.1:8712`, matching TaskList's `http://127.0.0.1:8711`. To choose another address, pass `--urls` (or set the standard `ASPNETCORE_URLS` environment variable). For example, to accept LAN connections:
+
+```bash
+dotnet run --urls "http://0.0.0.0:8712"
+```
+
+When Task Scheduler launches `TaskListStats.exe` directly, add the same `--urls "http://0.0.0.0:8712"` argument if other devices need to connect. The former `ListenUrl` setting and `TASKLIST_STATS_URL` variable are no longer read.
 
 ## Runtime logging
 
@@ -252,13 +258,18 @@ Task IDs shown in Stats link back to the main TaskList app using the task's Univ
 
 TaskList opens the correct list, switches to **All**, scrolls to the task, and highlights it.
 
-The TaskList origin is defined in `wwwroot/app.js`:
+By default, links point to TaskList on the same host you opened Stats with, at port 8711. For example, Stats at `http://192.168.1.50:8712` links to `http://192.168.1.50:8711/task/<UniversalID>`. If TaskList uses another host, port, or protocol, set its address in `appsettings.json`:
 
-```javascript
-const TASKLIST_ORIGIN = 'http://tasklist.lehighradio.com:8711';
+```json
+{
+  "TaskListStats": {
+    "DatabasePath": "../task-list/data/task-list.db",
+    "TaskListUrl": "https://tasks.example.com"
+  }
+}
 ```
 
-Change it if your TaskList instance uses another host, port, or protocol.
+The address is sent only in the authenticated snapshot response and is included in snapshot exports. Restart Stats after changing it.
 
 ## Statistics sections
 
@@ -446,7 +457,7 @@ An expired session should send you back to Login. Otherwise inspect `/api/health
 
 ### Task-ID links open the wrong TaskList server
 
-Change `TASKLIST_ORIGIN` in `wwwroot/app.js`.
+Set `TaskListStats:TaskListUrl` in `appsettings.json` to TaskList's address and restart Stats. See [TaskList deep links](#tasklist-deep-links).
 
 ### Statistics differ from what you expected
 
@@ -458,7 +469,15 @@ Run `node tests/frontend.test.cjs` for frontend regression tests using the actua
 
 Optional browser layout checks use Python and Playwright with Firefox installed: `python3 tests/browser_layout.py`. The checks run the actual frontend with synthetic API data across nine viewport sizes in both themes. They verify that roomy desktop windows fit both lists above the status bar, while laptop/mobile layouts use the workspace as their only vertical scroller and let the lists fill the visible area after scrolling past the controls. Use `--browser chromium` or `--browser webkit` to select another installed Playwright browser. These are development tools only.
 
-## Current release: v2.1.28
+## Current release: v2.2.0
+
+### v2.2.0
+
+- Choose the listen address the same way as TaskList: `http://127.0.0.1:8712` by default, overridden by `--urls` or `ASPNETCORE_URLS`. Remove the `ListenUrl` setting and `TASKLIST_STATS_URL` variable, and the private LAN address that was committed in `appsettings.json`.
+- Hash new passwords with 600,000 PBKDF2-HMAC-SHA256 iterations and upgrade 210,000-iteration hashes after the next successful login, replacing `auth.json` atomically.
+- Link task IDs to TaskList on the current host at port 8711 instead of a hardcoded address; the optional `TaskListStats:TaskListUrl` setting overrides it.
+- Generate `wwwroot/version.json` without a byte-order mark and only when the version changes, so builds no longer modify the committed file.
+- Verified default/`--urls`/`ASPNETCORE_URLS` addresses, first-run setup, legacy-hash login and upgrade, unchanged hash on a wrong password, restart, and the login rate limit against the running app.
 
 ### v2.1.28
 

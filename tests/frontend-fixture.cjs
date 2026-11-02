@@ -72,7 +72,7 @@ function fixture() {
   };
   const context = vm.createContext({
     document, Node: Element, navigator: {}, console, URL, URLSearchParams,
-    location: { origin: 'http://stats.test', pathname: '/', search: '' },
+    location: { origin: 'http://stats.test', protocol: 'http:', hostname: 'stats.test', pathname: '/', search: '' },
     fetch: async () => { throw new Error('Unexpected fetch'); },
     addEventListener() {}, matchMedia: () => ({ matches: false, addEventListener() {} }),
     localStorage: { getItem: () => null, setItem() {} },
