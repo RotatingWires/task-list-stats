@@ -469,7 +469,11 @@ Run `node tests/frontend.test.cjs` for frontend regression tests using the actua
 
 Optional browser layout checks use Python and Playwright with Firefox installed: `python3 tests/browser_layout.py`. The checks run the actual frontend with synthetic API data across nine viewport sizes in both themes. They verify that roomy desktop windows fit both lists above the status bar, while laptop/mobile layouts use the workspace as their only vertical scroller and let the lists fill the visible area after scrolling past the controls. Use `--browser chromium` or `--browser webkit` to select another installed Playwright browser. These are development tools only.
 
-## Current release: v2.2.0
+## Current release: v2.2.1
+
+### v2.2.1
+
+- Draw the title-bar minimize, maximize, and close symbols with CSS in equal-size boxes so they line up; the old `_` sat on the text baseline below the other two. TaskList and NewsReview use the same markup and styles.
 
 ### v2.2.0
 
