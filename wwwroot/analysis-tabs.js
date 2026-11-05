@@ -473,11 +473,19 @@ function initializeAnalysisTabs() {
   if (!$('#compareRangeA').value) $('#compareRangeA').value = formatAnalysisInputRange(ago30, today);
   if (!$('#compareRangeB').value) $('#compareRangeB').value = formatAnalysisInputRange(ago60, ago31);
 
-  $('#taskFlowQuery').addEventListener('input', () => { if (state.activeTab === 'taskFlow') renderTaskFlow(); });
-  for (const id of ['taskFlowRange', 'taskFlowEventType', 'taskFlowOrder'])
+  // Typed ranges and filters apply on Search (or Enter), not on every keystroke; dropdowns apply when chosen.
+  $('#taskFlowForm').addEventListener('submit', event => {
+    event.preventDefault();
+    if (state.activeTab === 'taskFlow') renderTaskFlow();
+  });
+  for (const id of ['taskFlowEventType', 'taskFlowOrder'])
     $(`#${id}`).addEventListener('change', () => { if (state.activeTab === 'taskFlow') renderTaskFlow(); });
 
-  for (const id of ['compareMode', 'compareListA', 'compareListB', 'compareRangeA', 'compareRangeB'])
+  $('#compareForm').addEventListener('submit', event => {
+    event.preventDefault();
+    if (state.activeTab === 'compare') renderCompare();
+  });
+  for (const id of ['compareMode', 'compareListA', 'compareListB'])
     $(`#${id}`).addEventListener('change', () => { if (state.activeTab === 'compare') renderCompare(); });
 
   $('#sessionGap').addEventListener('change', () => { if (state.activeTab === 'sessions') renderActivitySessions(); });

@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.4
+# TaskList Stats v2.2.5
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -320,6 +320,8 @@ Nesting depth, largest task trees, deepest tasks, title categories, common words
 
 Chronological event history with one **Date/time range** field, event type, ordering, text/list/ID filtering, status transitions, and TaskList deep links. Like TaskList Search and NewsReview, enter `10/3 - 10/8, 9am - 5pm`, or either range alone. The comma separates the date range from the time range. Dates accept `m/d`, `m/d/yy`, or `m/d/yyyy`; omitted years use the current year. Times use the browser's local clock with flexible 12-hour parsing; omitted AM/PM means AM. Hyphens, en dashes, and em dashes work as range separators.
 
+The range and the text filter apply when you press **Search** (or Enter), as in TaskList and NewsReview, so half-typed phrases are not searched; the Event and Order dropdowns apply as soon as you choose.
+
 With the range field empty, undated events remain visible as “Unknown” after dated rows in either sort direction. Choosing an explicit range excludes events that cannot be placed in that range. Time-only ranges search all dates, and overnight ranges such as `10pm - 2am` match late-night and early-morning times on each selected date. A time filter excludes date-only events rather than treating them as midnight. Moving tasks preserves their original event attribution; historical task links follow the permanent Universal ID to the current list and visible number.
 
 Created events display as `Created → Open` rather than showing a missing previous status, while normal state changes continue to display their actual transitions.
@@ -328,7 +330,7 @@ On roomy desktop windows, the Task Flow table fills the space below its controls
 
 ### Compare
 
-Compare either two list scopes or two time periods. Time-period mode uses one combined date/time range field for Period A and one for Period B, with the same syntax and missing-time behavior as Task Flow. Either date or time ranges can be supplied alone, and clearing a period's field includes all recorded history. The Difference section reports `A - B` for the same metrics.
+Compare either two list scopes or two time periods. Time-period mode uses one combined date/time range field for Period A and one for Period B, with the same syntax and missing-time behavior as Task Flow. Either date or time ranges can be supplied alone, and clearing a period's field includes all recorded history. Period ranges apply when you press **Search** (or Enter); the Compare mode and list dropdowns apply as soon as you choose. The Difference section reports `A - B` for the same metrics.
 
 Net recorded open flow follows actual status transitions: deleting an Open task reduces it, while Done → Cancelled and Cancelled → Done leave it unchanged. Legacy reconstructed closing transitions use their recorded/inferred Open origin. This measures recorded flow; current item counts remain a separate measure, particularly after moves or gaps in historical tracking.
 
@@ -486,7 +488,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.4**.
+Current release: **v2.2.5**.
+
+### v2.2.5
+
+- Task Flow and Compare search when you press **Search** or Enter, like TaskList and NewsReview, instead of on every keystroke or when a field loses focus. Dropdown choices still apply right away.
 
 ### v2.2.4
 

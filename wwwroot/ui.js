@@ -168,6 +168,7 @@ function populateListFilter() {
 
 function menuRadioButton(label, checked, onClick) {
   const button=document.createElement('button');
+  button.type='button'; // Menus sit inside the Task Flow/Compare forms; picking an option must not submit them.
   button.type='button';
   button.setAttribute('role','menuitemradio');
   button.setAttribute('aria-checked',checked?'true':'false');
