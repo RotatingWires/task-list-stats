@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.3
+# TaskList Stats v2.2.4
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -484,7 +484,11 @@ Optional browser layout checks use Python and Playwright with Firefox installed:
 
 ## Release notes
 
-Current release: **v2.2.3**.
+Current release: **v2.2.4**.
+
+### v2.2.4
+
+- Rename the two colors the dark theme never overrode (`--soft-shadow`, `--focus-accent`) to `--classic-shadow` and `--classic-accent`, matching the `--classic-*` tokens TaskList uses for the same situation. Nothing looks different.
 
 ### v2.2.3
 

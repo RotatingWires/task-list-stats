@@ -50,8 +50,8 @@
   --heat-4-text: #fff;
 
   /* Same in both themes: the dark theme has never had its own value for these. */
-  --soft-shadow: #808080;
-  --focus-accent: #000080;
+  --classic-shadow: #808080;
+  --classic-accent: #000080;
 }
 
 :root[data-theme-effective="dark"] {

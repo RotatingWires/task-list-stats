@@ -626,7 +626,7 @@ html.row-hover-enabled table > tbody > tr.row-hover > td {
 .roulette-body { padding: 0; }
 .roulette-heading { font-size: 15px; font-weight: 700; margin: 0 2px 3px; }
 .roulette-task-title { font-size: 17px; font-weight: 700; margin: 0 2px 9px; }
-.roulette-table-wrap { margin-top: 8px; box-shadow: 1px 1px 0 var(--soft-shadow); }
+.roulette-table-wrap { margin-top: 8px; box-shadow: 1px 1px 0 var(--classic-shadow); }
 .roulette-table-wrap table { table-layout: fixed; }
 .roulette-table-wrap th:first-child,
 .roulette-table-wrap td:first-child { width: min(210px, 38%); font-weight: 700; }
@@ -634,7 +634,7 @@ html.row-hover-enabled table > tbody > tr.row-hover > td {
 
 .fun-actions { margin: 8px 0 10px; }
 .fun-content { display: grid; gap: 9px; margin-top: 8px; }
-.fun-content .table-wrap { box-shadow: 1px 1px 0 var(--soft-shadow); }
+.fun-content .table-wrap { box-shadow: 1px 1px 0 var(--classic-shadow); }
 .fun-empty { color: var(--ink); background: var(--surface); border-top: 2px solid var(--dark-edge); border-left: 2px solid var(--dark-edge); border-right: 2px solid var(--light-edge); border-bottom: 2px solid var(--light-edge); padding: 14px; }
 .fun-task-heading, .fun-task-title, .fun-day-heading { font-weight: 700; }
 .fun-task-heading, .fun-task-title { padding-left: 2px; padding-right: 2px; }
