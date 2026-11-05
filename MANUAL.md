@@ -471,6 +471,8 @@ Run `node tests/frontend.test.cjs` for frontend regression tests using the actua
 
 Optional browser layout checks use Python and Playwright with Firefox installed: `python3 tests/browser_layout.py`. The checks run the actual frontend with synthetic API data across nine viewport sizes in both themes. They verify that roomy desktop windows fit both lists above the status bar, while laptop/mobile layouts use the workspace as their only vertical scroller and let the lists fill the visible area after scrolling past the controls. Use `--browser chromium` or `--browser webkit` to select another installed Playwright browser. These are development tools only.
 
+GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests/frontend.test.cjs` on every push and pull request. The Playwright layout checks stay a local, optional tool.
+
 ## Development philosophy
 
 - keep the source tree small
