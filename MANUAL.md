@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.2
+# TaskList Stats v2.2.3
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -158,8 +158,8 @@ wwwroot/
   charts.js               Canvas chart drawing and chart tooltip interactions
   ui.js                   navigation, custom selects, filtering, startup/session UI
   theme.js                persistent Light/Dark theme selection and startup application
-  style.css               base Windows 95-style UI and responsive layout
-  theme.css               shared Light/Dark Win95 theme tokens and dark-theme styling
+  style.css               base Windows 95-style UI and responsive layout (colors from theme.css)
+  theme.css               Light/Dark color tokens; the only file with color values
   analysis-tabs.css       analysis, milestone/session, and Calendar-dialog styles
   login.html              login / first-run setup page
   login.js                login, setup-token, and return-URL behavior
@@ -240,7 +240,7 @@ Task Scheduler can therefore launch `TaskListStats.exe` directly rather than usi
 
 Use **View → Theme** to choose **Light** or **Dark**. The selection persists in browser storage and applies to the Stats workspace and login/setup UI.
 
-The dark theme keeps the Windows 95 raised/recessed look instead of replacing it with a generic flat theme. Canvas charts read theme-aware colors and redraw appropriately.
+The dark theme keeps the Windows 95 raised/recessed look instead of replacing it with a generic flat theme. Every color is a token in `wwwroot/theme.css`, defined once for Light and once for Dark, with the same token names TaskList, NewsReview, and SpendTracker use; the other stylesheets and scripts contain no color values, apart from the two browser `theme-color` values that `theme.js` writes to the page metadata. Canvas charts read their colors from the `--chart-*` and `--pattern-*` tokens by series name and redraw when the theme changes.
 
 There is intentionally no automatic **System** theme; theme selection is strictly Light or Dark.
 
@@ -484,7 +484,13 @@ Optional browser layout checks use Python and Playwright with Firefox installed:
 
 ## Release notes
 
-Current release: **v2.2.2**.
+Current release: **v2.2.3**.
+
+### v2.2.3
+
+- Move every color into `wwwroot/theme.css` as Light/Dark tokens, using the token names shared with TaskList, NewsReview, and SpendTracker (`--face`, `--surface`, `--ink`, `--muted`, `--light-edge`, `--dark-edge`, `--title`, `--link`, and so on). The theme-only override rules that used to repaint `style.css` and `analysis-tabs.css` now live in the rules they belong to, so each color is set once.
+- Charts name their series (`created`, `completed`, `cancelled`, `patternCreated`, `patternCompleted`) instead of passing hex colors that were translated back into theme colors.
+- The look is unchanged: every view, menu, and dialog renders identically in both themes before and after.
 
 ### v2.2.2
 

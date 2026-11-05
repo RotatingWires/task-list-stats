@@ -7,31 +7,28 @@ let tooltip = null;
 let tooltipCanvas = null;
 let tooltipIndexValue = -1;
 
-function cssColor(name, fallback) {
-  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return value || fallback;
+function cssColor(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
+/** Every chart color is a theme token from theme.css; data series are referred to by name. */
 function chartPalette() {
   return {
-    surface: cssColor('--chart-surface', '#fff'),
-    text: cssColor('--chart-text', '#222'),
-    muted: cssColor('--chart-muted', '#333'),
-    axis: cssColor('--chart-axis', '#808080'),
-    grid: cssColor('--chart-grid', '#e0e0e0'),
-    created: cssColor('--chart-created', '#000080'),
-    completed: cssColor('--chart-completed', '#008000'),
-    cancelled: cssColor('--chart-cancelled', '#800000')
+    surface: cssColor('--chart-surface'),
+    text: cssColor('--chart-text'),
+    muted: cssColor('--chart-muted'),
+    axis: cssColor('--chart-axis'),
+    grid: cssColor('--chart-grid'),
+    created: cssColor('--chart-created'),
+    completed: cssColor('--chart-completed'),
+    cancelled: cssColor('--chart-cancelled'),
+    patternCreated: cssColor('--pattern-created'),
+    patternCompleted: cssColor('--pattern-completed')
   };
 }
 
-function themedSeriesColor(color) {
-  const value = String(color || '').toLowerCase();
-  const palette = chartPalette();
-  if (value === '#000080') return palette.created;
-  if (value === '#008000') return palette.completed;
-  if (value === '#800000') return palette.cancelled;
-  return color;
+function seriesColor(series) {
+  return chartPalette()[series];
 }
 
 function prepareCanvas(canvas, minHeight = 220) {
@@ -115,7 +112,7 @@ function drawBarValue(ctx, text, x, y) {
   ctx.restore();
 }
 
-function drawBarChart(canvas, labels, values, color = '#000080', decimal = false, yLabel = 'Tasks') {
+function drawBarChart(canvas, labels, values, series = 'created', decimal = false, yLabel = 'Tasks') {
   if (!canvas || canvas.closest('[hidden]')) return;
   const { ctx, width, height } = prepareCanvas(canvas);
   const palette = chartPalette();
@@ -131,7 +128,7 @@ function drawBarChart(canvas, labels, values, color = '#000080', decimal = false
   const n = values.length;
   const slot = a.plotW / n;
   const barW = Math.max(4, slot * .70);
-  const fill = themedSeriesColor(color);
+  const fill = seriesColor(series);
   values.forEach((value, i) => {
     const h = a.plotH * (value / a.max);
     const x = a.left + i * slot + (slot - barW) / 2;
@@ -150,7 +147,7 @@ function drawBarChart(canvas, labels, values, color = '#000080', decimal = false
   delete canvas._tooltipConfig;
 }
 
-function drawGroupedBarChart(canvas, labels, aValues, bValues, aColor, bColor, yLabel = 'Tasks') {
+function drawGroupedBarChart(canvas, labels, aValues, bValues, aSeries, bSeries, yLabel = 'Tasks') {
   if (!canvas || canvas.closest('[hidden]')) return;
   const { ctx, width, height } = prepareCanvas(canvas);
   const palette = chartPalette();
@@ -160,8 +157,8 @@ function drawGroupedBarChart(canvas, labels, aValues, bValues, aColor, bColor, y
   const slot = a.plotW / n;
   const hourChart = canvas.id === 'hourChart';
   const bw = Math.max(4, slot * (hourChart ? .38 : .34));
-  const colorA = themedSeriesColor(aColor);
-  const colorB = themedSeriesColor(bColor);
+  const colorA = seriesColor(aSeries);
+  const colorB = seriesColor(bSeries);
   for (let i = 0; i < n; i++) {
     const h1 = a.plotH * aValues[i] / a.max;
     const h2 = a.plotH * bValues[i] / a.max;
@@ -257,8 +254,8 @@ function installLineTooltip(canvas) {
   });
 }
 
-function drawLineChart(canvas, labels, values, color = '#000080', yLabel = 'Tasks', seriesName = 'Series') {
-  drawMultiLineChart(canvas, labels, [{ name: seriesName, values, color }], yLabel);
+function drawLineChart(canvas, labels, values, series = 'created', yLabel = 'Tasks', seriesName = 'Series') {
+  drawMultiLineChart(canvas, labels, [{ name: seriesName, values, series }], yLabel);
 }
 
 function drawMultiLineChart(canvas, labels, series, yLabel = 'Tasks') {
@@ -278,7 +275,7 @@ function drawMultiLineChart(canvas, labels, series, yLabel = 'Tasks') {
   }
   const xAt = i => a.left + (n === 1 ? a.plotW / 2 : a.plotW * i / (n - 1));
   for (const item of series) {
-    ctx.strokeStyle = themedSeriesColor(item.color);
+    ctx.strokeStyle = seriesColor(item.series);
     ctx.lineWidth = 2;
     ctx.beginPath();
     item.values.forEach((value, i) => {

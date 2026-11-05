@@ -270,7 +270,7 @@ function renderOverview() {
     else if (days <= 30) buckets[3][1]++;
     else buckets[4][1]++;
   }
-  Charts.drawBarChart($('#completionBucketsChart'), buckets.map(x => x[0]), buckets.map(x => x[1]), '#000080', false, 'Completed tasks');
+  Charts.drawBarChart($('#completionBucketsChart'), buckets.map(x => x[0]), buckets.map(x => x[1]), 'created', false, 'Completed tasks');
 
   const oldest = openItems.sort((a,b)=>a.createdDate-b.createdDate).slice(0, 15);
   setTable($('#oldestOpenTable'), ['List', 'ID', 'Task', 'Created', 'Age'], oldest.map(item => [

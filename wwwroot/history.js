@@ -35,13 +35,13 @@ function renderTrends() {
   const mode = $('#trendGroup').value;
   const grouped = groupedEvents(items, mode);
   Charts.drawMultiLineChart($('#trendChart'), grouped.keys.map(k => groupLabel(k, mode)), [
-    { name: 'Created', values: grouped.keys.map(k => grouped.maps.created.get(k) || 0), color: '#000080' },
-    { name: 'Completed', values: grouped.keys.map(k => grouped.maps.completed.get(k) || 0), color: '#008000' },
-    { name: 'Cancelled', values: grouped.keys.map(k => grouped.maps.cancelled.get(k) || 0), color: '#800000' }
+    { name: 'Created', values: grouped.keys.map(k => grouped.maps.created.get(k) || 0), series: 'created' },
+    { name: 'Completed', values: grouped.keys.map(k => grouped.maps.completed.get(k) || 0), series: 'completed' },
+    { name: 'Cancelled', values: grouped.keys.map(k => grouped.maps.cancelled.get(k) || 0), series: 'cancelled' }
   ], 'Tasks per period');
 
   const backlog = approximateBacklog(items);
-  Charts.drawLineChart($('#backlogChart'), backlog.labels, backlog.values, '#000080', 'Approx. open tasks', 'Approx. backlog');
+  Charts.drawLineChart($('#backlogChart'), backlog.labels, backlog.values, 'created', 'Approx. open tasks', 'Approx. backlog');
 
   const monthly = new Map();
   const monthlyCompleted = new Map();
@@ -287,7 +287,7 @@ function renderSeasonality(items) {
     for (const item of items) if (item.createdDate) counts[item.createdDate.getMonth()]++;
     for (let i=0;i<12;i++) counts[i] /= years.length;
   }
-  Charts.drawBarChart($('#seasonalityChart'), MONTHS, counts, '#000080', true, 'Average tasks created');
+  Charts.drawBarChart($('#seasonalityChart'), MONTHS, counts, 'created', true, 'Average tasks created');
 }
 
 function renderLists() {
@@ -311,7 +311,7 @@ function renderLists() {
   }
   rows.sort((a,b)=>Number(b[1].replaceAll(',',''))-Number(a[1].replaceAll(',','')));
   setTable($('#listStatsTable'), ['List','Total','Open','Done','Cancelled','Completion','Avg completion','Share'], rows, [1,2,3,4]);
-  Charts.drawBarChart($('#listShareChart'), shareLabels, shareValues, '#000080', false, 'Current entries');
+  Charts.drawBarChart($('#listShareChart'), shareLabels, shareValues, 'created', false, 'Current entries');
 
   const monthListCounts = new Map();
   for (const item of allItems) {

@@ -1,10 +1,10 @@
-/* TaskList-style login/setup screen for TaskList Stats. */
+/* TaskList-style login/setup screen for TaskList Stats. Colors come from theme.css. */
 body.login-page {
   display: grid;
   place-items: center;
   min-height: 100dvh;
   padding: 10px;
-  background: var(--teal);
+  background: var(--desktop);
 }
 
 .login-window {
@@ -30,12 +30,12 @@ body.login-page {
 .login-form input[type="password"] {
   min-width: 0;
   padding: 6px 7px;
-  background: #fff;
-  color: #000;
-  border-top: 2px solid #404040;
-  border-left: 2px solid #404040;
-  border-right: 2px solid #fff;
-  border-bottom: 2px solid #fff;
+  background: var(--surface);
+  color: var(--ink);
+  border-top: 2px solid var(--dark-edge);
+  border-left: 2px solid var(--dark-edge);
+  border-right: 2px solid var(--light-edge);
+  border-bottom: 2px solid var(--light-edge);
   border-radius: 0;
   outline: none;
 }
@@ -48,7 +48,7 @@ body.login-page {
 
 .login-error {
   min-height: 18px;
-  color: #800000;
+  color: var(--error);
   font-weight: 700;
 }
 
@@ -75,7 +75,7 @@ body.login-page {
 @media (max-width: 650px) {
   body.login-page {
     padding: max(10px, env(safe-area-inset-top)) 10px max(10px, env(safe-area-inset-bottom));
-    background: var(--teal);
+    background: var(--desktop);
   }
 
   .login-page .login-window {
@@ -87,8 +87,8 @@ body.login-page {
     min-height: 0 !important;
     max-height: calc(100dvh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom)));
     overflow: auto;
-    border-top: 2px solid var(--light);
-    border-left: 2px solid var(--light);
+    border-top: 2px solid var(--light-edge);
+    border-left: 2px solid var(--light-edge);
     border-right: 2px solid var(--black);
     border-bottom: 2px solid var(--black);
     box-shadow: 1px 1px 0 var(--shadow);

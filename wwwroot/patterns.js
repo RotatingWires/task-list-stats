@@ -1,8 +1,3 @@
-function patternChartColor(name, fallback) {
-  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  return value || fallback;
-}
-
 function renderPatterns() {
   const items = scopedItems();
   const createWeek = Array(7).fill(0), doneWeek = Array(7).fill(0);
@@ -17,10 +12,8 @@ function renderPatterns() {
       if (hasConfirmedClockTime(item.completedAt)) doneHour[item.completedDate.getHours()]++;
     }
   }
-  const createdColor = patternChartColor('--pattern-created', '#000080');
-  const completedColor = patternChartColor('--pattern-completed', '#008000');
-  Charts.drawGroupedBarChart($('#weekdayChart'), WEEKDAYS, createWeek, doneWeek, createdColor, completedColor, 'Tasks');
-  Charts.drawGroupedBarChart($('#hourChart'), Array.from({length:24},(_,h)=>formatHour(h)), createHour, doneHour, createdColor, completedColor, 'Tasks');
+  Charts.drawGroupedBarChart($('#weekdayChart'), WEEKDAYS, createWeek, doneWeek, 'patternCreated', 'patternCompleted', 'Tasks');
+  Charts.drawGroupedBarChart($('#hourChart'), Array.from({length:24},(_,h)=>formatHour(h)), createHour, doneHour, 'patternCreated', 'patternCompleted', 'Tasks');
   renderWeekdayHourHeatmap(items);
 
   const bestCreationWeekCount = Math.max(...createWeek);
@@ -147,10 +140,10 @@ function renderTrees() {
   const depthCounts = new Map();
   for (const item of items) increment(depthCounts, item.depth);
   const depths = [...depthCounts.keys()].sort((a,b)=>a-b);
-  Charts.drawBarChart($('#depthChart'), depths.map(d=>d===0?'Root':`Depth ${d}`), depths.map(d=>depthCounts.get(d)), '#000080', false, 'Tasks');
+  Charts.drawBarChart($('#depthChart'), depths.map(d=>d===0?'Root':`Depth ${d}`), depths.map(d=>depthCounts.get(d)), 'created', false, 'Tasks');
 
   const typeCounts = inferTaskTypes(items);
-  Charts.drawBarChart($('#taskTypeChart'), typeCounts.map(x=>x[0]), typeCounts.map(x=>x[1]), '#000080', false, 'Tasks');
+  Charts.drawBarChart($('#taskTypeChart'), typeCounts.map(x=>x[0]), typeCounts.map(x=>x[1]), 'created', false, 'Tasks');
 
   const largest = [...rootTrees].sort((a,b)=>b.size-a.size).slice(0,12);
   setTable($('#largestTreesTable'), ['List','Root','Title','Tree size','Max depth'], largest.map(x=>[
