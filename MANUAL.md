@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.1.28
+# TaskList Stats v2.2.2
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -137,7 +137,9 @@ The source tree intentionally stays small. Behavior belongs in normal purpose-ba
 
 ```text
 TaskListStats.csproj      .NET project, dependencies, and release version
-Program.cs                server, auth, read-only snapshot reader, and API
+src/
+  Program.cs              server, auth, read-only snapshot reader, and API
+  SingleFileLogger.cs     capped single-file runtime log writer
 appsettings.json          database path and listen-address configuration
 README.md                 setup, behavior, security, and release documentation
 
@@ -469,7 +471,24 @@ Run `node tests/frontend.test.cjs` for frontend regression tests using the actua
 
 Optional browser layout checks use Python and Playwright with Firefox installed: `python3 tests/browser_layout.py`. The checks run the actual frontend with synthetic API data across nine viewport sizes in both themes. They verify that roomy desktop windows fit both lists above the status bar, while laptop/mobile layouts use the workspace as their only vertical scroller and let the lists fill the visible area after scrolling past the controls. Use `--browser chromium` or `--browser webkit` to select another installed Playwright browser. These are development tools only.
 
-## Current release: v2.2.1
+## Development philosophy
+
+- keep the source tree small
+- prefer normal source edits over version-specific patch files
+- do not monkey-patch or reassign existing functions to bolt on release behavior
+- remove retired features from markup, code, styles, and dependencies instead of merely hiding them
+- keep TaskList authoritative and all Stats access to its database read-only
+- preserve timestamp precision instead of inventing data
+- keep controls consistent across desktop and mobile
+- use boring, understandable browser/.NET features before adding dependencies
+
+## Release notes
+
+Current release: **v2.2.2**.
+
+### v2.2.2
+
+- Move the C# server sources into `src/`, matching TaskList and NewsReview. `TaskListStats.csproj`, `appsettings.json`, `wwwroot/`, `tests/`, and every build, run, and test command stay where they were; behavior is unchanged.
 
 ### v2.2.1
 
@@ -821,14 +840,3 @@ Optional browser layout checks use Python and Playwright with Firefox installed:
 - Remove retired Search / Explorer, Flow, Insights, Ancient Task, and Task Graveyard features from the actual source instead of merely hiding them.
 
 Earlier release-by-release details remain available in Git commit history.
-
-## Development philosophy
-
-- keep the source tree small
-- prefer normal source edits over version-specific patch files
-- do not monkey-patch or reassign existing functions to bolt on release behavior
-- remove retired features from markup, code, styles, and dependencies instead of merely hiding them
-- keep TaskList authoritative and all Stats access to its database read-only
-- preserve timestamp precision instead of inventing data
-- keep controls consistent across desktop and mobile
-- use boring, understandable browser/.NET features before adding dependencies
