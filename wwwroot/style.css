@@ -530,13 +530,14 @@ html.row-hover-enabled table > tbody > tr.row-hover > td {
 .statusbar {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 5px;
+  gap: 4px;
   padding: 4px 5px;
   border-top: 1px solid var(--light-edge);
 }
+/* Panels the size of TaskList's: body-size text, 24px tall. */
 .statusbar span {
-  min-height: 22px;
-  padding: 3px 5px;
+  min-height: 24px;
+  padding: 4px 6px;
   border-top: 1px solid var(--shadow);
   border-left: 1px solid var(--shadow);
   border-right: 1px solid var(--light-edge);
@@ -544,7 +545,6 @@ html.row-hover-enabled table > tbody > tr.row-hover > td {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
 }
 
 .retro-dialog {
