@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.8
+# TaskList Stats v2.2.9
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -490,7 +490,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.8**.
+Current release: **v2.2.9**.
+
+### v2.2.9
+
+- The Dark theme's error red is `#ff9c9c`, the same as NewsReview's and TaskList's.
 
 ### v2.2.8
 
