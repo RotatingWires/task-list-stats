@@ -85,6 +85,20 @@ button { cursor: pointer; }
 .menu-wrap > button:not(.retro-select)[aria-expanded="true"] {
   border: 1px dotted var(--black);
 }
+/* Menu bar buttons highlight like NewsReview's top bar: on mouse hover, and while their menu is open. */
+.menubar > button[aria-expanded="true"],
+.menubar > .menu-wrap > button[aria-expanded="true"] {
+  border-color: transparent;
+  background: var(--title);
+  color: var(--title-text);
+}
+@media (hover: hover) and (pointer: fine) {
+  .menubar > button:hover,
+  .menubar > .menu-wrap > button:hover {
+    background: var(--title);
+    color: var(--title-text);
+  }
+}
 .menu-wrap { position: relative; }
 .menu-dropdown {
   position: absolute;

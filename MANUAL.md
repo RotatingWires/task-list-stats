@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.5
+# TaskList Stats v2.2.6
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -488,7 +488,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.5**.
+Current release: **v2.2.6**.
+
+### v2.2.6
+
+- Menu bar buttons (File, View, Help) highlight in the title color on mouse hover and while their menu is open, like NewsReview's top bar.
 
 ### v2.2.5
 
