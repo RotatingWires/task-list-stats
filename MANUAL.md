@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.9
+# TaskList Stats v2.2.10
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -490,7 +490,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.9**.
+Current release: **v2.2.10**.
+
+### v2.2.10
+
+- Dialogs dim the page with NewsReview's `#0007` backdrop, matching NewsReview, TaskList, and SpendTracker.
 
 ### v2.2.9
 
