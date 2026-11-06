@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.7
+# TaskList Stats v2.2.8
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -409,6 +409,8 @@ For older task data, TaskList reconstructs event rows from timestamps it already
 
 TaskList v1.5.24 and newer save list names at deletion. Stats reads this optional `deleted_lists` history without writing to TaskList's database and labels saved names “(deleted)” across historical views. Lists deleted before name preservation show “Deleted list #ID (name unavailable)” because their original names cannot be recovered. Older databases remain supported, and deleted lists are not added to current-list counts or selectors.
 
+TaskList v1.7.9 adds **File > Fresh Start...**, which can remove finished tasks, archived lists, the history of deleted tasks, or all task history to free disk space. Stats has no Fresh start of its own because it never writes to TaskList's database; its only stored data is its password hash and log. When a TaskList Fresh start removes history, TaskList changes its history revision, so Stats' next event request reports that a reset is required and Stats reloads the whole remaining history, just as after a TaskList restore. Charts, records, and Milestones then reflect only the history that remains; clearing all task history leaves one legacy event per date each remaining task still has.
+
 The Stats **Help** button opens About immediately, matching TaskList. Its wide, rectangular dialog uses 16px text for the event-history explanation and places about.lehighradio.com above the application/version label at the bottom, as TaskList does. The event-history paragraph explains missing dates, unavailable list names, and older history.
 
 ## Exporting a snapshot
@@ -488,7 +490,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.7**.
+Current release: **v2.2.8**.
+
+### v2.2.8
+
+- Document how Stats follows TaskList v1.7.9's Fresh Start: no Stats change is needed, because a Fresh start that removes history changes TaskList's history revision and Stats reloads the remaining history.
 
 ### v2.2.7
 
