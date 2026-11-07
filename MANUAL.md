@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.12
+# TaskList Stats v2.2.13
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -490,7 +490,12 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.12**.
+Current release: **v2.2.13**.
+
+### v2.2.13
+
+- On phones the title bar starts the same distance from the top as TaskList's (`--ios-top-offset`, at least 20px below the status bar).
+- Home Screen and app icons are PNGs drawn from the favicon (180, 192, and 512 px), so the installed app's icon matches the browser tab's.
 
 ### v2.2.12
 

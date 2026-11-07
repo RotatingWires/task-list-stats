@@ -4,6 +4,8 @@
   font-size: 14px;
   color: var(--ink);
   --ios-bottom-offset: 5px;
+  /* The least room above the title bar on phones, the same in TaskList, TaskList Stats, NewsReview, and SpendTracker. */
+  --ios-top-offset: 20px;
 }
 
 * { box-sizing: border-box; }
@@ -786,6 +788,10 @@ select:focus-visible,
 @media (max-width: 650px) {
   .window:not(.login-window) { border: 0; box-shadow: none; }
   .titlebar { margin: 0; }
+  /* Below iOS' status bar like TaskList: the inset the phone reports, but never less than --ios-top-offset (some
+     installed Home Screen apps report too little). */
+  body:not(.login-page) { padding-top: max(env(safe-area-inset-top), var(--ios-top-offset)); }
+  body:not(.login-page) .window { height: calc(100dvh - max(env(safe-area-inset-top), var(--ios-top-offset))); }
 }
 
 @media (max-width: 460px) {
