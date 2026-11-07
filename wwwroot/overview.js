@@ -59,7 +59,8 @@ function applyReleaseLabel(version) {
   if (!version) return;
   document.title = `TaskList Stats v${version}`;
   const title = document.querySelector('.title-left');
-  if (title) title.textContent = `TaskList Stats v${version}`;
+  // The version is its own span so phones can hide it from the title bar.
+  if (title) title.replaceChildren('TaskList Stats', Object.assign(document.createElement('span'), { className: 'title-version', textContent: ` v${version}` }));
   const about = document.querySelector('#aboutVersion');
   if (about) about.textContent = `TaskList Stats v${version}`;
 }

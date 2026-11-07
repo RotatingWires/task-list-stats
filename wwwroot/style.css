@@ -806,3 +806,8 @@ select:focus-visible,
   .records-layout .metric-list { grid-template-columns: 1fr; row-gap: 2px; }
   .records-layout .metric-value { text-align: left; margin-bottom: 8px; }
 }
+
+/* Phones leave the version out of the title bar, where it would be cut off; the About box still shows it. */
+@media (max-width: 650px) {
+  .title-version { display: none; }
+}
