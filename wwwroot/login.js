@@ -13,7 +13,6 @@ let setupMode = false;
 
 function applyReleaseLabel(version) {
   if (!version) return;
-  document.title = `TaskList Stats v${version} Login`;
   const label = document.querySelector('.title-left');
   if (label) label.replaceChildren('TaskList Stats', Object.assign(document.createElement('span'), { className: 'title-version', textContent: ` v${version}` }));
 }
