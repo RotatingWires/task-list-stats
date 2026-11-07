@@ -324,8 +324,6 @@ button:active,
 .stat-card .label { font-size: 12px; min-height: 30px; }
 .stat-card .value { font-weight: 700; font-size: 24px; line-height: 1.1; margin-top: 4px; overflow-wrap: anywhere; }
 .stat-card .sub { font-size: 11px; color: var(--muted-soft); margin-top: 4px; }
-.stat-card.subject-first .value { font-size: 19px; line-height: 1.2; }
-.stat-card.subject-first .sub { font-size: 14px; font-weight: 700; color: var(--ink); margin-top: 7px; }
 
 .two-column { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .groupbox {
@@ -341,7 +339,7 @@ button:active,
 .metric-list .metric-label { overflow-wrap: anywhere; position: relative; }
 .has-tooltip { cursor: help; text-decoration: underline dotted; text-underline-offset: 2px; touch-action: manipulation; }
 .metric-list .metric-value { font-weight: 700; text-align: right; }
-.note, .small-note { font-size: 11px; color: var(--muted-soft); line-height: 1.35; }
+.note { font-size: 11px; color: var(--muted-soft); line-height: 1.35; }
 .exam-scope-note { display: inline-block; margin: 0 0 8px; }
 
 .table-wrap {
@@ -391,7 +389,6 @@ html.row-hover-enabled table > tbody > tr.row-hover > td {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
 }
-.chart-frame.tall { min-height: 240px; }
 .chart-frame canvas { display: block; width: 100%; max-width: none; }
 .chart-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 0 0 6px 4px; font-size: 13px; font-weight: 700; }
 .legend-created { color: var(--chart-created); }
@@ -729,7 +726,6 @@ select:focus-visible,
 
 @media (min-width: 781px) {
   .chart-frame { max-width: none; min-height: 190px; margin-left: 0; margin-right: 0; }
-  .chart-frame.tall { min-height: 200px; }
   #hourChart { min-width: 1050px; }
   #taskTypeChart { min-width: 850px; }
 }
