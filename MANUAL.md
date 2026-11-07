@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.16
+# TaskList Stats v2.2.17
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -490,7 +490,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.16**.
+Current release: **v2.2.17**.
+
+### v2.2.17
+
+- Opening the app signed out goes to plain `login.html`, like NewsReview, instead of `login.html?ReturnUrl=%2F`; deep links still keep their address through signing in.
 
 ### v2.2.16
 
