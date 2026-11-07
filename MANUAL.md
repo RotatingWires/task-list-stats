@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.15
+# TaskList Stats v2.2.16
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -490,7 +490,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.15**.
+Current release: **v2.2.16**.
+
+### v2.2.16
+
+- The Home Screen icons leave a margin around the window, like NewsReview's, so iOS's rounded corners no longer cut off its frame and title bar. They have new file names (touch-180.png, touch-192.png, touch-512.png) so iOS downloads them; remove the app from your Home Screen and add it again to update it.
 
 ### v2.2.15
 

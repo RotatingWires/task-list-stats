@@ -1,5 +1,5 @@
 const CACHE = 'task-list-stats-shell';
-const STATIC = ['/', '/index.html', '/login.html', '/login.js', '/version.json', '/auth.css', '/style.css', '/analysis-tabs.css', '/theme.js', '/theme.css', '/app.js', '/overview.js', '/history.js', '/patterns.js', '/analysis-tabs.js', '/ui.js', '/charts.js', '/fun.js', '/manifest.webmanifest', '/icons/stats.svg', '/icons/home-180.png', '/icons/home-192.png', '/icons/home-512.png'];
+const STATIC = ['/', '/index.html', '/login.html', '/login.js', '/version.json', '/auth.css', '/style.css', '/analysis-tabs.css', '/theme.js', '/theme.css', '/app.js', '/overview.js', '/history.js', '/patterns.js', '/analysis-tabs.js', '/ui.js', '/charts.js', '/fun.js', '/manifest.webmanifest', '/icons/stats.svg', '/icons/touch-180.png', '/icons/touch-192.png', '/icons/touch-512.png'];
 const LAZY = ['/milestones.js'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC)));
