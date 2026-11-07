@@ -239,6 +239,11 @@ button:active,
   border-bottom: 2px solid var(--light-edge);
   border-radius: 0;
 }
+/* Phones zoom into a text box whose text is under 16px, so touch screens get 16px boxes; the rest of the page keeps
+   its size. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]), textarea { font-size: 16px; }
+}
 .retro-input::placeholder,
 .analysis-controls input::placeholder,
 .login-form input::placeholder {
