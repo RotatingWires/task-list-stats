@@ -211,6 +211,15 @@ function populateViewMenu() {
       closeMenus();
     }));
   }
+
+  const fontSeparator=document.createElement('div'); fontSeparator.className='menu-separator'; fontSeparator.setAttribute('role','separator');
+  const retroFont=menuRadioButton('Use Retro Font',window.TaskTheme?.getRetroFont?.() ?? false,event=>{
+    event.stopPropagation();
+    window.TaskTheme?.setRetroFont?.(!window.TaskTheme.getRetroFont());
+    closeMenus();
+  });
+  retroFont.setAttribute('role','menuitemcheckbox');
+  menu.append(fontSeparator,retroFont);
 }
 
 function toggleMenu(button, menu) {

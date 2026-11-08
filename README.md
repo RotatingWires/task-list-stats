@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.21
+# TaskList Stats v2.2.22
 
 A separate, read-only statistics dashboard for [TaskList](https://github.com/RotatingWires/task-list), with charts, calendars, task history, comparisons, activity sessions, and milestones.
 
@@ -58,3 +58,7 @@ The quickstart uses plain HTTP on loopback. HTTP does not encrypt passwords, ses
 Passwords use salted PBKDF2-HMAC-SHA256 hashes with 600,000 iterations; a hash saved with fewer iterations is upgraded the next time you log in. Sessions last up to 30 days, slide while active, and are marked Secure when the request uses HTTPS. Setup/login permits 5 attempts per source IP per minute. The setup token is console-only and excluded from file logging.
 
 See the manual for [authentication](MANUAL.md#authentication), [statistics sections](MANUAL.md#statistics-sections), [configuration overrides](MANUAL.md#requirements-and-running), and [troubleshooting](MANUAL.md#troubleshooting).
+
+## Credits
+
+**View → Use Retro Font** uses [W95FA](https://fontsarena.com/w95fa-by-alina-sava/) by Alina Sava, bundled in `wwwroot/fonts/` under the SIL Open Font License 1.1 (`wwwroot/fonts/OFL.txt`).

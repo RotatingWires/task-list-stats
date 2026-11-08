@@ -1,6 +1,9 @@
 (() => {
 'use strict';
 
+/** The page font (Tahoma, or W95FA with View → Use Retro Font) for text drawn on charts. */
+const chartFont = () => getComputedStyle(document.documentElement).getPropertyValue('--ui-font').trim() || 'Tahoma, Arial, sans-serif';
+
 const numberFmt = new Intl.NumberFormat();
 const oneDecimal = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 let tooltip = null;
@@ -51,7 +54,7 @@ function prepareCanvas(canvas, minHeight = 220) {
   ctx.clearRect(0, 0, cssWidth, cssHeight);
   ctx.fillStyle = chartPalette().surface;
   ctx.fillRect(0, 0, cssWidth, cssHeight);
-  ctx.font = 'bold 15px Tahoma, Arial, sans-serif';
+  ctx.font = `bold 15px ${chartFont()}`;
   ctx.textBaseline = 'middle';
   return { ctx, width: cssWidth, height: cssHeight };
 }
@@ -92,7 +95,7 @@ function axes(ctx, width, height, maxValue, yLabel = 'Tasks', left = 78, bottom 
     let yFontSize = 16;
     const maxLabelSpan = Math.max(60, height - 16);
     do {
-      ctx.font = `bold ${yFontSize}px Tahoma, Arial, sans-serif`;
+      ctx.font = `bold ${yFontSize}px ${chartFont()}`;
       if (ctx.measureText(yLabel).width <= maxLabelSpan || yFontSize <= 10) break;
       yFontSize--;
     } while (true);
@@ -104,7 +107,7 @@ function axes(ctx, width, height, maxValue, yLabel = 'Tasks', left = 78, bottom 
 
 function drawBarValue(ctx, text, x, y) {
   ctx.save();
-  ctx.font = 'bold 14px Tahoma, Arial, sans-serif';
+  ctx.font = `bold 14px ${chartFont()}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   ctx.fillStyle = chartPalette().text;
