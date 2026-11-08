@@ -76,7 +76,7 @@ function fixture() {
     fetch: async () => { throw new Error('Unexpected fetch'); },
     addEventListener() {}, matchMedia: () => ({ matches: false, addEventListener() {} }),
     localStorage: { getItem: () => null, setItem() {} },
-    setTimeout, clearTimeout, requestAnimationFrame: callback => callback(),
+    setTimeout, clearTimeout, AbortSignal, requestAnimationFrame: callback => callback(),
     Charts: new Proxy({}, { get: () => () => {} }),
     getComputedStyle: () => ({ getPropertyValue: () => '' }),
   });

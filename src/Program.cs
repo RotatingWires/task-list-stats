@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Data.Sqlite;
 using System.Globalization;
@@ -19,6 +20,22 @@ builder.Logging.AddProvider(new SingleFileLoggerProvider(consoleLogPath, 10 * 10
 // Loopback unless --urls, ASPNETCORE_URLS, or an appsettings "urls" value chooses another address.
 if (string.IsNullOrEmpty(builder.Configuration["urls"]))
     builder.WebHost.UseUrls("http://127.0.0.1:8712");
+
+// Session-cookie keys must outlive restarts, or every restart signs you out. On Windows with a loaded user profile
+// (signed in and started from a terminal), they stay in that profile's ASP.NET key ring. Otherwise (Linux, including
+// services under systemd ProtectHome, and Windows Task Scheduler without a loaded profile) they live in data/keys;
+// Windows then uses machine-scope DPAPI, since user-scope DPAPI fails when the profile isn't loaded. Same as NewsReview.
+var keysDirectory = Path.Combine(builder.Environment.ContentRootPath, "data", "keys");
+var profileKeyRing = OperatingSystem.IsWindows()
+    && Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) is { Length: > 0 } localAppData
+    && Directory.Exists(localAppData);
+var dataProtection = builder.Services.AddDataProtection().SetApplicationName("TaskListStats");
+if (!profileKeyRing)
+{
+    dataProtection.PersistKeysToFileSystem(new DirectoryInfo(keysDirectory));
+    if (OperatingSystem.IsWindows()) dataProtection.ProtectKeysWithDpapi(protectToLocalMachine: true);
+}
+var keyLocation = profileKeyRing ? "this Windows profile's ASP.NET key ring" : keysDirectory;
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -81,6 +98,9 @@ var dataDir = Path.Combine(app.Environment.ContentRootPath, "data");
 Directory.CreateDirectory(dataDir);
 var authPath = Path.Combine(dataDir, "auth.json");
 const int PasswordIterations = 600_000;
+app.Logger.LogInformation("TaskList Stats v{Version}, data folder {DataDirectory}.", appVersion, dataDir);
+app.Logger.LogInformation("Database: {DatabasePath}, opened read-only, busy_timeout=5000 ms.", ResolveDatabasePath(builder.Configuration));
+app.Logger.LogInformation("Sign-in keys: {Location}.", keyLocation);
 
 string? setupToken = PasswordConfigured(authPath) ? null : GenerateSetupToken();
 if (setupToken is not null)
@@ -167,7 +187,7 @@ app.MapGet("/api/auth/status", (HttpContext context) => Results.Ok(new
 app.MapPost("/api/auth/setup", async (SetupRequest request, HttpContext context) =>
 {
     if (PasswordConfigured(authPath))
-        return Results.Conflict(new { error = "A password has already been configured." });
+        return Results.Conflict(new { error = "A password is already configured." });
 
     if (setupToken is null)
         return Results.Conflict(new { error = "No setup token is active. Restart TaskList Stats to generate a new one." });
@@ -210,24 +230,12 @@ app.MapPost("/api/auth/logout", async (HttpContext context) =>
 
 var api = app.MapGroup("/api").RequireAuthorization();
 
-api.MapGet("/health", () =>
-{
-    var path = ResolveDatabasePath(builder.Configuration);
-    return Results.Ok(new
-    {
-        ok = File.Exists(path),
-        version = appVersion,
-        databaseFound = File.Exists(path),
-        databaseFile = Path.GetFileName(path)
-    });
-});
-
 api.MapGet("/snapshot", async () =>
 {
     var dbPath = ResolveDatabasePath(builder.Configuration);
     if (!File.Exists(dbPath))
     {
-        return Results.Problem(title: "TaskList database not found", detail: $"TaskList Stats could not find task-list.db. Set TaskListStats:DatabasePath in appsettings.json or the TASKLIST_DB_PATH environment variable. Resolved path: {dbPath}", statusCode: StatusCodes.Status503ServiceUnavailable);
+        return Results.Json(new { error = $"TaskList Stats could not find task-list.db. Set TaskListStats:DatabasePath in appsettings.json or the TASKLIST_DB_PATH environment variable. Resolved path: {dbPath}" }, statusCode: StatusCodes.Status503ServiceUnavailable);
     }
     try
     {
@@ -282,7 +290,7 @@ api.MapGet("/snapshot", async () =>
     }
     catch (SqliteException ex)
     {
-        return Results.Problem(title: "Could not read TaskList database", detail: ex.Message, statusCode: StatusCodes.Status503ServiceUnavailable);
+        return Results.Json(new { error = $"Could not read the TaskList database: {ex.Message}" }, statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 });
 
@@ -291,10 +299,7 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
     var dbPath = ResolveDatabasePath(builder.Configuration);
     if (!File.Exists(dbPath))
     {
-        return Results.Problem(
-            title: "TaskList database not found",
-            detail: "TaskList Stats could not find task-list.db.",
-            statusCode: StatusCodes.Status503ServiceUnavailable);
+        return Results.Json(new { error = "TaskList Stats could not find task-list.db." }, statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 
     try
@@ -374,10 +379,7 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
     }
     catch (SqliteException ex)
     {
-        return Results.Problem(
-            title: "Could not read TaskList event history",
-            detail: ex.Message,
-            statusCode: StatusCodes.Status503ServiceUnavailable);
+        return Results.Json(new { error = $"Could not read the TaskList event history: {ex.Message}" }, statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 });
 

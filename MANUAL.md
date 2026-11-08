@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.19
+# TaskList Stats v2.2.20
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -86,7 +86,6 @@ The default base URL is `http://127.0.0.1:8712`. Request and response bodies are
 | POST | `/api/auth/setup` | Public JSON: `{setupToken, password, confirmPassword}`. | First-run setup using the token printed by this server. Password must be at least 8 characters and match confirmation. Saves the Stats password hash and signs in; returns `{authenticated: true}`. Returns 409 if already configured, 401 for an invalid token, or 400 for an invalid password. |
 | POST | `/api/auth/login` | Public JSON: `{password}`. | Signs in and returns `{authenticated: true}`; 401 for an incorrect password, 409 if setup has not been completed. |
 | POST | `/api/auth/logout` | Authenticated; no body. | Clears the Stats session cookie; 204 with no response body. |
-| GET | `/api/health` | Authenticated; no body. | `{ok, version, databaseFound, databaseFile}`. `ok` indicates whether the configured database file exists, not whether every query can succeed. |
 | GET | `/api/snapshot` | Authenticated; no body. | Current lists/items and database metadata, described below. Reads TaskList through a read-only SQLite connection. |
 | GET | `/api/events` | Authenticated; optional `afterId` and `cursor` query parameters. | `{resetRequired, lastEventId, cursor, events}`; full or incremental history, described below. Reads through a read-only SQLite connection. |
 
@@ -145,6 +144,7 @@ README.md                 setup, behavior, security, and release documentation
 
 data/                     runtime-created private Stats data (ignored by Git)
   auth.json               salted password hash after first-run setup
+  keys/                   sign-in cookie keys when there is no Windows profile key ring (Linux, Task Scheduler)
 
 wwwroot/
   index.html              application shell, panels, controls, and dialogs
@@ -459,7 +459,7 @@ Check `TaskListStats:DatabasePath` or `TASKLIST_DB_PATH` and verify filesystem r
 
 ### The page shows `Database unavailable`
 
-An expired session should send you back to Login. Otherwise inspect `/api/health` and `/api/snapshot` after logging in.
+An expired session should send you back to Login. Otherwise open `/api/snapshot` after logging in; its error message names the database path it tried.
 
 ### Task-ID links open the wrong TaskList server
 
@@ -490,7 +490,15 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.19**.
+Current release: **v2.2.20**.
+
+### v2.2.20
+
+- Startup logs the version and data folder, the database settings, and where the sign-in keys are, in the same three lines as the other apps.
+- Without a Windows profile key ring (Linux, Task Scheduler), sign-in keys now live in data/keys like NewsReview, so a systemd service with ProtectHome stays signed in. Expect to log in once after updating.
+- The login page words wrong-password and too-many-attempts messages itself; setup conflicts say "A password is already configured."
+- API errors use `{ error }` like the other apps instead of ASP.NET problem details.
+- Removed `/api/health`; no other app has one.
 
 ### v2.2.19
 

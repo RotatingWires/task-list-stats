@@ -68,7 +68,7 @@ async function ensureEventsLoaded() {
       let message = `Server returned ${response.status}`;
       try {
         const body = await response.json();
-        message = body.detail || body.title || message;
+        message = body.error || message;
       } catch {}
       throw new Error(message);
     }
@@ -266,7 +266,7 @@ async function loadSnapshot() {
       if (response.status === 401) { window.location.replace(loginUrl()); return; }
       if (!response.ok) {
         let message = `Server returned ${response.status}`;
-        try { const body = await response.json(); message = body.detail || body.title || message; } catch {}
+        try { const body = await response.json(); message = body.error || message; } catch {}
         throw new Error(message);
       }
 
