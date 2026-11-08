@@ -69,9 +69,6 @@ async function request(url, options = {}) {
 }
 
 async function initialize() {
-  try {
-    await import('/theme.js');
-  } catch {}
 
   try {
     const status = await request('/api/auth/status');

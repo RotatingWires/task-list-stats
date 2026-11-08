@@ -202,20 +202,20 @@ function populateViewMenu() {
   const heading=document.createElement('div'); heading.className='menu-heading'; heading.textContent='Theme'; heading.setAttribute('role','presentation');
   menu.append(separator,heading);
 
-  const preference=window.TaskTheme?.getPreference?.() ?? 'light';
+  const preference=window.AppTheme?.getPreference?.() ?? 'light';
   for(const [value,label] of [['light','Light'],['dark','Dark']]){
     menu.append(menuRadioButton(label,value===preference,event=>{
       event.stopPropagation();
-      window.TaskTheme?.setPreference?.(value);
+      window.AppTheme?.setPreference?.(value);
       populateViewMenu();
       closeMenus();
     }));
   }
 
   const fontSeparator=document.createElement('div'); fontSeparator.className='menu-separator'; fontSeparator.setAttribute('role','separator');
-  const retroFont=menuRadioButton('Use Retro Font',window.TaskTheme?.getRetroFont?.() ?? false,event=>{
+  const retroFont=menuRadioButton('Use Retro Font',window.AppTheme?.getRetroFont?.() ?? false,event=>{
     event.stopPropagation();
-    window.TaskTheme?.setRetroFont?.(!window.TaskTheme.getRetroFont());
+    window.AppTheme?.setRetroFont?.(!window.AppTheme.getRetroFont());
     closeMenus();
   });
   retroFont.setAttribute('role','menuitemcheckbox');
@@ -471,7 +471,7 @@ function initializeCustomSingleSelects() {
   $$('[data-single-select]').forEach(host => { const button = host.querySelector('[data-single-select-button]'); const menu = host.querySelector('[data-single-select-menu]'); button.addEventListener('click', event => { event.stopPropagation(); if (button.disabled) return; toggleMenu(button, menu); }); });
 }
 
-window.addEventListener('task-theme-change', () => {
+window.addEventListener('theme-change', () => {
   populateViewMenu();
   Charts.hideTooltip?.();
   if (state.snapshot) requestAnimationFrame(() => renderAll());
@@ -482,9 +482,6 @@ async function startApp() {
   if (appStarted) return;
   appStarted = true;
   initializeRowHover();
-  try {
-    await import('/theme.js');
-  } catch {}
   Fun.initialize();
   initializeCustomSingleSelects();
   initializeTouchHelp();
@@ -492,4 +489,6 @@ async function startApp() {
   await loadSnapshot();
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp, { once: true }); else startApp();
-if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(()=>{});
+// No offline copy, like NewsReview: remove the service worker and cache that earlier releases installed.
+navigator.serviceWorker?.getRegistrations().then(registrations => registrations.forEach(registration => registration.unregister())).catch(() => {});
+window.caches?.keys().then(keys => keys.forEach(key => caches.delete(key))).catch(() => {});

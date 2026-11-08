@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.22
+# TaskList Stats v2.2.23
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -124,7 +124,7 @@ All analytics, list filtering, Task Flow, activity sessions, milestones, and the
 - SQLite through `Microsoft.Data.Sqlite`
 - Plain HTML, CSS, and JavaScript
 - Browser Canvas API for charts
-- Service worker + web manifest for PWA behavior
+- Web manifest for adding to a phone's home screen (no offline copy, like NewsReview)
 - No ORM
 - No frontend framework
 - No chart library
@@ -166,7 +166,7 @@ wwwroot/
   auth.css                login/setup styling
   version.json            frontend release version regenerated from TaskListStats.csproj during build
   manifest.webmanifest    installable-PWA metadata
-  sw.js                   network-first service worker/static cache
+  sw.js                   removes the offline cache earlier releases installed
   icons/stats.svg         app/favicon icon
 ```
 
@@ -176,7 +176,7 @@ wwwroot/
 
 The build target regenerates `wwwroot/version.json` from `$(Version)` for the browser's release label. It rewrites the file only when the version changes, so building does not leave the committed copy modified. The running server assembly version remains available through the auth/snapshot APIs as a fallback.
 
-Frontend asset URLs no longer carry release-number query strings. The service worker uses a stable shell-cache name and network-first requests with `cache: 'no-store'`, updating the cached copy after a successful network response and using cache only as an offline fallback. That keeps frontend freshness independent of manually duplicated release numbers.
+Frontend asset URLs carry no release-number query strings. The server marks pages and scripts `Cache-Control: no-cache`, so the browser checks each with the server on every load and always runs the current release.
 
 ## Requirements and running
 
@@ -439,9 +439,7 @@ Treat exports as private because they can contain task titles, descriptions, lis
 
 ## PWA behavior
 
-The service worker caches the application shell, shared theme assets, and login/setup assets; uses network-first `cache: 'no-store'` behavior for current same-origin static assets; always fetches `/api/*` from the network; and uses cached files only as an offline fallback.
-
-The cache name is stable rather than release-numbered. Successful online asset loads replace the cached copy, so normal frontend updates do not require duplicated version strings in asset URLs or cache names. On activation, obsolete files are removed from the stable shell cache, including the retired milestone popup assets. The shell cache does not contain the live TaskList snapshot. The on-demand milestones.js module is excluded from installation precaching, cached after its first use, and retained during cache cleanup for later offline visits.
+TaskList Stats keeps no offline copy of its pages, like NewsReview: without a connection the browser shows its own offline page, which makes a connection problem obvious instead of opening a stale app that cannot reach its data. It can still be added to a phone's home screen from the web manifest. `sw.js` only removes the service worker and cache that releases before v2.2.23 installed.
 
 ## Security and privacy
 
@@ -508,7 +506,12 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.22**.
+Current release: **v2.2.23**.
+
+### v2.2.23
+
+- No offline copy, like NewsReview: without a connection the browser shows its own offline page instead of a stale app. The old service worker and its cache are removed automatically.
+- One `theme.js` shared word for word with the other three apps: the page marks its theme with `data-theme`, and it loads at the top of every page, login included, so it never flashes the wrong theme.
 
 ### v2.2.22
 

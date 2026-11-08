@@ -59,7 +59,7 @@
   --classic-accent: #000080;
 }
 
-:root[data-theme-effective="dark"] {
+:root[data-theme="dark"] {
   --face: #303030;
   --light-edge: #666;
   --mid-edge: #494949;

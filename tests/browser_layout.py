@@ -123,7 +123,7 @@ def main():
             page.goto("http://stats.test/")
             page.wait_for_function("state.snapshot !== null")
             for theme in ["light", "dark"]:
-                page.evaluate("theme => window.TaskTheme.setPreference(theme)", theme)
+                page.evaluate("theme => window.AppTheme.setPreference(theme)", theme)
                 for width, height, flowing in CASES:
                     page.set_viewport_size(dict(width=width, height=height))
                     for tab in TABS:

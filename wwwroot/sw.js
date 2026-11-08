@@ -1,35 +1,10 @@
-const CACHE = 'task-list-stats-shell';
-const STATIC = ['/', '/index.html', '/login.html', '/login.js', '/version.json', '/auth.css', '/style.css', '/analysis-tabs.css', '/theme.js', '/theme.css', '/app.js', '/overview.js', '/history.js', '/patterns.js', '/analysis-tabs.js', '/ui.js', '/charts.js', '/fun.js', '/manifest.webmanifest', '/icons/stats.svg', '/icons/touch-180.png', '/icons/touch-192.png', '/icons/touch-512.png'];
-const LAZY = ['/milestones.js'];
-self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC)));
-  self.skipWaiting();
-});
+// TaskList Stats keeps no offline copy, like NewsReview: without a connection the browser shows its own offline page, which
+// makes a connection problem obvious. A browser still running the worker from an earlier release picks up this one,
+// which deletes that release's cache and then removes itself.
+self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', event => {
   event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)));
-    const cache = await caches.open(CACHE);
-    const requests = await cache.keys();
-    await Promise.all(requests.filter(request => {
-      const path = new URL(request.url).pathname;
-      return !STATIC.includes(path) && !LAZY.includes(path);
-    }).map(request => cache.delete(request)));
+    for (const key of await caches.keys()) await caches.delete(key);
+    await self.registration.unregister();
   })());
-  self.clients.claim();
-});
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-  if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
-  event.respondWith(
-    fetch(event.request, { cache: 'no-store' }).then(response => {
-      const copy = response.clone();
-      caches.open(CACHE).then(cache => cache.put(event.request, copy));
-      return response;
-    }).catch(() => caches.match(event.request).then(hit => hit || caches.match(url.pathname)))
-  );
 });
