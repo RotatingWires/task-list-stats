@@ -13,7 +13,25 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.RateLimiting;
 
-var builder = WebApplication.CreateBuilder(args);
+// TaskList Stats options are read here; everything else (such as --urls) goes to ASP.NET Core. Same as NewsReview.
+if (args is ["--version"])
+{
+    Console.WriteLine(Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0");
+    return;
+}
+var hostArgs = new List<string>();
+string? dataDirectoryArgument = null;
+for (var i = 0; i < args.Length; i++)
+{
+    if (args[i] == "--data-dir" && i + 1 < args.Length) dataDirectoryArgument = args[++i];
+    else hostArgs.Add(args[i]);
+}
+
+var builder = WebApplication.CreateBuilder(hostArgs.ToArray());
+// --data-dir, then the TaskListStats:DataDirectory setting, then TASKLISTSTATS_DATA_DIR, then data/ next to the app.
+var dataDir = Path.GetFullPath(dataDirectoryArgument ?? builder.Configuration["TaskListStats:DataDirectory"]
+    ?? Environment.GetEnvironmentVariable("TASKLISTSTATS_DATA_DIR") ?? Path.Combine(builder.Environment.ContentRootPath, "data"));
+Directory.CreateDirectory(dataDir);
 var consoleLogPath = Path.Combine(builder.Environment.ContentRootPath, "logs", "console.log");
 builder.Logging.AddProvider(new SingleFileLoggerProvider(consoleLogPath, 10 * 1024 * 1024));
 
@@ -25,7 +43,7 @@ if (string.IsNullOrEmpty(builder.Configuration["urls"]))
 // (signed in and started from a terminal), they stay in that profile's ASP.NET key ring. Otherwise (Linux, including
 // services under systemd ProtectHome, and Windows Task Scheduler without a loaded profile) they live in data/keys;
 // Windows then uses machine-scope DPAPI, since user-scope DPAPI fails when the profile isn't loaded. Same as NewsReview.
-var keysDirectory = Path.Combine(builder.Environment.ContentRootPath, "data", "keys");
+var keysDirectory = Path.Combine(dataDir, "keys");
 var profileKeyRing = OperatingSystem.IsWindows()
     && Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) is { Length: > 0 } localAppData
     && Directory.Exists(localAppData);
@@ -94,8 +112,6 @@ var app = builder.Build();
 app.UseResponseCompression();
 var appVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
 
-var dataDir = Path.Combine(app.Environment.ContentRootPath, "data");
-Directory.CreateDirectory(dataDir);
 var authPath = Path.Combine(dataDir, "auth.json");
 const int PasswordIterations = 600_000;
 app.Logger.LogInformation("TaskList Stats v{Version}, data folder {DataDirectory}.", appVersion, dataDir);
@@ -235,7 +251,7 @@ api.MapGet("/snapshot", async () =>
     var dbPath = ResolveDatabasePath(builder.Configuration);
     if (!File.Exists(dbPath))
     {
-        return Results.Json(new { error = $"TaskList Stats could not find task-list.db. Set TaskListStats:DatabasePath in appsettings.json or the TASKLIST_DB_PATH environment variable. Resolved path: {dbPath}" }, statusCode: StatusCodes.Status503ServiceUnavailable);
+        return Results.Json(new { error = $"TaskList Stats could not find TaskList's tasklist.db. Set TaskListStats:DatabasePath in appsettings.json or the TASKLIST_DB_PATH environment variable. Resolved path: {dbPath}" }, statusCode: StatusCodes.Status503ServiceUnavailable);
     }
     try
     {
@@ -299,7 +315,7 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
     var dbPath = ResolveDatabasePath(builder.Configuration);
     if (!File.Exists(dbPath))
     {
-        return Results.Json(new { error = "TaskList Stats could not find task-list.db." }, statusCode: StatusCodes.Status503ServiceUnavailable);
+        return Results.Json(new { error = "TaskList Stats could not find TaskList's tasklist.db." }, statusCode: StatusCodes.Status503ServiceUnavailable);
     }
 
     try
@@ -389,14 +405,18 @@ app.Run();
 static string ResolveDatabasePath(IConfiguration configuration)
 {
     var environmentPath = Environment.GetEnvironmentVariable("TASKLIST_DB_PATH");
-    var configuredPath = environmentPath ?? configuration["TaskListStats:DatabasePath"] ?? "../task-list/TaskList/data/task-list.db";
-    if (Path.IsPathRooted(configuredPath)) return Path.GetFullPath(configuredPath);
+    var configuredPath = environmentPath ?? configuration["TaskListStats:DatabasePath"] ?? "../task-list/data/tasklist.db";
     var basePath = Directory.GetCurrentDirectory();
-    var candidates = new[] { configuredPath, "../task-list/TaskList/data/task-list.db", "../task-list/data/task-list.db", "../TaskList/data/task-list.db", "TaskList/data/task-list.db", "data/task-list.db" };
+    var candidates = Path.IsPathRooted(configuredPath)
+        ? [configuredPath]
+        : new[] { configuredPath, "../task-list/data/tasklist.db", "../task-list/TaskList/data/tasklist.db", "../TaskList/data/tasklist.db", "TaskList/data/tasklist.db", "data/tasklist.db" };
     foreach (var candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
     {
         var full = Path.GetFullPath(Path.Combine(basePath, candidate));
-        if (File.Exists(full)) return full;
+        // TaskList before v1.7.22 named its database task-list.db; either name in the same folder works.
+        var folder = Path.GetDirectoryName(full)!;
+        foreach (var name in new[] { Path.GetFileName(full), "tasklist.db", "task-list.db" })
+            if (File.Exists(Path.Combine(folder, name))) return Path.Combine(folder, name);
     }
     return Path.GetFullPath(Path.Combine(basePath, configuredPath));
 }

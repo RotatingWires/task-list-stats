@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.20
+# TaskList Stats v2.2.21
 
 A separate, read-only statistics dashboard for [TaskList](https://github.com/RotatingWires/task-list), with charts, calendars, task history, comparisons, activity sessions, and milestones.
 
@@ -9,7 +9,7 @@ A separate, read-only statistics dashboard for [TaskList](https://github.com/Rot
 
 ## Quickstart
 
-Requires the **.NET 10 SDK** and an existing TaskList `task-list.db`. Clone the repository:
+Requires the **.NET 10 SDK** and an existing TaskList `tasklist.db`. Clone the repository:
 
 ```sh
 git clone https://github.com/RotatingWires/task-list-stats.git
@@ -21,7 +21,7 @@ Set `appsettings.json` to your TaskList database path. For checkouts in neighbor
 ```json
 {
   "TaskListStats": {
-    "DatabasePath": "../task-list/data/task-list.db"
+    "DatabasePath": "../task-list/data/tasklist.db"
   }
 }
 ```

@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.20
+# TaskList Stats v2.2.21
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -183,7 +183,7 @@ Frontend asset URLs no longer carry release-number query strings. The service wo
 Server requirements:
 
 - .NET 10 SDK/runtime
-- a TaskList `task-list.db` SQLite database
+- a TaskList `tasklist.db` SQLite database
 - read access to the TaskList database and parent path, including existing SQLite WAL/SHM sidecar files when WAL is active
 - write permission to the Stats working directory for `data/auth.json` and `logs/console.log`
 
@@ -201,7 +201,7 @@ Typical `appsettings.json`:
 ```json
 {
   "TaskListStats": {
-    "DatabasePath": "/srv/task-list/data/task-list.db"
+    "DatabasePath": "/srv/task-list/data/tasklist.db"
   }
 }
 ```
@@ -209,7 +209,7 @@ Typical `appsettings.json`:
 `TASKLIST_DB_PATH` overrides the database path:
 
 ```bash
-export TASKLIST_DB_PATH=/srv/task-list/data/task-list.db
+export TASKLIST_DB_PATH=/srv/task-list/data/tasklist.db
 ```
 
 Without configuration, Stats listens on loopback only, at `http://127.0.0.1:8712`, matching TaskList's `http://127.0.0.1:8711`. To choose another address, pass `--urls` (or set the standard `ASPNETCORE_URLS` environment variable). For example, to accept LAN connections:
@@ -219,6 +219,22 @@ dotnet run --urls "http://0.0.0.0:8712"
 ```
 
 When Task Scheduler launches `TaskListStats.exe` directly, add the same `--urls "http://0.0.0.0:8712"` argument if other devices need to connect. The former `ListenUrl` setting and `TASKLIST_STATS_URL` variable are no longer read.
+
+TaskList before v1.7.22 named its database `task-list.db`. Stats accepts either name in the configured folder, so an older path setting keeps working after TaskList renames the file.
+
+Stats keeps its own password and sign-in keys in `data/`. To keep them elsewhere, pass `--data-dir`, set `TaskListStats:DataDirectory`, or set `TASKLISTSTATS_DATA_DIR`.
+
+| Environment variable | Purpose |
+| --- | --- |
+| `TASKLISTSTATS_DATA_DIR` | Stats' own data folder, overridden by `--data-dir` |
+| `TASKLIST_DB_PATH` | TaskList's database, overriding `TaskListStats:DatabasePath` |
+| `ASPNETCORE_URLS` | Listening address, like `--urls`; default `http://127.0.0.1:8712` |
+
+| Command-line option | Purpose |
+| --- | --- |
+| `--urls URL` | Listening address, for example `http://0.0.0.0:8712` for LAN access |
+| `--data-dir PATH` | Data folder (Stats' password and sign-in keys) |
+| `--version` | Print the version and exit |
 
 ## Runtime logging
 
@@ -265,7 +281,7 @@ By default, links point to TaskList on the same host you opened Stats with, at p
 ```json
 {
   "TaskListStats": {
-    "DatabasePath": "../task-list/data/task-list.db",
+    "DatabasePath": "../task-list/data/tasklist.db",
     "TaskListUrl": "https://tasks.example.com"
   }
 }
@@ -490,7 +506,12 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.20**.
+Current release: **v2.2.21**.
+
+### v2.2.21
+
+- Finds TaskList's database as `tasklist.db` or the older `task-list.db`; the default path is now `../task-list/data/tasklist.db`.
+- Command-line options like NewsReview: `--data-dir PATH`, `--version`. The data folder can also come from `TaskListStats:DataDirectory` or `TASKLISTSTATS_DATA_DIR`.
 
 ### v2.2.20
 
