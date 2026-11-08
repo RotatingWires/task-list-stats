@@ -1,3 +1,15 @@
+const REQUEST_TIMEOUT_MS = 30000;
+
+/** fetch that gives up after 30 seconds, like NewsReview, instead of waiting forever on a stopped server. */
+async function timedFetch(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+  try {
+    return await fetch(url, timeoutMs ? { ...options, signal: AbortSignal.timeout(timeoutMs) } : options);
+  } catch (error) {
+    if (error.name === 'TimeoutError') throw new Error('The server did not respond within 30 seconds. Check that it is running.');
+    throw error;
+  }
+}
+
 const EVENT_HISTORY_TABS = new Set(['taskFlow', 'compare', 'sessions', 'milestones']);
 let milestonesView = null;
 
@@ -47,7 +59,7 @@ async function ensureEventsLoaded() {
     const query = canIncrement
       ? `?afterId=${encodeURIComponent(state.lastEventId)}&cursor=${encodeURIComponent(state.eventCursor)}`
       : '';
-    const response = await fetch(`/api/events${query}`, { cache: 'no-store', credentials: 'same-origin' });
+    const response = await timedFetch(`/api/events${query}`, { cache: 'no-store', credentials: 'same-origin' });
     if (response.status === 401) {
       window.location.replace(loginUrl());
       return;
@@ -222,7 +234,7 @@ function loginUrl() {
 async function logout() {
   closeMenus();
   try {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
+    await timedFetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin', cache: 'no-store' });
   } finally {
     window.location.replace('/login.html');
   }
@@ -230,7 +242,7 @@ async function logout() {
 
 async function frontendReleaseVersion(fallback = '') {
   try {
-    const response = await fetch('/version.json', { cache: 'no-store', credentials: 'same-origin' });
+    const response = await timedFetch('/version.json', { cache: 'no-store', credentials: 'same-origin' });
     if (!response.ok) return fallback;
     const body = await response.json();
     return body.version || fallback;

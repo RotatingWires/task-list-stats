@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.18
+# TaskList Stats v2.2.19
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -490,7 +490,13 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.18**.
+Current release: **v2.2.19**.
+
+### v2.2.19
+
+- Browser hardening like NewsReview: a content security policy, no MIME sniffing, no referrer, and writes from other sites are refused.
+- API replies are never stored by the browser; pages and scripts are revalidated on each load.
+- Requests give up after 30 seconds instead of waiting forever on a stopped server (snapshot exports excepted).
 
 ### v2.2.18
 
