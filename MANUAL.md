@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.39
+# TaskList Stats v2.2.40
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -86,7 +86,8 @@ The source tree intentionally stays small. Behavior belongs in normal purpose-ba
 ```text
 TaskListStats.csproj      .NET project, dependencies, and release version
 src/
-  Program.cs              server, auth, read-only snapshot reader, and API
+  Program.cs              startup, middleware, sign-in endpoints, and API routes
+  Store.cs                read-only TaskList database reader: snapshot, event history pages, connections (like the other apps' Store.cs)
   SingleFileLogger.cs     capped single-file runtime log writer
   PasswordAuth.cs         setup token, password file, and sign-in cookie (the same file in all four apps)
 appsettings.json          database path, listen address, and log level
@@ -540,7 +541,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs the server 
 
 ## Release notes
 
-Current release: **v2.2.39**.
+Current release: **v2.2.40**.
+
+### v2.2.40
+
+- Code: reading TaskList's database moved from `Program.cs` into `Store.cs`, like the other apps; Program.cs keeps startup and the routes.
 
 ### v2.2.39
 
