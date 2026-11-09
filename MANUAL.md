@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.33
+# TaskList Stats v2.2.34
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -515,7 +515,12 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.33**.
+Current release: **v2.2.34**.
+
+### v2.2.34
+
+- `theme.css` starts with one shared palette, the same color names and values in every app (light and dark), followed by the colors only this app uses. Links use the same navy as the other apps (#000080 instead of #0000a0).
+- The wide layout starts above 1000px like the other apps (was 1100px).
 
 ### v2.2.33
 

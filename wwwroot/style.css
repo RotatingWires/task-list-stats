@@ -312,7 +312,7 @@ button:active,
   margin-bottom: 8px;
 }
 .stat-grid.compact { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
-@media (min-width: 1100px) {
+@media (min-width: 1001px) { /* "Wide" starts above 1000px in every app. */
   #activityCards { grid-template-columns: repeat(8, minmax(0, 1fr)); }
   #activityCards .stat-card { min-width: 0; }
 }

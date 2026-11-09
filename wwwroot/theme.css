@@ -5,29 +5,33 @@
 
 /* Light/Dark Windows 95 theme tokens for TaskList Stats. Every color in the other stylesheets comes from here. */
 :root {
+  color-scheme: light;
+  /* The shared palette: the same names and values in TaskList, TaskList Stats, NewsReview, and SpendTracker. */
+  --ink: #000;
+  --desktop: #008080;
   --face: #c0c0c0;
+  --surface: #fff;
+  --surface-alt: #f4f4f4;
   --light-edge: #fff;
   --mid-edge: #dfdfdf;
   --shadow: #808080;
   --dark-edge: #404040;
   --black: #000;
-  --ink: #000;
-  --surface: #fff;
-  --surface-alt: #f4f4f4;
+  --title: #000080;
+  --title-text: #fff;
   --divider: #c8c8c8;
   --divider-subtle: #d0d0d0;
   --muted: #555;
-  --muted-soft: #666;
+  --link: #000080;
+  --link-hover: #0000d0;
   --note: #ffffe1;
-  --link: #0000a0;
-  --link-visited: #551a8b;
+  --highlight: #fff4a8; /* An item just jumped to, like a TaskList deep link. */
   --row-hover: #e5ecf8;
-  --title: #000080;
-  --title-text: #fff;
   --error: #800000;
-  --desktop: #008080;
   --backdrop: #0007;
-
+  /* Colors only TaskList Stats uses. */
+  --muted-soft: #666;
+  --link-visited: #551a8b;
   --chart-surface: #fff;
   --chart-text: #222;
   --chart-muted: #333;
@@ -42,7 +46,6 @@
   --chart-tooltip-text: #fff;
   --chart-tooltip-light-edge: #555;
   --chart-tooltip-dark-edge: #000;
-
   --heat-0: #d7d7d7;
   --heat-1: #b7cbd8;
   --heat-2: #6f9bb5;
@@ -53,34 +56,38 @@
   --heat-2-text: var(--ink);
   --heat-3-text: #fff;
   --heat-4-text: #fff;
-
-  /* Same in both themes: the dark theme has never had its own value for these. */
+  /* TaskList Stats colors that stay the same in both themes. */
   --classic-shadow: #808080;
   --classic-accent: #000080;
 }
 
 :root[data-theme="dark"] {
+  color-scheme: dark;
+  /* The shared palette. */
+  --ink: #f1f1f1;
+  --desktop: #002f2f;
   --face: #303030;
+  --surface: #191919;
+  --surface-alt: #242424;
   --light-edge: #666;
   --mid-edge: #494949;
   --shadow: #181818;
   --dark-edge: #0e0e0e;
-  --ink: #f1f1f1;
-  --surface: #191919;
-  --surface-alt: #242424;
+  --black: #000;
+  --title: #111858;
+  --title-text: #fff;
   --divider: #3d3d3d;
   --divider-subtle: #414141;
   --muted: #b8b8b8;
-  --muted-soft: #c7c7c7;
-  --note: #3b3825;
   --link: #91adff;
-  --link-visited: #c69cff;
+  --link-hover: #c0ceff;
+  --note: #3b3825;
+  --highlight: #5c4c00;
   --row-hover: #2d3850;
-  --title: #111858;
-  --title-text: #fff;
   --error: #ff9c9c;
-  --desktop: #002f2f;
-
+  /* Colors only TaskList Stats uses. */
+  --muted-soft: #c7c7c7;
+  --link-visited: #c69cff;
   --chart-surface: #191919;
   --chart-text: #eeeeee;
   --chart-muted: #c7c7c7;
@@ -95,7 +102,6 @@
   --chart-tooltip-text: #111;
   --chart-tooltip-light-edge: #fff;
   --chart-tooltip-dark-edge: #777;
-
   --heat-0: #242424;
   --heat-1: #30485a;
   --heat-2: #3f6f8d;
