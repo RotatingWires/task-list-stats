@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.23
+# TaskList Stats v2.2.24
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -433,7 +433,7 @@ The Stats **Help** button opens About immediately, matching TaskList. Its wide, 
 
 ## Exporting a snapshot
 
-Use **File → Export snapshot JSON...** to download the snapshot loaded by Stats.
+Use **File → Import/Export... → Download Snapshot** to download the snapshot loaded by Stats as `taskliststats-snapshot-YYYYMMDD-HHMMSS.json` (local time). Stats keeps no data of its own, so there is nothing to restore; back up and restore tasks in TaskList.
 
 Treat exports as private because they can contain task titles, descriptions, list names, IDs, statuses, timestamps, and event history.
 
@@ -506,7 +506,12 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.23**.
+Current release: **v2.2.24**.
+
+### v2.2.24
+
+- **File → Import/Export...** opens a dialog like the other apps' with **Download Snapshot** (formerly File → Export snapshot JSON...).
+- Download names follow one pattern in every app, in local time: `taskliststats-snapshot-YYYYMMDD-HHMMSS.json`.
 
 ### v2.2.23
 

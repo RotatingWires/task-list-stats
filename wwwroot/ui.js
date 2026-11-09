@@ -1,6 +1,12 @@
 const REQUEST_TIMEOUT_MS = 30000;
 
 /** fetch that gives up after 30 seconds, like NewsReview, instead of waiting forever on a stopped server. */
+/** yyyyMMdd-HHmmss in local time, the stamp in every download's file name, like the other apps. */
+function fileStamp(date = new Date()) {
+  const two = number => String(number).padStart(2, '0');
+  return `${date.getFullYear()}${two(date.getMonth() + 1)}${two(date.getDate())}-${two(date.getHours())}${two(date.getMinutes())}${two(date.getSeconds())}`;
+}
+
 async function timedFetch(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   try {
     return await fetch(url, timeoutMs ? { ...options, signal: AbortSignal.timeout(timeoutMs) } : options);
@@ -333,7 +339,7 @@ async function downloadSnapshot() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `task-list-stats-snapshot-${localDayKey(new Date())}.json`;
+  a.download = `taskliststats-snapshot-${fileStamp()}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -343,7 +349,9 @@ $('#viewMenuButton').addEventListener('click',e=>{e.stopPropagation();populateVi
 $('#aboutMenu').addEventListener('click',()=>{closeMenus();$('#aboutDialog').showModal();});
 $('#listFilterButton').addEventListener('click',e=>{e.stopPropagation();toggleMenu($('#listFilterButton'),$('#listFilterMenu'));});
 $('#refreshButton').addEventListener('click',()=>{closeMenus();loadSnapshot();});
-$('#exportButton').addEventListener('click',()=>{closeMenus();downloadSnapshot();});
+// Import/Export... like the other apps; Stats can only download a snapshot, since TaskList owns the data.
+$('#transferMenuItem').addEventListener('click',()=>{closeMenus();$('#transferDialog').showModal();});
+$('#exportButton').addEventListener('click',()=>{$('#transferDialog').close();downloadSnapshot();});
 $('#logoutButton').addEventListener('click', logout);
 $$('.tabs [role="tab"]').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
 $('#trendGroup').addEventListener('change',renderTrends);

@@ -811,3 +811,8 @@ select:focus-visible,
 @media (max-width: 650px) {
   .title-version { display: none; }
 }
+
+/* Import/Export: explanations above full-width buttons, like the other apps. */
+.transfer-dialog { width: min(460px, calc(100vw - 24px)); }
+.transfer-body { display: grid; gap: 7px; line-height: 1.5; }
+.transfer-body p { margin: 0; }
