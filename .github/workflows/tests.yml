@@ -14,4 +14,6 @@ jobs:
         with:
           node-version: '22'
       - run: dotnet build TaskListStats.csproj --nologo
+      # Server and sign-in tests against the real app; browser checks stay local, like the other apps.
+      - run: python3 -m unittest discover -s tests -v
       - run: node tests/frontend.test.cjs
