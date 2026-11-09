@@ -198,7 +198,10 @@ function menuRadioButton(label, checked, onClick) {
 }
 
 function populateViewMenu() {
-  const menu=$('#viewMenu'); menu.replaceChildren();
+  const menu=$('#viewMenu');
+  // A heading over each group, like TaskList's View menu.
+  const tabsHeading=document.createElement('div'); tabsHeading.className='menu-heading'; tabsHeading.textContent='Tabs'; tabsHeading.setAttribute('role','presentation');
+  menu.replaceChildren(tabsHeading);
   for(const tab of $$('.tabs [role="tab"]')){
     const value=tab.dataset.tab;
     menu.append(menuRadioButton(tab.textContent,value===state.activeTab,()=>{switchTab(value);populateViewMenu();}));
