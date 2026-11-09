@@ -1,3 +1,6 @@
+'use strict';
+
+/* Trends, backlog, Calendar and its day drill-down, and Lists. */
 function groupKey(date, mode) {
   if (mode === 'day') return localDayKey(date);
   if (mode === 'week') return weekKey(date);

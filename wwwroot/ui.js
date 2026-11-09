@@ -1,3 +1,5 @@
+'use strict';
+
 const REQUEST_TIMEOUT_MS = 30000;
 
 /** yyyyMMdd-HHmmss in local time, the stamp in every download's file name, like the other apps. */

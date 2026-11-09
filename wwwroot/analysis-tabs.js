@@ -1,5 +1,6 @@
 'use strict';
 
+/* Task Flow, Compare, and Activity Sessions. */
 const ANALYSIS_EVENT_TYPES = ['Created', 'Completed', 'Cancelled', 'Reopened', 'Deleted'];
 function allRecordedEvents() {
   const events = state.snapshot?.events ?? [];

@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.38
+# TaskList Stats v2.2.39
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -540,7 +540,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs the server 
 
 ## Release notes
 
-Current release: **v2.2.38**.
+Current release: **v2.2.39**.
+
+### v2.2.39
+
+- Code: every script starts with a short comment saying what it holds (and `'use strict';` where it is not a module), like SpendTracker's; `SingleFileLogger.cs` is now the same file in all four apps.
 
 ### v2.2.38
 

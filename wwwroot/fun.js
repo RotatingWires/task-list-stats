@@ -1,3 +1,4 @@
+/* The Fun workspace. */
 (() => {
 'use strict';
 

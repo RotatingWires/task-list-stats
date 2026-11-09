@@ -1,3 +1,6 @@
+'use strict';
+
+/* Patterns, and Trees & Titles. */
 function renderPatterns() {
   const items = scopedItems();
   const createWeek = Array(7).fill(0), doneWeek = Array(7).fill(0);

@@ -1,3 +1,6 @@
+'use strict';
+
+/* Overview: records, completion behavior, and aging. */
 function scopeLabel() {
   if (isAllListScope()) return 'All lists';
   if (state.selectedListIds.size === 1) return listName([...state.selectedListIds][0]);
