@@ -1,0 +1,27 @@
+[Unit]
+Description=TaskListStats
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+# Replace these paths and account before installation. Build first with:
+#   dotnet publish -c Release -o /opt/taskliststats
+# Runs as TaskList's account, which owns the TaskList database Stats reads.
+User=tasklist
+WorkingDirectory=/opt/taskliststats
+EnvironmentFile=-/etc/taskliststats.env
+ExecStart=/usr/bin/dotnet /opt/taskliststats/TaskListStats.dll --urls http://127.0.0.1:8712 --data-dir /var/lib/taskliststats --TaskListStats:DatabasePath=/var/lib/tasklist/tasklist.db
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+# Create /opt/taskliststats/logs and make it writable by the service account. Stats opens
+# TaskList's database read-only, but SQLite still needs to write its -shm file beside it.
+ReadWritePaths=/var/lib/taskliststats /opt/taskliststats/logs /var/lib/tasklist
+
+[Install]
+WantedBy=multi-user.target

@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.27
+# TaskList Stats v2.2.28
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -139,7 +139,10 @@ TaskListStats.csproj      .NET project, dependencies, and release version
 src/
   Program.cs              server, auth, read-only snapshot reader, and API
   SingleFileLogger.cs     capped single-file runtime log writer
-appsettings.json          database path and listen-address configuration
+  PasswordAuth.cs         setup token, password file, and sign-in cookie (the same file in all four apps)
+appsettings.json          database path, listen address, and log level
+deploy/taskliststats.service
+                          example systemd unit
 README.md                 setup, behavior, security, and release documentation
 
 data/                     runtime-created private Stats data (ignored by Git)
@@ -235,6 +238,12 @@ Stats keeps its own password and sign-in keys in `data/`. To keep them elsewhere
 | `--urls URL` | Listening address, for example `http://0.0.0.0:8712` for LAN access |
 | `--data-dir PATH` | Data folder (Stats' password and sign-in keys) |
 | `--version` | Print the version and exit |
+
+### Run as a Linux service
+
+`deploy/taskliststats.service` is a systemd template, not an installer, like NewsReview's: build with `dotnet publish -c Release -o /opt/taskliststats`, create the service account, `/var/lib/taskliststats` (the data folder) and `/opt/taskliststats/logs`, adjust `User`, `WorkingDirectory`, `ExecStart`, and `ReadWritePaths` to match, then install and enable it. It listens on loopback at port 8712; change its `--urls` for LAN access, and find the first-run setup token in the journal. It runs as TaskList's `tasklist` account so it can read `/var/lib/tasklist/tasklist.db`, which its `ExecStart` passes as `--TaskListStats:DatabasePath`.
+
+`appsettings.json` holds the default listen address (`Urls`) and log level, the same keys in every app. `--urls` and `ASPNETCORE_URLS` override it.
 
 ## Runtime logging
 
@@ -506,7 +515,13 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.27**.
+Current release: **v2.2.28**.
+
+### v2.2.28
+
+- Sign-in code lives in `src/PasswordAuth.cs`, the same file in all four apps. Passwords are capped at 1024 characters and `auth.json` is saved readable only by its owner on Linux and macOS.
+- New `appsettings.json` with the listen address and log level, the same keys in every app. (added to the existing database path setting)
+- New `deploy/taskliststats.service` systemd template, like NewsReview's; it runs as TaskList's account to read its database.
 
 ### v2.2.27
 
