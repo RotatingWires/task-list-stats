@@ -245,7 +245,7 @@ app.MapPost("/api/auth/logout", async (HttpContext context) =>
 
 var api = app.MapGroup("/api").RequireAuthorization();
 
-api.MapGet("/snapshot", async () =>
+api.MapGet("/snapshot", () =>
 {
     var dbPath = ResolveDatabasePath(builder.Configuration);
     if (!File.Exists(dbPath))
@@ -254,29 +254,29 @@ api.MapGet("/snapshot", async () =>
     }
     try
     {
-        await using var connection = await OpenReadOnlyConnectionAsync(dbPath);
+        using var connection = OpenReadOnlyConnection(dbPath);
         using var readTransaction = connection.BeginTransaction(deferred: true);
 
         var lists = new List<ListSnapshot>();
-        await using (var command = connection.CreateCommand())
+        using (var command = connection.CreateCommand())
         {
             command.CommandText = "SELECT id, name, created_at FROM lists ORDER BY id;";
-            await using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync()) lists.Add(new ListSnapshot(reader.GetInt64(0), reader.GetString(1), reader.GetString(2)));
+            using var reader = command.ExecuteReader();
+            while (reader.Read()) lists.Add(new ListSnapshot(reader.GetInt64(0), reader.GetString(1), reader.GetString(2)));
         }
 
         var deletedLists = new List<DeletedListSnapshot>();
-        if (await TableExistsAsync(connection, "deleted_lists"))
+        if (TableExists(connection, "deleted_lists"))
         {
-            await using var command = connection.CreateCommand();
+            using var command = connection.CreateCommand();
             command.CommandText = "SELECT id, name FROM deleted_lists ORDER BY id;";
-            await using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
                 deletedLists.Add(new DeletedListSnapshot(reader.GetInt64(0), reader.GetString(1)));
         }
 
         var items = new List<ItemSnapshot>();
-        await using (var command = connection.CreateCommand())
+        using (var command = connection.CreateCommand())
         {
             command.CommandText = """
                 SELECT universal_id, list_id, display_id, parent_display_id, title, description, status,
@@ -284,20 +284,20 @@ api.MapGet("/snapshot", async () =>
                 FROM items
                 ORDER BY universal_id;
                 """;
-            await using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
             {
                 items.Add(new ItemSnapshot(reader.GetInt64(0), reader.GetInt64(1), reader.GetString(2), reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4), reader.IsDBNull(5) ? "" : reader.GetString(5), reader.GetString(6), reader.GetString(7), reader.IsDBNull(8) ? null : reader.GetString(8), reader.IsDBNull(9) ? null : reader.GetString(9), reader.IsDBNull(10) ? null : reader.GetString(10), reader.IsDBNull(11) ? null : reader.GetString(11)));
             }
         }
 
-        var eventLogAvailable = await TableExistsAsync(connection, "task_events");
+        var eventLogAvailable = TableExists(connection, "task_events");
 
         long highestUniversalId = 0;
-        await using (var command = connection.CreateCommand())
+        using (var command = connection.CreateCommand())
         {
             command.CommandText = "SELECT COALESCE(MAX(id), 0) FROM universal_ids;";
-            highestUniversalId = Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture);
+            highestUniversalId = Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture);
         }
 
         var fileInfo = new FileInfo(dbPath);
@@ -309,7 +309,7 @@ api.MapGet("/snapshot", async () =>
     }
 });
 
-api.MapGet("/events", async (long? afterId, string? cursor) =>
+api.MapGet("/events", (long? afterId, string? cursor) =>
 {
     var dbPath = ResolveDatabasePath(builder.Configuration);
     if (!File.Exists(dbPath))
@@ -319,19 +319,19 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
 
     try
     {
-        await using var connection = await OpenReadOnlyConnectionAsync(dbPath);
+        using var connection = OpenReadOnlyConnection(dbPath);
         using var readTransaction = connection.BeginTransaction(deferred: true);
 
         var requestedAfterId = Math.Max(0, afterId ?? 0);
-        if (!await TableExistsAsync(connection, "task_events"))
+        if (!TableExists(connection, "task_events"))
             return Results.Ok(new EventBatch(requestedAfterId > 0, 0, null, []));
 
         var historyRevision = string.Empty;
-        if (await TableExistsAsync(connection, "task_history_state"))
+        if (TableExists(connection, "task_history_state"))
         {
-            await using var history = connection.CreateCommand();
+            using var history = connection.CreateCommand();
             history.CommandText = "SELECT revision FROM task_history_state WHERE id=1;";
-            historyRevision = Convert.ToString(await history.ExecuteScalarAsync(), CultureInfo.InvariantCulture) ?? string.Empty;
+            historyRevision = Convert.ToString(history.ExecuteScalar(), CultureInfo.InvariantCulture) ?? string.Empty;
         }
 
         var resetRequired = false;
@@ -339,7 +339,7 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
 
         if (requestedAfterId > 0)
         {
-            await using var anchorCommand = connection.CreateCommand();
+            using var anchorCommand = connection.CreateCommand();
             anchorCommand.CommandText = """
                 SELECT id, universal_id, event_type, event_at, from_status, to_status,
                        list_id, display_id, parent_display_id, title, source
@@ -348,8 +348,8 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
                 """;
             anchorCommand.Parameters.AddWithValue("$afterId", requestedAfterId);
 
-            await using var anchorReader = await anchorCommand.ExecuteReaderAsync();
-            if (await anchorReader.ReadAsync())
+            using var anchorReader = anchorCommand.ExecuteReader();
+            if (anchorReader.Read())
                 anchor = ReadEvent(anchorReader);
 
             if (anchor is null ||
@@ -363,7 +363,7 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
         }
 
         var events = new List<EventSnapshot>();
-        await using (var command = connection.CreateCommand())
+        using (var command = connection.CreateCommand())
         {
             command.CommandText = """
                 SELECT id, universal_id, event_type, event_at, from_status, to_status,
@@ -374,8 +374,8 @@ api.MapGet("/events", async (long? afterId, string? cursor) =>
                 """;
             command.Parameters.AddWithValue("$afterId", requestedAfterId);
 
-            await using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
                 events.Add(ReadEvent(reader));
         }
 
@@ -420,7 +420,7 @@ static string ResolveDatabasePath(IConfiguration configuration)
     return Path.GetFullPath(Path.Combine(basePath, configuredPath));
 }
 
-static async Task<SqliteConnection> OpenReadOnlyConnectionAsync(string dbPath)
+static SqliteConnection OpenReadOnlyConnection(string dbPath)
 {
     var connectionString = new SqliteConnectionStringBuilder
     {
@@ -434,25 +434,25 @@ static async Task<SqliteConnection> OpenReadOnlyConnectionAsync(string dbPath)
     var connection = new SqliteConnection(connectionString);
     try
     {
-        await connection.OpenAsync();
-        await using var pragma = connection.CreateCommand();
+        connection.Open();
+        using var pragma = connection.CreateCommand();
         pragma.CommandText = "PRAGMA query_only = ON; PRAGMA busy_timeout = 5000;";
-        await pragma.ExecuteNonQueryAsync();
+        pragma.ExecuteNonQuery();
         return connection;
     }
     catch
     {
-        await connection.DisposeAsync();
+        connection.Dispose();
         throw;
     }
 }
 
-static async Task<bool> TableExistsAsync(SqliteConnection connection, string tableName)
+static bool TableExists(SqliteConnection connection, string tableName)
 {
-    await using var command = connection.CreateCommand();
+    using var command = connection.CreateCommand();
     command.CommandText = "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = $tableName);";
     command.Parameters.AddWithValue("$tableName", tableName);
-    return Convert.ToInt64(await command.ExecuteScalarAsync(), CultureInfo.InvariantCulture) != 0;
+    return Convert.ToInt64(command.ExecuteScalar(), CultureInfo.InvariantCulture) != 0;
 }
 
 static EventSnapshot ReadEvent(SqliteDataReader reader) => new(

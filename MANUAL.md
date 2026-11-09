@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.28
+# TaskList Stats v2.2.29
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -515,7 +515,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.28**.
+Current release: **v2.2.29**.
+
+### v2.2.29
+
+- Database calls are synchronous, like SpendTracker's and NewsReview's. Microsoft.Data.Sqlite runs its async calls synchronously anyway, so this changes no behavior.
 
 ### v2.2.28
 
