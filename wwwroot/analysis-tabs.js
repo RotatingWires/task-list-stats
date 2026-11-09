@@ -33,8 +33,7 @@ function currentItemForEvent(event) {
 function eventTaskNode(event) {
   const item = currentItemForEvent(event);
   if (item) return taskLink(item, `#${event.displayId}`);
-  const span = document.createElement('span');
-  span.textContent = `#${event.displayId}`;
+  const span = el('span', '', `#${event.displayId}`);
   span.title = 'This task is no longer present in the current TaskList snapshot.';
   return span;
 }
@@ -357,28 +356,21 @@ function formatSessionDate(date) {
 }
 
 function makeSessionEventRow(event) {
-  const row = document.createElement('div');
-  row.className = 'session-event-row';
-  const heading = document.createElement('div');
-  heading.className = 'session-event-heading';
-  const type = document.createElement('strong');
+  const row = el('div', 'session-event-row');
+  const heading = el('div', 'session-event-heading');
+  const type = el('strong');
   type.textContent = event.eventType;
-  const when = document.createElement('span');
-  when.className = 'session-event-when';
+  const when = el('span', 'session-event-when');
   when.textContent = formatSessionTime(event.eventDate);
   heading.append(type, when);
 
-  const task = document.createElement('div');
-  task.className = 'session-event-task';
-  const list = document.createElement('span');
-  list.textContent = `${listName(event.listId)} • `;
+  const task = el('div', 'session-event-task');
+  const list = el('span', '', `${listName(event.listId)} • `);
   task.append(list, eventTaskNode(event));
-  const title = document.createElement('span');
-  title.textContent = ` • ${event.title}`;
+  const title = el('span', '', ` • ${event.title}`);
   task.append(title);
 
-  const meta = document.createElement('div');
-  meta.className = 'session-event-meta';
+  const meta = el('div', 'session-event-meta');
   meta.textContent = eventTransition(event);
   row.append(heading, task, meta);
   return row;
@@ -387,12 +379,9 @@ function makeSessionEventRow(event) {
 function openSessionEvents(session) {
   $('#sessionEventsTitle').textContent = `Activity Session — ${formatSessionDate(session.start)}`;
 
-  const summary = document.createElement('div');
-  summary.className = 'session-dialog-summary';
-  summary.textContent = `${formatSessionTime(session.start)} – ${formatSessionTime(session.end)} • ${formatDuration(session.end - session.start)} • ${numberFmt.format(session.events.length)} event${session.events.length === 1 ? '' : 's'}`;
+  const summary = el('div', 'session-dialog-summary', `${formatSessionTime(session.start)} – ${formatSessionTime(session.end)} • ${formatDuration(session.end - session.start)} • ${numberFmt.format(session.events.length)} event${session.events.length === 1 ? '' : 's'}`);
 
-  const list = document.createElement('div');
-  list.className = 'session-event-list';
+  const list = el('div', 'session-event-list');
   const ordered = [...session.events].sort((a, b) => b.eventDate - a.eventDate || b.id - a.id);
   list.replaceChildren(...ordered.map(makeSessionEventRow));
 
@@ -406,33 +395,23 @@ function makeSessionRow(session) {
   const cancelled = session.events.filter(event => event.eventType === 'Cancelled').length;
   const reopened = session.events.filter(event => event.eventType === 'Reopened').length;
 
-  const row = document.createElement('div');
-  row.className = 'session-row';
-  const heading = document.createElement('div');
-  heading.className = 'session-heading';
-  const date = document.createElement('strong');
+  const row = el('div', 'session-row');
+  const heading = el('div', 'session-heading');
+  const date = el('strong');
   date.textContent = formatSessionDate(session.start);
-  const times = document.createElement('span');
-  times.className = 'session-when';
-  times.textContent = `${formatSessionTime(session.start)} – ${formatSessionTime(session.end)}`;
+  const times = el('span', 'session-when', `${formatSessionTime(session.start)} – ${formatSessionTime(session.end)}`);
   heading.append(date, times);
 
-  const detail = document.createElement('div');
-  detail.className = 'session-detail';
-  const span = document.createElement('span');
-  span.textContent = `${formatDuration(session.end - session.start)} • `;
+  const detail = el('div', 'session-detail');
+  const span = el('span', '', `${formatDuration(session.end - session.start)} • `);
   detail.append(span);
 
-  const eventButton = document.createElement('button');
-  eventButton.type = 'button';
-  eventButton.className = 'session-event-count';
-  eventButton.textContent = `${numberFmt.format(session.events.length)} event${session.events.length === 1 ? '' : 's'}`;
+  const eventButton = el('button', 'session-event-count', `${numberFmt.format(session.events.length)} event${session.events.length === 1 ? '' : 's'}`);
   eventButton.title = 'Open this session and view its recorded events newest first.';
   eventButton.addEventListener('click', () => openSessionEvents(session));
   detail.append(eventButton);
 
-  const counts = document.createElement('span');
-  counts.textContent = ` • ${created} created • ${completed} completed • ${cancelled} cancelled • ${reopened} reopened`;
+  const counts = el('span', '', ` • ${created} created • ${completed} completed • ${cancelled} cancelled • ${reopened} reopened`);
   detail.append(counts);
   row.append(heading, detail);
   return row;

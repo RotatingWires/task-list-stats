@@ -334,7 +334,7 @@ async function downloadSnapshot() {
 
   const blob = new Blob([JSON.stringify(state.snapshot, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
+  const a = el('a');
   a.href = url;
   a.download = `taskliststats-snapshot-${fileStamp()}.json`;
   a.click();

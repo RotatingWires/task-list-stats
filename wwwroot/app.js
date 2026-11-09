@@ -1,5 +1,14 @@
 'use strict';
 
+/** Creates an element with an optional class and text; buttons get type="button". The same helper in every app. */
+function el(tag, className = '', text = '') {
+  const node = document.createElement(tag);
+  if (tag === 'button') node.type = 'button';
+  if (className) node.className = className;
+  if (text) node.textContent = text;
+  return node;
+}
+
 const state = {
   snapshot: null,
   selectedListIds: new Set(),
@@ -199,8 +208,7 @@ function taskUrl(item) {
   return `${taskListOrigin()}/task/${encodeURIComponent(item.universalId)}`;
 }
 function taskLink(item, label = `#${item.displayId}`) {
-  const a = document.createElement('a');
-  a.className = 'task-id-link';
+  const a = el('a', 'task-id-link');
   a.href = taskUrl(item);
   a.target = '_blank';
   a.rel = 'noopener noreferrer';
@@ -252,7 +260,7 @@ function allValidYears(items = scopedItems()) {
 }
 
 function makeStatCard(label, value, sub = '', kind = '') {
-  const card = document.createElement('div');
+  const card = el('div');
   card.className = `stat-card${kind ? ` ${kind}` : ''}`;
   const l = document.createElement('div'); l.className = 'label'; l.textContent = label;
   const v = document.createElement('div'); v.className = 'value'; v.textContent = value;
@@ -314,10 +322,10 @@ function setTable(table, headers, rows, numericColumns = []) {
   const sort = saved && saved.index < headers.length ? saved : null;
   const shown = sort && rows.length > 1 ? sortRows(rows, sort.index, sort.direction) : rows;
   table.replaceChildren();
-  const thead = document.createElement('thead');
-  const trh = document.createElement('tr');
+  const thead = el('thead');
+  const trh = el('tr');
   headers.forEach((header, i) => {
-    const th = document.createElement('th');
+    const th = el('th');
     if (numericColumns.includes(i)) th.className = 'num';
     th.textContent = header;
     if (header && rows.length > 1) {
@@ -339,11 +347,11 @@ function setTable(table, headers, rows, numericColumns = []) {
   });
   thead.append(trh);
 
-  const tbody = document.createElement('tbody');
+  const tbody = el('tbody');
   for (const row of shown) {
-    const tr = document.createElement('tr');
+    const tr = el('tr');
     row.forEach((value, i) => {
-      const td = document.createElement('td');
+      const td = el('td');
       if (numericColumns.includes(i)) td.className = 'num';
       if (value instanceof Node) {
         td.append(value);
@@ -376,8 +384,8 @@ function setTable(table, headers, rows, numericColumns = []) {
     tbody.append(tr);
   }
   if (!rows.length) {
-    const tr = document.createElement('tr');
-    const td = document.createElement('td');
+    const tr = el('tr');
+    const td = el('td');
     td.colSpan = headers.length;
     td.textContent = 'No data.';
     tr.append(td);

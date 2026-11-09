@@ -188,33 +188,26 @@ function makeMilestoneIcon(type) {
 }
 
 function makeMilestoneRow(record, groupedByType = false) {
-  const row = document.createElement('div');
-  row.className = 'milestone-row';
-  const heading = document.createElement('div');
-  heading.className = 'milestone-heading';
-  const name = document.createElement('strong');
+  const row = el('div', 'milestone-row');
+  const heading = el('div', 'milestone-heading');
+  const name = el('strong');
   name.textContent = groupedByType && record.scope !== 'global'
     ? milestoneLabel(record.threshold, record.type.toLowerCase()) : record.label;
-  const when = document.createElement('span');
-  when.className = 'milestone-when';
+  const when = el('span', 'milestone-when');
   when.textContent = milestoneWhen(record.event);
   heading.append(name, makeMilestoneIcon(record.type), when);
 
-  const detail = document.createElement('div');
-  detail.className = 'milestone-detail';
-  const list = document.createElement('span');
-  list.textContent = `${listName(record.event.listId)} • `;
+  const detail = el('div', 'milestone-detail');
+  const list = el('span', '', `${listName(record.event.listId)} • `);
   detail.append(list, eventTaskNode(record.event));
-  const tail = document.createElement('span');
-  tail.textContent = ` • ${record.event.eventType}: ${record.event.title}`;
+  const tail = el('span', '', ` • ${record.event.eventType}: ${record.event.title}`);
   detail.append(tail);
   row.append(heading, detail);
   return row;
 }
 
 function makeMilestoneGrid(records, groupedByType = false) {
-  const grid = document.createElement('div');
-  grid.className = 'milestone-group-grid';
+  const grid = el('div', 'milestone-group-grid');
   grid.replaceChildren(...records.map(record => makeMilestoneRow(record, groupedByType)));
   return grid;
 }
@@ -230,8 +223,7 @@ export function renderMilestones() {
     { label: 'Deleted events', value: numberFmt.format(events.filter(event => event.eventType === 'Deleted').length) }
   ]);
   if (!eventLogReady()) {
-    const empty = document.createElement('div');
-    empty.className = 'milestone-empty';
+    const empty = el('div', 'milestone-empty');
     empty.textContent = eventHistoryUnavailableMessage('recorded milestones');
     timeline.replaceChildren(empty);
     return;
@@ -256,18 +248,14 @@ export function renderMilestones() {
   const sections = [];
   const mode = $('#milestoneSort').value;
   for (const group of milestoneGroups(records, mode)) {
-    const section = document.createElement('section');
-    section.className = 'milestone-group';
-    const title = document.createElement('h3');
-    title.className = 'milestone-group-title';
+    const section = el('section', 'milestone-group');
+    const title = el('h3', 'milestone-group-title');
     title.textContent = group.label;
     section.append(title);
     if (mode === 'type') {
       for (const scope of milestoneTypeGroups(group.records)) {
-        const subsection = document.createElement('section');
-        subsection.className = 'milestone-subgroup';
-        const subtitle = document.createElement('h4');
-        subtitle.className = 'milestone-subgroup-title';
+        const subsection = el('section', 'milestone-subgroup');
+        const subtitle = el('h4', 'milestone-subgroup-title');
         subtitle.textContent = scope.label;
         subsection.append(subtitle, makeMilestoneGrid(scope.records, true));
         section.append(subsection);

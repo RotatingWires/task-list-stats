@@ -148,12 +148,10 @@ function formatStreak(streak, verb) {
 }
 
 function makeRecordGroup(title, rows) {
-  const fieldset = document.createElement('fieldset');
-  fieldset.className = 'groupbox';
-  const legend = document.createElement('legend');
+  const fieldset = el('fieldset', 'groupbox');
+  const legend = el('legend');
   legend.textContent = title;
-  const list = document.createElement('div');
-  list.className = 'metric-list';
+  const list = el('div', 'metric-list');
   renderMetricList(list, rows);
   fieldset.append(legend, list);
   return fieldset;
@@ -200,8 +198,7 @@ function renderRecordLists(items) {
 
   const container = $('#recordCards');
   container.className = 'records-layout';
-  const columns = document.createElement('div');
-  columns.className = 'two-column';
+  const columns = el('div', 'two-column');
   columns.append(
     makeRecordGroup('Creation Records', creationRows),
     makeRecordGroup('Completion Records', completionRows)

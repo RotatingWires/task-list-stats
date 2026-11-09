@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.37
+# TaskList Stats v2.2.38
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -540,7 +540,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs the server 
 
 ## Release notes
 
-Current release: **v2.2.37**.
+Current release: **v2.2.38**.
+
+### v2.2.38
+
+- Code: elements are built with the `el(tag, className, text)` helper, the same one in every app.
 
 ### v2.2.37
 

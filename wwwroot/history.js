@@ -194,8 +194,7 @@ function renderYearHeatmap(items) {
   let max = 0;
   for (const [key, value] of map) if (key.startsWith(`${year}-`)) max = Math.max(max, value);
 
-  const grid = document.createElement('div');
-  grid.className = 'heatmap-grid';
+  const grid = el('div', 'heatmap-grid');
   grid.style.gridTemplateColumns = `42px repeat(${weeks}, 24px)`;
   grid.style.gridTemplateRows = '20px repeat(7, 24px)';
   grid.style.gridAutoFlow = 'row';
@@ -213,7 +212,7 @@ function renderYearHeatmap(items) {
     grid.append(label);
     for (let w=0; w<weeks; w++) {
       const d = new Date(start); d.setDate(start.getDate() + w*7 + dow);
-      const cell = document.createElement('span');
+      const cell = el('span');
       const inYear = d.getFullYear() === year;
       const value = inYear ? (map.get(localDayKey(d)) || 0) : 0;
       cell.className = `heat ${inYear ? heatClass(value, max) : 'h0'}`;
@@ -265,8 +264,7 @@ function renderMonthYearHeatmap(items) {
   const counts = new Map();
   for (const date of dates) increment(counts, monthKey(date));
   const max = Math.max(0, ...counts.values());
-  const grid = document.createElement('div');
-  grid.className = 'month-year-grid';
+  const grid = el('div', 'month-year-grid');
   grid.style.gridTemplateColumns = `58px repeat(12, 56px)`;
   const blank = document.createElement('div'); grid.append(blank);
   for (const m of MONTHS) { const h=document.createElement('div'); h.className='month-year-head'; h.textContent=m; grid.append(h); }
@@ -341,15 +339,12 @@ function calendarItemsForDay(dayKey, dateField) {
 }
 
 function calendarDaySection(label, items) {
-  const fieldset = document.createElement('fieldset');
-  fieldset.className = 'groupbox calendar-detail-group';
-  const legend = document.createElement('legend');
-  legend.textContent = `${label} (${numberFmt.format(items.length)})`;
+  const fieldset = el('fieldset', 'groupbox calendar-detail-group');
+  const legend = el('legend', '', `${label} (${numberFmt.format(items.length)})`);
   fieldset.append(legend);
 
-  const wrap = document.createElement('div');
-  wrap.className = 'table-wrap';
-  const table = document.createElement('table');
+  const wrap = el('div', 'table-wrap');
+  const table = el('table');
   setTable(table, ['List', 'ID', 'Task', 'Current status'], items.map(item => [
     listName(item.listId),
     taskLink(item),
@@ -379,9 +374,7 @@ function openCalendarDayDetails(dayKey) {
     day: 'numeric'
   });
 
-  const scope = document.createElement('div');
-  scope.className = 'calendar-detail-scope';
-  scope.textContent = `Scope: ${isAllListScope() ? 'All lists' : selectedListNames().join(', ')}`;
+  const scope = el('div', 'calendar-detail-scope', `Scope: ${isAllListScope() ? 'All lists' : selectedListNames().join(', ')}`);
 
   $('#calendarDayBody').replaceChildren(
     scope,
