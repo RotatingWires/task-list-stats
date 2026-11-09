@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.32
+# TaskList Stats v2.2.33
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -515,7 +515,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.32**.
+Current release: **v2.2.33**.
+
+### v2.2.33
+
+- Dropdowns and menus share one file, `dropdown.js`, the same in every app: Arrow Down/Up move through a menu (Arrow Down on a closed dropdown opens it), Home and End jump to the first and last item, and Escape closes it and returns to its button without closing the dialog under it. A dropdown that would be cut off inside a dialog floats over the page and opens upward when there is more room there, like SpendTracker's.
 
 ### v2.2.32
 
