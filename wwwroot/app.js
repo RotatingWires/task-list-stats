@@ -203,7 +203,7 @@ function taskLink(item, label = `#${item.displayId}`) {
   a.className = 'task-id-link';
   a.href = taskUrl(item);
   a.target = '_blank';
-  a.rel = 'noopener';
+  a.rel = 'noopener noreferrer';
   a.textContent = label;
   a.title = `Open ${listName(item.listId)} task #${item.displayId} in a new tab`;
   return a;

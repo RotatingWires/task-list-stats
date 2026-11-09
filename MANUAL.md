@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.30
+# TaskList Stats v2.2.31
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -515,7 +515,14 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.30**.
+Current release: **v2.2.31**.
+
+### v2.2.31
+
+- Every dialog is a `<form method="dialog">`, and its Cancel/Close/OK button is marked `data-close="dialogId"`; one shared handler closes it, the same code in every app.
+- Keyboard focus draws the same dotted Windows 95 focus rectangle in every app; mouse clicks draw none.
+- Screen readers get the same structure in every app: a hidden page heading with the app name and a **Skip to content** link that appears when you press Tab.
+- Every button has an explicit type; links to TaskList open a new tab with `noopener noreferrer` like NewsReview's.
 
 ### v2.2.30
 
