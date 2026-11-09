@@ -304,7 +304,6 @@ button:active,
   border-right: 2px solid var(--light-edge);
   border-bottom: 2px solid var(--light-edge);
 }
-.error-panel { color: var(--error); }
 
 .stat-grid {
   display: grid;
@@ -746,13 +745,13 @@ select:focus-visible,
   .workspace { padding: 5px; }
   .groupbox { padding-left: 5px; padding-right: 5px; }
   .statusbar {
-    grid-template-columns: 1fr;
+    /* Both sides stay on phones, like TaskList: the right side shortens with an ellipsis. */
+    grid-template-columns: auto minmax(0, 1fr);
     margin-left: max(5px, env(safe-area-inset-left));
     margin-right: max(5px, env(safe-area-inset-right));
     margin-bottom: max(var(--ios-bottom-offset), env(safe-area-inset-bottom));
     padding-top: 3px;
   }
-  .statusbar #statusRight { display: none; }
   .control-row { flex-wrap: wrap; max-width: 100%; }
   .month-input { max-width: 100%; min-width: 0; }
   .month-calendar {

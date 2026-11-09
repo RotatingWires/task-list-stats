@@ -7,6 +7,11 @@ function fileStamp(date = new Date()) {
   return `${date.getFullYear()}${two(date.getMonth() + 1)}${two(date.getDate())}-${two(date.getHours())}${two(date.getMinutes())}${two(date.getSeconds())}`;
 }
 
+/** Errors show in the status bar, like TaskList's. */
+function showError(message) {
+  $('#statusLeft').textContent = `Error: ${message}`;
+}
+
 async function timedFetch(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
   try {
     return await fetch(url, timeoutMs ? { ...options, signal: AbortSignal.timeout(timeoutMs) } : options);
@@ -149,10 +154,8 @@ function switchTab(name) {
       $('#databaseStatus').textContent =
         `${numberFmt.format(state.snapshot.items.length)} current items • ${eventHistoryStatusText()}`;
     } catch (error) {
-      const panel = $('#errorPanel');
-      panel.hidden = false;
-      panel.textContent = `${name === 'milestones' ? 'Could not load Milestones' : 'Could not load event history'}: ${error.message}`;
       renderAll();
+      showError(`${name === 'milestones' ? 'Could not load Milestones' : 'Could not load event history'}: ${error.message}`);
     }
   });
 }
@@ -271,7 +274,6 @@ async function loadSnapshot() {
   if (state.snapshotLoading) return state.snapshotLoading;
   state.snapshotLoading = (async () => {
     $('#loadingPanel').hidden = false;
-    $('#errorPanel').hidden = true;
     $('#databaseStatus').textContent = 'Loading database...';
 
     const cachedEvents = state.eventsLoaded ? (state.snapshot?.events ?? []) : [];
@@ -316,7 +318,7 @@ async function loadSnapshot() {
       renderAll();
     } catch (error) {
       $('#loadingPanel').hidden = true;
-      const panel = $('#errorPanel'); panel.hidden = false; panel.textContent = error.message;
+      showError(error.message);
       $('#databaseStatus').textContent = 'Database unavailable';
     }
   })();
@@ -332,9 +334,7 @@ async function downloadSnapshot() {
   try {
     await ensureEventsLoaded();
   } catch (error) {
-    const panel = $('#errorPanel');
-    panel.hidden = false;
-    panel.textContent = `Could not load event history for export: ${error.message}`;
+    showError(`Could not load event history for export: ${error.message}`);
     return;
   }
 

@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.25
+# TaskList Stats v2.2.26
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -506,7 +506,12 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.25**.
+Current release: **v2.2.26**.
+
+### v2.2.26
+
+- On phones the status bar keeps both sides, like TaskList: the right side shortens with an ellipsis.
+- Errors show in the status bar as **Error: ...**, like TaskList, instead of a red panel over the page.
 
 ### v2.2.25
 
