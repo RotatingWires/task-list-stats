@@ -130,7 +130,7 @@ function formatHourRecord(key) {
   const date = new Date(`${match[1]}T${match[2]}:00:00`);
   return date.toLocaleString(undefined, {
     year: 'numeric', month: 'numeric', day: 'numeric',
-    hour: 'numeric', hour12: true
+    hour: 'numeric'
   });
 }
 

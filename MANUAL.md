@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.26
+# TaskList Stats v2.2.27
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -74,7 +74,7 @@ The plaintext password is never stored. `auth.json` contains a random salt and a
 
 Successful login creates the `TaskListStats.Auth` cookie. It is HttpOnly, SameSite=Strict, persistent for up to 30 days, sliding while active, and marked Secure when the request itself uses HTTPS.
 
-Use **File → Log Out** to clear the session. Setup and login are rate-limited to 5 attempts per source IP per minute.
+Use **File > Log Out** to clear the session. Setup and login are rate-limited to 5 attempts per source IP per minute.
 
 ## HTTP endpoints
 
@@ -254,19 +254,19 @@ Task Scheduler can therefore launch `TaskListStats.exe` directly rather than usi
 
 ## Themes
 
-Use **View → Theme** to choose **Light** or **Dark**. The selection persists in browser storage and applies to the Stats workspace and login/setup UI.
+Use **View > Theme** to choose **Light** or **Dark**. The selection persists in browser storage and applies to the Stats workspace and login/setup UI.
 
 The dark theme keeps the Windows 95 raised/recessed look instead of replacing it with a generic flat theme. Every color is a token in `wwwroot/theme.css`, defined once for Light and once for Dark, with the same token names TaskList, NewsReview, and SpendTracker use; the other stylesheets and scripts contain no color values, apart from the two browser `theme-color` values that `theme.js` writes to the page metadata. Canvas charts read their colors from the `--chart-*` and `--pattern-*` tokens by series name and redraw when the theme changes.
 
 There is intentionally no automatic **System** theme; theme selection is strictly Light or Dark.
 
-**View → Use Retro Font** switches the whole app, including the login page and chart labels, to W95FA, an open-source recreation of the Windows 95 MS Sans Serif font bundled in `wwwroot/fonts`, so the interface looks the same on Windows, Linux, macOS, Android, and iOS without installing fonts. It is off by default and saved per browser, separately for each app.
+**View > Use Retro Font** switches the whole app, including the login page and chart labels, to W95FA, an open-source recreation of the Windows 95 MS Sans Serif font bundled in `wwwroot/fonts`, so the interface looks the same on Windows, Linux, macOS, Android, and iOS without installing fonts. It is off by default and saved per browser, separately for each app.
 
 ## Table readability and row hover
 
 Tables use 14px text, a 1.45 line height, and larger cell padding across all tabs. Activity Session rows and Compare's custom table layout use matching spacing.
 
-**File → Highlight rows on hover** is a square checkbox enabled by default. Clicking it toggles the setting and dismisses the File menu, just like selecting an option in View. Its setting is saved per browser. When enabled, table body rows highlight using the same Light/Dark colors as TaskList; headers, statistic cards, heatmap cells, and Milestones tiles are unaffected. Hover follows actual mouse/trackpad pointer movement, including over links and buttons inside rows and on touchscreen laptops. Moving outside a row, leaving the page, disabling the option, or using touch/pen input clears the highlight. Synthetic mouse events after touch are briefly suppressed. Theme styles load directly with the page, using the same stylesheet loading approach as TaskList.
+**File > Highlight rows on hover** is a square checkbox enabled by default. Clicking it toggles the setting and dismisses the File menu, just like selecting an option in View. Its setting is saved per browser. When enabled, table body rows highlight using the same Light/Dark colors as TaskList; headers, statistic cards, heatmap cells, and Milestones tiles are unaffected. Hover follows actual mouse/trackpad pointer movement, including over links and buttons inside rows and on touchscreen laptops. Moving outside a row, leaving the page, disabling the option, or using touch/pen input clears the highlight. Synthetic mouse events after touch are briefly suppressed. Theme styles load directly with the page, using the same stylesheet loading approach as TaskList.
 
 ## TaskList deep links
 
@@ -340,7 +340,7 @@ Chronological event history with one **Date/time range** field, event type, orde
 
 The range and the text filter apply when you press **Search** (or Enter), as in TaskList and NewsReview, so half-typed phrases are not searched; the Event and Order dropdowns apply as soon as you choose.
 
-With the range field empty, undated events remain visible as “Unknown” after dated rows in either sort direction. Choosing an explicit range excludes events that cannot be placed in that range. Time-only ranges search all dates, and overnight ranges such as `10pm - 2am` match late-night and early-morning times on each selected date. A time filter excludes date-only events rather than treating them as midnight. Moving tasks preserves their original event attribution; historical task links follow the permanent Universal ID to the current list and visible number.
+With the range field empty, undated events remain visible as "Unknown" after dated rows in either sort direction. Choosing an explicit range excludes events that cannot be placed in that range. Time-only ranges search all dates, and overnight ranges such as `10pm - 2am` match late-night and early-morning times on each selected date. A time filter excludes date-only events rather than treating them as midnight. Moving tasks preserves their original event attribution; historical task links follow the permanent Universal ID to the current list and visible number.
 
 Created events display as `Created → Open` rather than showing a missing previous status, while normal state changes continue to display their actual transitions.
 
@@ -374,7 +374,7 @@ Milestones are calculated automatically from the available event history. Curren
 
 The permanent Milestones timeline is computed from event history and is independent of TaskList's live notification queue. It remains available whether or not a popup has been displayed. Stats never claims or displays celebration dialogs or confetti; live celebrations belong exclusively to TaskList.
 
-Global/list/recorded-event milestones include undated records and identify the threshold-crossing event by event-record order, matching TL's counter increments. Backdated imports therefore count without pretending they were inserted earlier. A milestone with no usable timestamp shows “Unknown date” and appears in an Unknown date section for Chronological/Year grouping. Yearly event milestones require valid dates and use UTC years for timestamps; date-only imports use their written year. Calendar charts and displayed event times keep their normal local-time presentation. Universal-ID milestones can also show unknown dates when the creation record is undated.
+Global/list/recorded-event milestones include undated records and identify the threshold-crossing event by event-record order, matching TL's counter increments. Backdated imports therefore count without pretending they were inserted earlier. A milestone with no usable timestamp shows "Unknown date" and appears in an Unknown date section for Chronological/Year grouping. Yearly event milestones require valid dates and use UTC years for timestamps; date-only imports use their written year. Calendar charts and displayed event times keep their normal local-time presentation. Universal-ID milestones can also show unknown dates when the creation record is undated.
 
 Milestones have a **Sort by** dropdown with Chronological, Year, Type, and List choices. It uses the same selected-circle indicator as View and closes after choosing an option. Chronological is the default and keeps month-and-year sections, such as October 2026, newest first. Year groups by the year earned, newest first. Type groups Created, Completed, Cancelled, Reopened, Deleted, Recorded events, and Universal ID milestones separately. Within each type, Overall milestones come first, followed by separate year sections (newest year first), then separate list sections (alphabetically). Milestones progress from the smallest threshold to the largest within each of those sections, including milestones with unknown dates. Tile titles omit the year/list prefix already supplied by the section heading. List groups by the list attached to the event that earned the milestone, alphabetically. Chronological, Year, and List keep milestones newest first within each group. Sorting respects the selected list scope and shows only groups containing milestones.
 
@@ -425,7 +425,7 @@ TaskList v1.5 introduced an append-only `task_events` history log. Created, Comp
 
 For older task data, TaskList reconstructs event rows from timestamps it already had. That older reconstruction can be incomplete when a task changed state repeatedly before the event log existed. Because older TaskList versions did not store deletion timestamps, tasks deleted before v1.5.10 cannot be given a trustworthy historical Deleted event.
 
-TaskList v1.5.24 and newer save list names at deletion. Stats reads this optional `deleted_lists` history without writing to TaskList's database and labels saved names “(deleted)” across historical views. Lists deleted before name preservation show “Deleted list #ID (name unavailable)” because their original names cannot be recovered. Older databases remain supported, and deleted lists are not added to current-list counts or selectors.
+TaskList v1.5.24 and newer save list names at deletion. Stats reads this optional `deleted_lists` history without writing to TaskList's database and labels saved names "(deleted)" across historical views. Lists deleted before name preservation show "Deleted list #ID (name unavailable)" because their original names cannot be recovered. Older databases remain supported, and deleted lists are not added to current-list counts or selectors.
 
 TaskList v1.7.9 adds **File > Fresh Start...**, which can remove finished tasks, archived lists, the history of deleted tasks, or all task history to free disk space. Stats has no Fresh start of its own because it never writes to TaskList's database; its only stored data is its password hash and log. When a TaskList Fresh start removes history, TaskList changes its history revision, so Stats' next event request reports that a reset is required and Stats reloads the whole remaining history, just as after a TaskList restore. Charts, records, and Milestones then reflect only the history that remains; clearing all task history leaves one legacy event per date each remaining task still has.
 
@@ -433,7 +433,7 @@ The Stats **Help** button opens About immediately, matching TaskList. Its wide, 
 
 ## Exporting a snapshot
 
-Use **File → Import/Export... → Download Snapshot** to download the snapshot loaded by Stats as `taskliststats-snapshot-YYYYMMDD-HHMMSS.json` (local time). Stats keeps no data of its own, so there is nothing to restore; back up and restore tasks in TaskList.
+Use **File > Import/Export... > Download Snapshot** to download the snapshot loaded by Stats as `taskliststats-snapshot-YYYYMMDD-HHMMSS.json` (local time). Stats keeps no data of its own, so there is nothing to restore; back up and restore tasks in TaskList.
 
 Treat exports as private because they can contain task titles, descriptions, list names, IDs, statuses, timestamps, and event history.
 
@@ -506,7 +506,14 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.26**.
+Current release: **v2.2.27**.
+
+### v2.2.27
+
+- Wording matches the other apps: menu paths are written **File > Import/Export...**, only "..." and straight quotes are used.
+- Loading text is **Loading...** like the other apps.
+- Times follow the browser's 12- or 24-hour setting instead of always using a 12-hour clock; Activity Sessions dates use the browser's locale.
+- When the session expires, Stats goes to the login page with **Your session has expired.**, like TaskList.
 
 ### v2.2.26
 
@@ -520,7 +527,7 @@ Current release: **v2.2.26**.
 
 ### v2.2.24
 
-- **File → Import/Export...** opens a dialog like the other apps' with **Download Snapshot** (formerly File → Export snapshot JSON...).
+- **File > Import/Export...** opens a dialog like the other apps' with **Download Snapshot** (formerly File > Export snapshot JSON...).
 - Download names follow one pattern in every app, in local time: `taskliststats-snapshot-YYYYMMDD-HHMMSS.json`.
 
 ### v2.2.23
@@ -530,7 +537,7 @@ Current release: **v2.2.26**.
 
 ### v2.2.22
 
-- **View → Use Retro Font**: the whole app, login page and chart labels included, can use W95FA, an open-source recreation of the Windows 95 font bundled with the app (SIL Open Font License, `wwwroot/fonts/OFL.txt`), so it looks the same on Windows, Linux, macOS, Android, and iOS. Off by default; saved per browser.
+- **View > Use Retro Font**: the whole app, login page and chart labels included, can use W95FA, an open-source recreation of the Windows 95 font bundled with the app (SIL Open Font License, `wwwroot/fonts/OFL.txt`), so it looks the same on Windows, Linux, macOS, Android, and iOS. Off by default; saved per browser.
 
 ### v2.2.21
 
@@ -677,7 +684,7 @@ Current release: **v2.2.26**.
 
 ### v2.1.20
 
-- Clarify in Help that dates marked “Unknown” may come from tasks imported from another application; keep the event-history explanation in one paragraph.
+- Clarify in Help that dates marked "Unknown" may come from tasks imported from another application; keep the event-history explanation in one paragraph.
 
 ### v2.1.19
 
@@ -694,7 +701,7 @@ Current release: **v2.2.26**.
 
 ### v2.1.17
 
-- Show preserved deleted list names in Task Flow, Activity Sessions, and milestone history with a “(deleted)” label.
+- Show preserved deleted list names in Task Flow, Activity Sessions, and milestone history with a "(deleted)" label.
 - Mark older deleted list names as unavailable rather than substituting a generic current-list name.
 - Explain deleted list-name availability in About alongside the existing date/history limitations.
 - Read the optional name-history table without changing the read-only connection or lazy event loading; support older TaskList databases.
@@ -782,7 +789,7 @@ Current release: **v2.2.26**.
 - Fix table row hover by tracking mouse/trackpad pointer movement directly, including links and buttons inside rows, instead of gating CSS :hover on a separate mouse-capability class.
 - Clear row highlighting when leaving rows/the page, disabling the checkbox, or using touch/pen input; preserve the saved setting and synthetic-mouse suppression.
 - Load theme.css directly in both application and login pages, matching TaskList, and delete the obsolete dynamic stylesheet loader and readiness waits.
-- Remove the period from File → Highlight rows on hover.
+- Remove the period from File > Highlight rows on hover.
 - Verify that the redundant Trends monthly year comparison markup, renderer, and call sites remain fully removed; Calendar retains the Month × Year Heatmap.
 - Preserve TaskList's Light/Dark hover colors, table readability improvements, and newest-first session detail order.
 - Update release metadata/documentation to v2.1.7.
@@ -939,7 +946,7 @@ Current release: **v2.2.26**.
 
 ### v2.0.11
 
-- Remove **System** from View → Theme so theme selection is strictly Light or Dark.
+- Remove **System** from View > Theme so theme selection is strictly Light or Dark.
 - Remove the `prefers-color-scheme` listener and System-theme resolution instead of merely hiding the menu choice.
 - Make Calendar day drill-down omit Created / Completed / Cancelled categories when that category has no tasks on the selected day.
 - Use darker, less neon Created/Completed colors for the Patterns grouped charts in dark mode while leaving other chart palettes unchanged.

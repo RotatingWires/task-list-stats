@@ -72,8 +72,8 @@ async function ensureEventsLoaded() {
       : '';
     const response = await timedFetch(`/api/events${query}`, { cache: 'no-store', credentials: 'same-origin' });
     if (response.status === 401) {
-      window.location.replace(loginUrl());
-      return;
+      window.location.replace('/login.html');
+      throw new Error('Your session has expired.');
     }
     if (!response.ok) {
       let message = `Server returned ${response.status}`;
@@ -246,12 +246,6 @@ function closeMenus() {
   $$('[aria-haspopup="menu"]').forEach(button => button.setAttribute('aria-expanded', 'false'));
 }
 
-function loginUrl() {
-  const returnUrl = `${location.pathname}${location.search}${location.hash}`;
-  // The home page needs no return address: plain /login.html, like NewsReview.
-  return !returnUrl || returnUrl === '/' ? '/login.html' : `/login.html?returnUrl=${encodeURIComponent(returnUrl)}`;
-}
-
 async function logout() {
   closeMenus();
   try {
@@ -274,7 +268,7 @@ async function loadSnapshot() {
   if (state.snapshotLoading) return state.snapshotLoading;
   state.snapshotLoading = (async () => {
     $('#loadingPanel').hidden = false;
-    $('#databaseStatus').textContent = 'Loading database...';
+    $('#databaseStatus').textContent = 'Loading...';
 
     const cachedEvents = state.eventsLoaded ? (state.snapshot?.events ?? []) : [];
     const cachedLastEventId = state.lastEventId;
@@ -283,7 +277,7 @@ async function loadSnapshot() {
 
     try {
       const response = await fetch('/api/snapshot', { cache: 'no-store', credentials: 'same-origin' });
-      if (response.status === 401) { window.location.replace(loginUrl()); return; }
+      if (response.status === 401) { window.location.replace('/login.html'); throw new Error('Your session has expired.'); }
       if (!response.ok) {
         let message = `Server returned ${response.status}`;
         try { const body = await response.json(); message = body.error || message; } catch {}

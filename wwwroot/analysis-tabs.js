@@ -344,11 +344,11 @@ function inferSessions(events, gapMinutes) {
 }
 
 function formatSessionTime(date) {
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return date.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
 
 function formatSessionDate(date) {
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(undefined, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',

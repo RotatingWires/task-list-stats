@@ -110,13 +110,13 @@ function formatDate(date) {
 function formatDateTime(date) {
   return date ? date.toLocaleString(undefined, {
     year: 'numeric', month: 'numeric', day: 'numeric',
-    hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
+    hour: 'numeric', minute: '2-digit', second: '2-digit'
   }) : '—';
 }
 
 function formatHour(hour) {
   const d = new Date(2000, 0, 1, hour, 0, 0);
-  return d.toLocaleTimeString(undefined, { hour: 'numeric', hour12: true });
+  return d.toLocaleTimeString(undefined, { hour: 'numeric' });
 }
 
 function durationMs(item) {

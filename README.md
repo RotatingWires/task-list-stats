@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.26
+# TaskList Stats v2.2.27
 
 A separate, read-only statistics dashboard for [TaskList](https://github.com/RotatingWires/task-list), with charts, calendars, task history, comparisons, activity sessions, and milestones.
 
@@ -61,4 +61,4 @@ See the manual for [authentication](MANUAL.md#authentication), [statistics secti
 
 ## Credits
 
-**View → Use Retro Font** uses [W95FA](https://fontsarena.com/w95fa-by-alina-sava/) by Alina Sava, bundled in `wwwroot/fonts/` under the SIL Open Font License 1.1 (`wwwroot/fonts/OFL.txt`).
+**View > Use Retro Font** uses [W95FA](https://fontsarena.com/w95fa-by-alina-sava/) by Alina Sava, bundled in `wwwroot/fonts/` under the SIL Open Font License 1.1 (`wwwroot/fonts/OFL.txt`).
