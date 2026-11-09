@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.31
+# TaskList Stats v2.2.32
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -515,7 +515,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.31**.
+Current release: **v2.2.32**.
+
+### v2.2.32
+
+- Every table sorts by a column when you click its heading (or press Enter): ascending, descending, then the original order, like SpendTracker's tables. A sort is kept when the table is drawn again.
 
 ### v2.2.31
 

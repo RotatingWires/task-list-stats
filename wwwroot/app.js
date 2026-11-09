@@ -280,7 +280,39 @@ function renderMetricList(container, rows) {
   }
 }
 
+/** Remembered sorts by table id, so a table drawn again keeps its order. */
+const tableSorts = new Map();
+
+/** What a cell sorts by: numbers as numbers (commas, %, and units after them are ignored), m/d/yyyy dates by date, dashes last. */
+function sortValueOf(value) {
+  if (value == null || typeof value === 'number') return value ?? null;
+  const text = (value instanceof Node ? value.textContent : String(value)).trim();
+  if (!text || text === '—' || text === '-') return null;
+  const date = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(text);
+  if (date) return Number(date[3]) * 10000 + Number(date[1]) * 100 + Number(date[2]);
+  const number = /^([+−-])?(\d[\d,]*(?:\.\d+)?)/.exec(text.replace(/^#/, ''));
+  if (number) return (number[1] === '−' || number[1] === '-' ? -1 : 1) * Number(number[2].replace(/,/g, ''));
+  return text.toLowerCase();
+}
+
+/** A sorted copy, like SpendTracker's: stable, numbers before text, and empty values last in both directions. */
+function sortRows(rows, index, direction) {
+  const keyed = rows.map((row, position) => ({ row, position, value: sortValueOf(row[index]) }));
+  keyed.sort((a, b) => {
+    if (a.value == null || b.value == null) return (a.value == null) - (b.value == null) || a.position - b.position;
+    const kindA = typeof a.value === 'number' ? 0 : 1;
+    const kindB = typeof b.value === 'number' ? 0 : 1;
+    const order = kindA - kindB || (kindA === 0 ? a.value - b.value : String(a.value).localeCompare(String(b.value), undefined, { numeric: true }));
+    return order * direction || a.position - b.position;
+  });
+  return keyed.map(entry => entry.row);
+}
+
+/** Tables sort by a column when its heading is clicked (or Enter/Space): ascending, descending, then back to the original order, like SpendTracker. */
 function setTable(table, headers, rows, numericColumns = []) {
+  const saved = table.id ? tableSorts.get(table.id) : table.sortState;
+  const sort = saved && saved.index < headers.length ? saved : null;
+  const shown = sort && rows.length > 1 ? sortRows(rows, sort.index, sort.direction) : rows;
   table.replaceChildren();
   const thead = document.createElement('thead');
   const trh = document.createElement('tr');
@@ -288,12 +320,27 @@ function setTable(table, headers, rows, numericColumns = []) {
     const th = document.createElement('th');
     if (numericColumns.includes(i)) th.className = 'num';
     th.textContent = header;
+    if (header && rows.length > 1) {
+      th.classList.add('sortable');
+      th.tabIndex = 0;
+      th.setAttribute('aria-sort', sort?.index === i ? (sort.direction === 1 ? 'ascending' : 'descending') : 'none');
+      const resort = () => {
+        const next = sort?.index !== i ? { index: i, direction: 1 } : sort.direction === 1 ? { index: i, direction: -1 } : null;
+        if (table.id) { if (next) tableSorts.set(table.id, next); else tableSorts.delete(table.id); } else table.sortState = next;
+        setTable(table, headers, rows, numericColumns);
+        table.querySelectorAll('th')[i]?.focus();
+      };
+      th.addEventListener('click', resort);
+      th.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); resort(); }
+      });
+    }
     trh.append(th);
   });
   thead.append(trh);
 
   const tbody = document.createElement('tbody');
-  for (const row of rows) {
+  for (const row of shown) {
     const tr = document.createElement('tr');
     row.forEach((value, i) => {
       const td = document.createElement('td');

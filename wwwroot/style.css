@@ -711,6 +711,13 @@ select,
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Sortable table headings, like SpendTracker's. */
+th.sortable { cursor: pointer; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+th.sortable:hover { background: var(--row-hover); }
+th.sortable[aria-sort="ascending"]::after { content: " ▲"; font-size: 10px; }
+th.sortable[aria-sort="descending"]::after { content: " ▼"; font-size: 10px; }
+th.sortable:focus-visible { outline: 1px dotted currentColor; outline-offset: -3px; }
+
 /* Screen-reader-only text, and the skip link that appears when tabbed to; the same rules in every app. */
 .sr-only, .skip:not(:focus) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .skip:focus { position: fixed; top: 0; left: 0; background: var(--surface); color: var(--ink); padding: 10px; z-index: 10; }
