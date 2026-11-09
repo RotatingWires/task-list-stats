@@ -1,7 +1,5 @@
-'use strict';
-
 /** Creates an element with an optional class and text; buttons get type="button". The same helper in every app. */
-function el(tag, className = '', text = '') {
+export function el(tag, className = '', text = '') {
   const node = document.createElement(tag);
   if (tag === 'button') node.type = 'button';
   if (className) node.className = className;
@@ -9,7 +7,7 @@ function el(tag, className = '', text = '') {
   return node;
 }
 
-const state = {
+export const state = {
   snapshot: null,
   selectedListIds: new Set(),
   activeTab: 'overview',
@@ -21,15 +19,15 @@ const state = {
   snapshotLoading: null
 };
 
-const $ = selector => document.querySelector(selector);
-const $$ = selector => [...document.querySelectorAll(selector)];
-const numberFmt = new Intl.NumberFormat();
-const oneDecimal = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
+export const $ = selector => document.querySelector(selector);
+export const $$ = selector => [...document.querySelectorAll(selector)];
+export const numberFmt = new Intl.NumberFormat();
+export const oneDecimal = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-const HEATMAP_EVENT_OPTIONS = [
+export const HEATMAP_EVENT_OPTIONS = [
   ['created', 'Created'],
   ['completed', 'Completed'],
   ['cancelled', 'Cancelled'],
@@ -50,13 +48,13 @@ const STATISTIC_TOOLTIPS = new Map([
   ['Terminal time', 'For a currently Done or Cancelled item, the elapsed time from creation to its current terminal event. This requires confirmed clock times; date-only imports show a dash.']
 ]);
 
-const STOPWORDS = new Set([
+export const STOPWORDS = new Set([
   'the','a','an','and','or','to','of','for','in','on','at','with','from','by','is','it','this','that','these','those',
   'my','your','our','their','be','do','does','did','done','task','tasks','homework','assignment','assignments','class',
   'chapter','week','day','new','make','add','finish','complete','read','write','about','into','up','out','as','due'
 ]);
 
-function parseDate(value) {
+export function parseDate(value) {
   if (!value || typeof value !== 'string' || value.toLowerCase() === 'unknown') return null;
   const isoDate = /^(\d{4})-(\d{2})-(\d{2})(?=$|T)/.exec(value);
   if (isoDate) {
@@ -72,11 +70,11 @@ function parseDate(value) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function hasConfirmedClockTime(value) {
+export function hasConfirmedClockTime(value) {
   return typeof value === 'string' && /T\d{2}:\d{2}/.test(value);
 }
 
-function* heatmapDates(items, mode, { requireClockTime = false } = {}) {
+export function* heatmapDates(items, mode, { requireClockTime = false } = {}) {
   const events = mode === 'activity'
     ? HEATMAP_EVENT_OPTIONS.map(([value]) => value).filter(value => value !== 'activity')
     : [mode];
@@ -88,7 +86,7 @@ function* heatmapDates(items, mode, { requireClockTime = false } = {}) {
   }
 }
 
-function localDayKey(date) {
+export function localDayKey(date) {
   if (!date) return null;
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -96,7 +94,7 @@ function localDayKey(date) {
   return `${y}-${m}-${d}`;
 }
 
-function monthKey(date) {
+export function monthKey(date) {
   if (!date) return null;
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
@@ -107,28 +105,28 @@ function startOfWeek(date) {
   return d;
 }
 
-function weekKey(date) {
+export function weekKey(date) {
   if (!date) return null;
   return localDayKey(startOfWeek(date));
 }
 
-function formatDate(date) {
+export function formatDate(date) {
   return date ? date.toLocaleDateString() : '—';
 }
 
-function formatDateTime(date) {
+export function formatDateTime(date) {
   return date ? date.toLocaleString(undefined, {
     year: 'numeric', month: 'numeric', day: 'numeric',
     hour: 'numeric', minute: '2-digit', second: '2-digit'
   }) : '—';
 }
 
-function formatHour(hour) {
+export function formatHour(hour) {
   const d = new Date(2000, 0, 1, hour, 0, 0);
   return d.toLocaleTimeString(undefined, { hour: 'numeric' });
 }
 
-function durationMs(item) {
+export function durationMs(item) {
   const created = item.createdDate;
   const completed = item.completedDate;
   if (!created || !completed || !hasConfirmedClockTime(item.createdAt) || !hasConfirmedClockTime(item.completedAt)) return null;
@@ -136,7 +134,7 @@ function durationMs(item) {
   return ms >= 0 ? ms : null;
 }
 
-function formatDuration(ms) {
+export function formatDuration(ms) {
   if (ms == null || !Number.isFinite(ms)) return '—';
   const minute = 60_000;
   const hour = 60 * minute;
@@ -146,7 +144,7 @@ function formatDuration(ms) {
   return `${oneDecimal.format(ms / day)} days`;
 }
 
-function terminalDurationMs(item) {
+export function terminalDurationMs(item) {
   if (!item.createdDate || !hasConfirmedClockTime(item.createdAt)) return null;
   const terminal = item.status === 'Done'
     ? item.completedDate
@@ -163,28 +161,28 @@ function terminalDurationMs(item) {
   return ms >= 0 ? ms : null;
 }
 
-function median(values) {
+export function median(values) {
   if (!values.length) return null;
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
-function average(values) {
+export function average(values) {
   if (!values.length) return null;
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
-function percent(part, total) {
+export function percent(part, total) {
   return total ? `${oneDecimal.format((part / total) * 100)}%` : '0%';
 }
 
-function increment(map, key, amount = 1) {
+export function increment(map, key, amount = 1) {
   if (key == null) return;
   map.set(key, (map.get(key) || 0) + amount);
 }
 
-function maxEntry(map) {
+export function maxEntry(map) {
   let best = null;
   for (const [key, value] of map) {
     if (!best || value > best[1]) best = [key, value];
@@ -192,7 +190,7 @@ function maxEntry(map) {
   return best;
 }
 
-function listName(id) {
+export function listName(id) {
   const current = state.snapshot?.lists.find(x => x.id === id);
   if (current) return current.name;
   const deleted = state.snapshot?.deletedLists?.find(x => x.id === id);
@@ -207,7 +205,7 @@ function taskListOrigin() {
 function taskUrl(item) {
   return `${taskListOrigin()}/task/${encodeURIComponent(item.universalId)}`;
 }
-function taskLink(item, label = `#${item.displayId}`) {
+export function taskLink(item, label = `#${item.displayId}`) {
   const a = el('a', 'task-id-link');
   a.href = taskUrl(item);
   a.target = '_blank';
@@ -217,7 +215,7 @@ function taskLink(item, label = `#${item.displayId}`) {
   return a;
 }
 
-function normalizeSnapshot(raw) {
+export function normalizeSnapshot(raw) {
   raw.lists = raw.lists ?? [];
   raw.deletedLists = raw.deletedLists ?? [];
   raw.events = raw.events ?? [];
@@ -233,23 +231,23 @@ function normalizeSnapshot(raw) {
   return raw;
 }
 
-function isAllListScope() {
+export function isAllListScope() {
   return state.selectedListIds.size === 0;
 }
 
-function selectedListNames() {
+export function selectedListNames() {
   return [...state.selectedListIds]
     .map(id => listName(id))
     .sort((a, b) => a.localeCompare(b));
 }
 
-function scopedItems() {
+export function scopedItems() {
   if (!state.snapshot) return [];
   if (isAllListScope()) return state.snapshot.items;
   return state.snapshot.items.filter(item => state.selectedListIds.has(item.listId));
 }
 
-function allValidYears(items = scopedItems()) {
+export function allValidYears(items = scopedItems()) {
   const years = new Set();
   for (const item of items) {
     for (const d of [item.createdDate, item.completedDate, item.cancelledDate, item.reopenedDate]) {
@@ -269,11 +267,11 @@ function makeStatCard(label, value, sub = '', kind = '') {
   return card;
 }
 
-function renderCards(container, cards) {
+export function renderCards(container, cards) {
   container.replaceChildren(...cards.map(c => makeStatCard(c.label, c.value, c.sub || '', c.kind || '')));
 }
 
-function renderMetricList(container, rows) {
+export function renderMetricList(container, rows) {
   container.replaceChildren();
   for (const row of rows) {
     const [label, value, tooltip = ''] = row;
@@ -317,7 +315,7 @@ function sortRows(rows, index, direction) {
 }
 
 /** Tables sort by a column when its heading is clicked (or Enter/Space): ascending, descending, then back to the original order, like SpendTracker. */
-function setTable(table, headers, rows, numericColumns = []) {
+export function setTable(table, headers, rows, numericColumns = []) {
   const saved = table.id ? tableSorts.get(table.id) : table.sortState;
   const sort = saved && saved.index < headers.length ? saved : null;
   const shown = sort && rows.length > 1 ? sortRows(rows, sort.index, sort.direction) : rows;

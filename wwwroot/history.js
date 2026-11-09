@@ -1,6 +1,8 @@
-'use strict';
-
 /* Trends, backlog, Calendar and its day drill-down, and Lists. */
+import { $, MONTHS, WEEKDAYS, allValidYears, average, durationMs, el, formatDuration, heatmapDates, increment, isAllListScope, listName, localDayKey, maxEntry, monthKey, numberFmt, parseDate, percent, scopedItems, selectedListNames, setTable, state, taskLink, weekKey } from './app.js';
+import { formatMonthKey } from './overview.js';
+import { setSingleSelectOptions } from './ui.js';
+
 function groupKey(date, mode) {
   if (mode === 'day') return localDayKey(date);
   if (mode === 'week') return weekKey(date);
@@ -33,7 +35,7 @@ function groupedEvents(items, mode) {
   return { keys, maps };
 }
 
-function renderTrends() {
+export function renderTrends() {
   const items = scopedItems();
   const mode = $('#trendGroup').value;
   const grouped = groupedEvents(items, mode);
@@ -119,7 +121,7 @@ function approximateBacklog(items) {
   return { labels, values };
 }
 
-function parseCalendarMonth(value) {
+export function parseCalendarMonth(value) {
   const match = /^\s*(\d{1,2})\/(\d{2}|\d{4})\s*$/.exec(value || '');
   if (!match) return null;
   const month = Number(match[1]);
@@ -129,7 +131,7 @@ function parseCalendarMonth(value) {
   return { year, month };
 }
 
-function formatCalendarMonthValue(year, month) {
+export function formatCalendarMonthValue(year, month) {
   return `${month}/${year}`;
 }
 
@@ -161,7 +163,7 @@ function populateCalendarControls(items) {
   }
 }
 
-function renderCalendar() {
+export function renderCalendar() {
   const items = scopedItems();
   populateCalendarControls(items);
   renderYearHeatmap(items);
@@ -176,7 +178,7 @@ function dailyMap(items, mode) {
   return map;
 }
 
-function heatClass(value, max) {
+export function heatClass(value, max) {
   if (!value) return 'h0';
   const ratio = value / Math.max(1, max);
   if (ratio <= .25) return 'h1';
@@ -185,7 +187,7 @@ function heatClass(value, max) {
   return 'h4';
 }
 
-function renderYearHeatmap(items) {
+export function renderYearHeatmap(items) {
   const container = $('#yearHeatmap');
   const year = Number($('#heatmapYear').value);
   const mode = $('#heatmapMode').value;
@@ -227,7 +229,7 @@ function renderYearHeatmap(items) {
   container.replaceChildren(grid);
 }
 
-function renderMonthCalendar(items) {
+export function renderMonthCalendar(items) {
   const selected = parseCalendarMonth($('#calendarMonth').value);
   if (!selected) {
     $('#monthCalendar').replaceChildren();
@@ -261,7 +263,7 @@ function renderMonthCalendar(items) {
   }
 }
 
-function renderMonthYearHeatmap(items) {
+export function renderMonthYearHeatmap(items) {
   const dates = [...heatmapDates(items, $('#monthYearHeatmapMode').value)];
   const years = [...new Set(dates.map(date => date.getFullYear()))].sort((a,b)=>a-b);
   const counts = new Map();
@@ -291,7 +293,7 @@ function renderSeasonality(items) {
   Charts.drawBarChart($('#seasonalityChart'), MONTHS, counts, 'created', true, 'Average tasks created');
 }
 
-function renderLists() {
+export function renderLists() {
   const allItems = state.snapshot.items;
   const currentIds = isAllListScope() ? null : state.selectedListIds;
   const lists = state.snapshot.lists.filter(l => !currentIds || currentIds.has(l.id));

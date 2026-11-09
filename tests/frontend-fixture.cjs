@@ -83,7 +83,7 @@ function fixture() {
   context.window = context;
   const run = source => vm.runInContext(source, context);
   for (const file of ['app.js', 'overview.js', 'history.js', 'patterns.js', 'analysis-tabs.js', 'ui.js', 'milestones.js', 'fun.js']) {
-    const source = fs.readFileSync(path.join(__dirname, '..', 'wwwroot', file), 'utf8').replace(/^export /gm, '');
+    const source = fs.readFileSync(path.join(__dirname, '..', 'wwwroot', file), 'utf8').replace(/^export /gm, '').replace(/^import [^\n]*\n/gm, ''); // Modules share one context here, as classic scripts did.
     vm.runInContext(source, context, { filename: file });
   }
   get('#taskFlowEventType').value = 'all';

@@ -1,6 +1,7 @@
-'use strict';
-
 /* The on-demand Milestones view: grouping, thresholds, and icons. */
+import { $, el, formatDate, formatDateTime, hasConfirmedClockTime, listName, monthKey, numberFmt, renderCards, state } from './app.js';
+import { ANALYSIS_EVENT_TYPES, compareEventDates, eventHistoryUnavailableMessage, eventLogReady, eventTaskNode, scopedRecordedEvents } from './analysis-tabs.js';
+
 const MILESTONE_EVENT_BASE_THRESHOLDS = [1, 100, 500, 1000, 2000, 3000, 5000, 10000];
 const MILESTONE_UID_BASE_THRESHOLDS = [1, 100, 500, 1000, 2000, 2500, 3000, 5000, 10000];
 const MILESTONE_LIST_BASE_THRESHOLDS = [100, 500, 1000, 2000, 5000];

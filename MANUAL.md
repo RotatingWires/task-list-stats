@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.40
+# TaskList Stats v2.2.41
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -78,6 +78,8 @@ It can answer questions such as:
 - No frontend framework
 - No chart library
 - No Node/npm build step
+
+The frontend is plain HTML, CSS, and JavaScript modules (`<script type="module">`) with no build step, the same in all four apps. Two small files stay classic scripts and are the same word for word in every app: `theme.js`, which has to run before the page draws so it never flashes the wrong theme, and `dropdown.js`.
 
 ## Project layout
 
@@ -541,7 +543,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs the server 
 
 ## Release notes
 
-Current release: **v2.2.40**.
+Current release: **v2.2.41**.
+
+### v2.2.41
+
+- Code: the scripts are JavaScript modules (`<script type="module">`) with imports and exports, like NewsReview's, instead of classic scripts sharing globals; the app starts once every module has loaded. `theme.js` and `dropdown.js` stay classic scripts, the same in every app, so the theme is applied before the page draws.
 
 ### v2.2.40
 

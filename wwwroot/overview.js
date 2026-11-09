@@ -1,17 +1,17 @@
-'use strict';
-
 /* Overview: records, completion behavior, and aging. */
-function scopeLabel() {
+import { $, average, durationMs, el, formatDate, formatDuration, hasConfirmedClockTime, increment, isAllListScope, listName, localDayKey, maxEntry, median, monthKey, numberFmt, percent, renderCards, renderMetricList, scopedItems, selectedListNames, setTable, state, weekKey } from './app.js';
+
+export function scopeLabel() {
   if (isAllListScope()) return 'All lists';
   if (state.selectedListIds.size === 1) return listName([...state.selectedListIds][0]);
   return `${state.selectedListIds.size} lists`;
 }
 
-function scopeDetailLabel() {
+export function scopeDetailLabel() {
   return isAllListScope() ? 'All lists' : selectedListNames().join(', ');
 }
 
-function longestCreationStreaks(items) {
+export function longestCreationStreaks(items) {
   const dates = items.map(x => x.createdDate).filter(Boolean).sort((a, b) => a - b);
   if (!dates.length) return { quiet: 0, active: 0, activeTotal: 0 };
   const counts = new Map();
@@ -46,7 +46,7 @@ function busiestPeriod(items, keyFn) {
   return maxEntry(map);
 }
 
-function formatMonthKey(key) {
+export function formatMonthKey(key) {
   if (!key) return '—';
   const [y, m] = key.split('-').map(Number);
   return new Date(y, m - 1, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
@@ -58,7 +58,7 @@ function formatWeekKey(key) {
   return `Week of ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`;
 }
 
-function applyReleaseLabel(version) {
+export function applyReleaseLabel(version) {
   if (!version) return;
   const title = document.querySelector('.title-left');
   // The version is its own span so phones can hide it from the title bar.
@@ -209,7 +209,7 @@ function renderRecordLists(items) {
   container.replaceChildren(columns, makeRecordGroup('Timeline', timelineRows));
 }
 
-function renderOverview() {
+export function renderOverview() {
   const items = scopedItems();
   const total = items.length;
   const open = items.filter(x => x.status === 'Open').length;

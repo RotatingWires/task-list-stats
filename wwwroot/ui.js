@@ -1,4 +1,8 @@
-'use strict';
+import { $, $$, HEATMAP_EVENT_OPTIONS, el, formatDateTime, isAllListScope, normalizeSnapshot, numberFmt, parseDate, scopedItems, state } from './app.js';
+import { applyReleaseLabel, renderOverview, scopeDetailLabel, scopeLabel } from './overview.js';
+import { formatCalendarMonthValue, parseCalendarMonth, renderCalendar, renderLists, renderMonthCalendar, renderMonthYearHeatmap, renderTrends, renderYearHeatmap } from './history.js';
+import { renderPatterns, renderTrees, renderWeekdayHourHeatmap } from './patterns.js';
+import { ANALYSIS_EVENT_TYPES, initializeAnalysisTabs, renderActivitySessions, renderCompare, renderTaskFlow } from './analysis-tabs.js';
 
 const REQUEST_TIMEOUT_MS = 30000;
 
@@ -465,7 +469,7 @@ function singleSelectParts(id) {
   return { input, host, button: host.querySelector('[data-single-select-button]'), label: host.querySelector('[data-single-select-label]'), menu: host.querySelector('[data-single-select-menu]') };
 }
 
-function setSingleSelectOptions(id, options, preferredValue = null) {
+export function setSingleSelectOptions(id, options, preferredValue = null) {
   const parts = singleSelectParts(id); if (!parts) return;
   const normalized = options.map(([value, label]) => ({ value: String(value), label: String(label) })); parts.menu.replaceChildren();
   if (!normalized.length) { parts.input.value = ''; parts.label.textContent = '—'; parts.button.disabled = true; return; }
@@ -500,7 +504,8 @@ async function startApp() {
   initializeAnalysisTabs();
   await loadSnapshot();
 }
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', startApp, { once: true }); else startApp();
+// Start once every module has run: module scripts all finish before DOMContentLoaded.
+document.addEventListener('DOMContentLoaded', startApp);
 // No offline copy, like NewsReview: remove the service worker and cache that earlier releases installed.
 navigator.serviceWorker?.getRegistrations().then(registrations => registrations.forEach(registration => registration.unregister())).catch(() => {});
 window.caches?.keys().then(keys => keys.forEach(key => caches.delete(key))).catch(() => {});

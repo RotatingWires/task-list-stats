@@ -1,7 +1,8 @@
-'use strict';
-
 /* Task Flow, Compare, and Activity Sessions. */
-const ANALYSIS_EVENT_TYPES = ['Created', 'Completed', 'Cancelled', 'Reopened', 'Deleted'];
+import { $, average, el, formatDate, formatDateTime, formatDuration, hasConfirmedClockTime, isAllListScope, listName, median, numberFmt, oneDecimal, parseDate, percent, renderCards, renderMetricList, scopedItems, setTable, state, taskLink } from './app.js';
+import { setSingleSelectOptions } from './ui.js';
+
+export const ANALYSIS_EVENT_TYPES = ['Created', 'Completed', 'Cancelled', 'Reopened', 'Deleted'];
 function allRecordedEvents() {
   const events = state.snapshot?.events ?? [];
   for (const event of events) {
@@ -11,17 +12,17 @@ function allRecordedEvents() {
   return events;
 }
 
-function scopedRecordedEvents() {
+export function scopedRecordedEvents() {
   const events = allRecordedEvents();
   if (isAllListScope()) return events;
   return events.filter(event => state.selectedListIds.has(event.listId));
 }
 
-function eventLogReady() {
+export function eventLogReady() {
   return Boolean(state.snapshot?.eventLogAvailable && state.eventsLoaded);
 }
 
-function eventHistoryUnavailableMessage(feature = 'this view') {
+export function eventHistoryUnavailableMessage(feature = 'this view') {
   if (state.snapshot?.eventLogAvailable && !state.eventsLoaded)
     return 'Event history is still loading.';
   return `Event history is not available for ${feature}.`;
@@ -31,7 +32,7 @@ function currentItemForEvent(event) {
   return state.snapshot?.items.find(item => item.universalId === event.universalId) ?? null;
 }
 
-function eventTaskNode(event) {
+export function eventTaskNode(event) {
   const item = currentItemForEvent(event);
   if (item) return taskLink(item, `#${event.displayId}`);
   const span = el('span', '', `#${event.displayId}`);
@@ -120,7 +121,7 @@ function matchesAnalysisRange(event, range) {
     : minutes >= range.timeStart || minutes <= range.timeEnd;
 }
 
-function compareEventDates(a, b, ascending = false) {
+export function compareEventDates(a, b, ascending = false) {
   if (Boolean(a.eventDate) !== Boolean(b.eventDate)) return a.eventDate ? -1 : 1;
   const difference = (a.eventDate ? a.eventDate - b.eventDate : 0) || a.id - b.id;
   return ascending ? difference : -difference;
@@ -138,7 +139,7 @@ function setAnalysisEmpty(table, message) {
   setTable(table, ['Message'], [[message]]);
 }
 
-function renderTaskFlow() {
+export function renderTaskFlow() {
   const table = $('#taskFlowTable');
   const summary = $('#taskFlowSummary');
   if (!eventLogReady()) {
@@ -249,7 +250,7 @@ function compareMetricRows(counts, items = null) {
   return rows;
 }
 
-function renderCompare() {
+export function renderCompare() {
   const table = $('#compareTable');
   const summary = $('#compareSummary');
   if (!eventLogReady()) {
@@ -418,7 +419,7 @@ function makeSessionRow(session) {
   return row;
 }
 
-function renderActivitySessions() {
+export function renderActivitySessions() {
   const table = $('#sessionsTable');
   if (!eventLogReady()) {
     renderCards($('#sessionCards'), []);
@@ -443,7 +444,7 @@ function renderActivitySessions() {
   setTable(table, ['Session'], recent.map(session => [makeSessionRow(session)]));
 }
 
-function initializeAnalysisTabs() {
+export function initializeAnalysisTabs() {
   const now = new Date();
   const today = now;
   const ago30 = new Date(now.getTime() - 29 * 86_400_000);

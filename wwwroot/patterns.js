@@ -1,7 +1,9 @@
-'use strict';
-
 /* Patterns, and Trees & Titles. */
-function renderPatterns() {
+import { $, STOPWORDS, WEEKDAYS, average, formatDateTime, formatHour, hasConfirmedClockTime, heatmapDates, increment, listName, localDayKey, monthKey, numberFmt, oneDecimal, percent, renderCards, renderMetricList, scopedItems, setTable, state, weekKey } from './app.js';
+import { longestCreationStreaks } from './overview.js';
+import { heatClass } from './history.js';
+
+export function renderPatterns() {
   const items = scopedItems();
   const createWeek = Array(7).fill(0), doneWeek = Array(7).fill(0);
   const createHour = Array(24).fill(0), doneHour = Array(24).fill(0);
@@ -44,7 +46,7 @@ function renderPatterns() {
   renderExamMetrics(items);
 }
 
-function renderWeekdayHourHeatmap(items) {
+export function renderWeekdayHourHeatmap(items) {
   const mode = $('#hourHeatmapMode').value;
   const matrix = Array.from({length:7},()=>Array(24).fill(0));
   for (const date of heatmapDates(items, mode, { requireClockTime: true })) matrix[date.getDay()][date.getHours()]++;
@@ -88,7 +90,7 @@ function renderExamMetrics(items) {
   ]);
 }
 
-function renderTrees() {
+export function renderTrees() {
   const items = scopedItems();
   const roots = [];
   const rootStats = new Map();
