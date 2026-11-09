@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.35
+# TaskList Stats v2.2.36
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -10,6 +10,31 @@ TaskList stays focused on creating and managing tasks. TaskList Stats reads the 
 All TaskList database access is read-only, using private SQLite page caches. Stats does not edit tasks, lists, task events, statuses, Universal IDs, or notification state. Live milestone dialogs and confetti belong exclusively to TaskList; Stats keeps the permanent analytical Milestones tab.
 
 The interface uses the same Windows 95-style visual language as TaskList, includes persistent **Light** and **Dark** themes, includes TaskList-style first-run password setup/login, works on desktop and mobile, and can be installed as a PWA.
+
+- [What it does](#what-it-does)
+- [Technology stack](#technology-stack)
+- [Project layout](#project-layout)
+- [Version handling](#version-handling)
+- [Configuration and running](#configuration-and-running)
+- [Runtime logging](#runtime-logging)
+- [Authentication](#authentication)
+- [Themes](#themes)
+- [TaskList database access](#tasklist-database-access)
+- [Table readability and row hover](#table-readability-and-row-hover)
+- [TaskList deep links](#tasklist-deep-links)
+- [Statistics sections](#statistics-sections)
+- [List filtering](#list-filtering)
+- [Timestamp precision rules](#timestamp-precision-rules)
+- [Current-status semantics](#current-status-semantics)
+- [Event history and older data](#event-history-and-older-data)
+- [Import and export](#import-and-export)
+- [HTTP API](#http-api)
+- [Home screen and PWA](#home-screen-and-pwa)
+- [Security and privacy](#security-and-privacy)
+- [Troubleshooting](#troubleshooting)
+- [Development checks](#development-checks)
+- [Development philosophy](#development-philosophy)
+- [Release notes](#release-notes)
 
 ## What it does
 
@@ -39,82 +64,6 @@ It can answer questions such as:
 <img width="2560" height="1296" alt="image" src="https://github.com/user-attachments/assets/06f6885c-fdc1-452b-a39f-d7a9385df762" />
 <img width="2560" height="1296" alt="image" src="https://github.com/user-attachments/assets/3c5cdbda-9990-48fe-9509-16b6eb806ee1" />
 <img width="2560" height="1296" alt="image" src="https://github.com/user-attachments/assets/3a1a6686-f5f4-4720-a819-dda6741d4aa7" />
-
-## TaskList database access
-
-TaskList Stats does **not** create, update, or delete TaskList data.
-
-Both the snapshot and event-history readers open the TaskList SQLite database with:
-
-- `Mode=ReadOnly`
-- `Cache=Private`
-- `PRAGMA query_only = ON`
-
-The server reads current TaskList lists/items into the initial snapshot and the browser performs the statistics against that snapshot. The append-only `task_events` history is intentionally excluded from initial startup and is loaded from `/api/events` only when Task Flow, Compare, Activity Sessions, Milestones, or snapshot export actually needs it.
-
-After the first event-history load, Stats keeps the events in browser memory across normal **Refresh** operations. When event history is needed again, the browser sends the last event ID plus an opaque cursor derived from that last event. The server validates that cursor against the current database and returns only rows with a larger event ID. Those new rows are appended to the in-memory event set, so a refresh after five new TaskList events transfers five event rows instead of the entire history.
-
-If the database was restored, replaced, truncated, or otherwise no longer contains the same last cached event, cursor validation fails. The same `/api/events` response then marks the cache for reset and returns the full current event history, so Stats recovers automatically instead of silently combining events from two database histories. Event history is not persisted in browser storage, so a full page/browser restart still performs one normal lazy full-history load when an event-dependent feature is first opened.
-
-Stats has no milestone acknowledgement endpoint or read/write connection to the TaskList database. Its analytical Milestones tab reads event history without accessing TaskList's notification queue.
-
-Authentication also requires one Stats-owned file:
-
-```text
-data/auth.json
-```
-
-That file stores the Stats password hash. It is not part of the TaskList database.
-
-## Authentication
-
-On first run, if `data/auth.json` does not exist, the server prints a setup token. Open Stats, enter that token, choose a password of at least 8 characters, and confirm it.
-
-The plaintext password is never stored. `auth.json` contains a random salt and a PBKDF2-HMAC-SHA256 derived hash using 600,000 iterations, and records its iteration count. Hashes created by earlier releases with 210,000 iterations still verify; after the next successful login, Stats re-hashes the password with 600,000 iterations and replaces `auth.json` by writing a temporary file and renaming it. A wrong password never changes the file.
-
-Successful login creates the `TaskListStats.Auth` cookie. It is HttpOnly, SameSite=Strict, persistent for up to 30 days, sliding while active, and marked Secure when the request itself uses HTTPS.
-
-Use **File > Log Out** to clear the session. Setup and login are rate-limited to 5 attempts per source IP per minute.
-
-## HTTP endpoints
-
-The default base URL is `http://127.0.0.1:8712`. Request and response bodies are JSON unless stated otherwise. Stats uses its own `TaskListStats.Auth` cookie; a TaskList login cookie does not authenticate Stats. Login/setup set an HttpOnly, SameSite=Strict cookie with a 30-day sliding lifetime, marked Secure when the request uses HTTPS. Send that cookie on authenticated requests.
-
-| Method | Path | Request | Response / effect |
-| --- | --- | --- | --- |
-| GET | `/api/auth/status` | None; public. | `{version, configured, authenticated}`. |
-| POST | `/api/auth/setup` | Public JSON: `{setupToken, password, confirmPassword}`. | First-run setup using the token printed by this server. Password must be at least 8 characters and match confirmation. Saves the Stats password hash and signs in; returns `{authenticated: true}`. Returns 409 if already configured, 401 for an invalid token, or 400 for an invalid password. |
-| POST | `/api/auth/login` | Public JSON: `{password}`. | Signs in and returns `{authenticated: true}`; 401 for an incorrect password, 409 if setup has not been completed. |
-| POST | `/api/auth/logout` | Authenticated; no body. | Clears the Stats session cookie; 204 with no response body. |
-| GET | `/api/snapshot` | Authenticated; no body. | Current lists/items and database metadata, described below. Reads TaskList through a read-only SQLite connection. |
-| GET | `/api/events` | Authenticated; optional `afterId` and `cursor` query parameters. | `{resetRequired, lastEventId, cursor, events}`; full or incremental history, described below. Reads through a read-only SQLite connection. |
-
-Setup and login share a limit of 5 attempts per observed source IP per minute; excess attempts return 429. Protected endpoints return 401 without a valid Stats cookie. Missing/unreadable TaskList databases return 503 problem details for snapshot/history requests. Validation and malformed JSON/query values can return 400. Authentication errors may have no JSON body; errors returned with `error` use that field, while database problems use `title` and `detail`.
-
-### Snapshot fields
-
-`/api/snapshot` returns `{version, generatedAtUtc, databaseLastWriteUtc, highestUniversalId, lists, deletedLists, items, eventLogAvailable, events}`. Timestamps are strings. `databaseLastWriteUtc` is the main database file's last-write time, not an event-history cursor. `highestUniversalId` includes IDs allocated to entries that have since been deleted.
-
-- `lists`: `{id, name, createdAt}` for every surviving list, including archived lists. The snapshot does not include list descriptions or an archive flag.
-- `deletedLists`: `{id, name}` from TaskList's deleted-list name ledger; an empty array when that table is unavailable in an older database.
-- `items`: flat `{universalId, listId, displayId, parentDisplayId, title, description, status, createdAt, updatedAt, completedAt, cancelledAt, reopenedAt}` rows. `parentDisplayId` is null for roots; optional timestamps can be null. Status is `Open`, `Done`, or `Cancelled`. No server-side list/date/status filters are applied.
-- `eventLogAvailable`: whether `task_events` exists. `events` is always empty in this endpoint; history is loaded separately.
-
-### Incremental event history
-
-Start with `GET /api/events`. Its `events` array contains all current recorded events ordered by event ID ascending. Each event is `{id, universalId, eventType, eventAt, fromStatus, toStatus, listId, displayId, parentDisplayId, title, source}`. Status/parent fields can be null. List/display IDs and titles describe the entry when the event was recorded.
-
-Retain the returned `lastEventId` and opaque `cursor`, then request `/api/events?afterId=LAST_ID&cursor=CURSOR` to get only newer events. There is no page size or server-side history filter; an initial load can contain the entire history. Zero/negative `afterId` starts from the beginning. When no new events exist, the last event ID/cursor remain usable.
-
-For a positive `afterId`, the server checks the supplied cursor against that exact event. If the event is missing or the cursor is missing/mismatched, it returns `resetRequired: true` and the full current history. Replace the cached history in that case instead of appending. If the event table is absent, the response has `lastEventId: 0`, `cursor: null`, and `events: []`; `resetRequired` is true when a positive `afterId` was supplied.
-
-With TaskList v1.6.9 or newer, the opaque cursor also includes the server-owned history revision, which changes on ZIP restore even if the final event is identical. Older TaskList schemas use the event anchor alone. Snapshot/history reads each use one deferred read transaction so concurrent changes cannot mix lists, tasks, revision state, and event rows from different database states. Concurrent snapshot refreshes coalesce, and late history responses cannot modify a replacement snapshot.
-
-### Browser routes and API scope
-
-`/` and `/index.html` require sign-in; `/login.html` handles login/setup. Static frontend/PWA assets are served separately. Other authenticated non-file GET paths fall back to the application HTML, so an unknown GET path should not be treated as a JSON endpoint.
-
-All analytics, list filtering, Task Flow, activity sessions, milestones, and the JSON snapshot download are computed/assembled in the browser from these read-only APIs. Stats has no task-writing, list-writing, milestone-consume, or ZIP-restore endpoint.
 
 ## Technology stack
 
@@ -181,7 +130,7 @@ The build target regenerates `wwwroot/version.json` from `$(Version)` for the br
 
 Frontend asset URLs carry no release-number query strings. The server marks pages and scripts `Cache-Control: no-cache`, so the browser checks each with the server on every load and always runs the current release.
 
-## Requirements and running
+## Configuration and running
 
 Server requirements:
 
@@ -261,6 +210,16 @@ Sensitive first-run authentication material is intentionally excluded from file 
 
 Task Scheduler can therefore launch `TaskListStats.exe` directly rather than using `cmd.exe` only for output redirection.
 
+## Authentication
+
+On first run, if `data/auth.json` does not exist, the server prints a setup token. Open Stats, enter that token, choose a password of at least 8 characters, and confirm it.
+
+The plaintext password is never stored. `auth.json` contains a random salt and a PBKDF2-HMAC-SHA256 derived hash using 600,000 iterations, and records its iteration count. Hashes created by earlier releases with 210,000 iterations still verify; after the next successful login, Stats re-hashes the password with 600,000 iterations and replaces `auth.json` by writing a temporary file and renaming it. A wrong password never changes the file.
+
+Successful login creates the `TaskListStats.Auth` cookie. It is HttpOnly, SameSite=Strict, persistent for up to 30 days, sliding while active, and marked Secure when the request itself uses HTTPS.
+
+Use **File > Log Out** to clear the session. Setup and login are rate-limited to 5 attempts per source IP per minute.
+
 ## Themes
 
 Use **View > Theme** to choose **Light** or **Dark**. The selection persists in browser storage and applies to the Stats workspace and login/setup UI.
@@ -270,6 +229,32 @@ The dark theme keeps the Windows 95 raised/recessed look instead of replacing it
 There is intentionally no automatic **System** theme; theme selection is strictly Light or Dark.
 
 **View > Use Retro Font** switches the whole app, including the login page and chart labels, to W95FA, an open-source recreation of the Windows 95 MS Sans Serif font bundled in `wwwroot/fonts`, so the interface looks the same on Windows, Linux, macOS, Android, and iOS without installing fonts. It is off by default and saved per browser, separately for each app.
+
+## TaskList database access
+
+TaskList Stats does **not** create, update, or delete TaskList data.
+
+Both the snapshot and event-history readers open the TaskList SQLite database with:
+
+- `Mode=ReadOnly`
+- `Cache=Private`
+- `PRAGMA query_only = ON`
+
+The server reads current TaskList lists/items into the initial snapshot and the browser performs the statistics against that snapshot. The append-only `task_events` history is intentionally excluded from initial startup and is loaded from `/api/events` only when Task Flow, Compare, Activity Sessions, Milestones, or snapshot export actually needs it.
+
+After the first event-history load, Stats keeps the events in browser memory across normal **Refresh** operations. When event history is needed again, the browser sends the last event ID plus an opaque cursor derived from that last event. The server validates that cursor against the current database and returns only rows with a larger event ID. Those new rows are appended to the in-memory event set, so a refresh after five new TaskList events transfers five event rows instead of the entire history.
+
+If the database was restored, replaced, truncated, or otherwise no longer contains the same last cached event, cursor validation fails. The same `/api/events` response then marks the cache for reset and returns the full current event history, so Stats recovers automatically instead of silently combining events from two database histories. Event history is not persisted in browser storage, so a full page/browser restart still performs one normal lazy full-history load when an event-dependent feature is first opened.
+
+Stats has no milestone acknowledgement endpoint or read/write connection to the TaskList database. Its analytical Milestones tab reads event history without accessing TaskList's notification queue.
+
+Authentication also requires one Stats-owned file:
+
+```text
+data/auth.json
+```
+
+That file stores the Stats password hash. It is not part of the TaskList database.
 
 ## Table readability and row hover
 
@@ -440,13 +425,53 @@ TaskList v1.7.9 adds **File > Fresh Start...**, which can remove finished tasks,
 
 The Stats **Help** button opens About immediately, matching TaskList. Its wide, rectangular dialog uses 16px text for the event-history explanation and places about.lehighradio.com above the application/version label at the bottom, as TaskList does. The event-history paragraph explains missing dates, unavailable list names, and older history.
 
-## Exporting a snapshot
+## Import and export
 
 Use **File > Import/Export... > Download Snapshot** to download the snapshot loaded by Stats as `taskliststats-snapshot-YYYYMMDD-HHMMSS.json` (local time). Stats keeps no data of its own, so there is nothing to restore; back up and restore tasks in TaskList.
 
 Treat exports as private because they can contain task titles, descriptions, list names, IDs, statuses, timestamps, and event history.
 
-## PWA behavior
+## HTTP API
+
+The default base URL is `http://127.0.0.1:8712`. Request and response bodies are JSON unless stated otherwise. Stats uses its own `TaskListStats.Auth` cookie; a TaskList login cookie does not authenticate Stats. Login/setup set an HttpOnly, SameSite=Strict cookie with a 30-day sliding lifetime, marked Secure when the request uses HTTPS. Send that cookie on authenticated requests.
+
+| Method | Path | Request | Response / effect |
+| --- | --- | --- | --- |
+| GET | `/api/auth/status` | None; public. | `{version, configured, authenticated}`. |
+| POST | `/api/auth/setup` | Public JSON: `{setupToken, password, confirmPassword}`. | First-run setup using the token printed by this server. Password must be at least 8 characters and match confirmation. Saves the Stats password hash and signs in; returns `{authenticated: true}`. Returns 409 if already configured, 401 for an invalid token, or 400 for an invalid password. |
+| POST | `/api/auth/login` | Public JSON: `{password}`. | Signs in and returns `{authenticated: true}`; 401 for an incorrect password, 409 if setup has not been completed. |
+| POST | `/api/auth/logout` | Authenticated; no body. | Clears the Stats session cookie; 204 with no response body. |
+| GET | `/api/snapshot` | Authenticated; no body. | Current lists/items and database metadata, described below. Reads TaskList through a read-only SQLite connection. |
+| GET | `/api/events` | Authenticated; optional `afterId` and `cursor` query parameters. | `{resetRequired, lastEventId, cursor, events}`; full or incremental history, described below. Reads through a read-only SQLite connection. |
+
+Setup and login share a limit of 5 attempts per observed source IP per minute; excess attempts return 429. Protected endpoints return 401 without a valid Stats cookie. Missing/unreadable TaskList databases return 503 problem details for snapshot/history requests. Validation and malformed JSON/query values can return 400. Authentication errors may have no JSON body; errors returned with `error` use that field, while database problems use `title` and `detail`.
+
+### Snapshot fields
+
+`/api/snapshot` returns `{version, generatedAtUtc, databaseLastWriteUtc, highestUniversalId, lists, deletedLists, items, eventLogAvailable, events}`. Timestamps are strings. `databaseLastWriteUtc` is the main database file's last-write time, not an event-history cursor. `highestUniversalId` includes IDs allocated to entries that have since been deleted.
+
+- `lists`: `{id, name, createdAt}` for every surviving list, including archived lists. The snapshot does not include list descriptions or an archive flag.
+- `deletedLists`: `{id, name}` from TaskList's deleted-list name ledger; an empty array when that table is unavailable in an older database.
+- `items`: flat `{universalId, listId, displayId, parentDisplayId, title, description, status, createdAt, updatedAt, completedAt, cancelledAt, reopenedAt}` rows. `parentDisplayId` is null for roots; optional timestamps can be null. Status is `Open`, `Done`, or `Cancelled`. No server-side list/date/status filters are applied.
+- `eventLogAvailable`: whether `task_events` exists. `events` is always empty in this endpoint; history is loaded separately.
+
+### Incremental event history
+
+Start with `GET /api/events`. Its `events` array contains all current recorded events ordered by event ID ascending. Each event is `{id, universalId, eventType, eventAt, fromStatus, toStatus, listId, displayId, parentDisplayId, title, source}`. Status/parent fields can be null. List/display IDs and titles describe the entry when the event was recorded.
+
+Retain the returned `lastEventId` and opaque `cursor`, then request `/api/events?afterId=LAST_ID&cursor=CURSOR` to get only newer events. There is no page size or server-side history filter; an initial load can contain the entire history. Zero/negative `afterId` starts from the beginning. When no new events exist, the last event ID/cursor remain usable.
+
+For a positive `afterId`, the server checks the supplied cursor against that exact event. If the event is missing or the cursor is missing/mismatched, it returns `resetRequired: true` and the full current history. Replace the cached history in that case instead of appending. If the event table is absent, the response has `lastEventId: 0`, `cursor: null`, and `events: []`; `resetRequired` is true when a positive `afterId` was supplied.
+
+With TaskList v1.6.9 or newer, the opaque cursor also includes the server-owned history revision, which changes on ZIP restore even if the final event is identical. Older TaskList schemas use the event anchor alone. Snapshot/history reads each use one deferred read transaction so concurrent changes cannot mix lists, tasks, revision state, and event rows from different database states. Concurrent snapshot refreshes coalesce, and late history responses cannot modify a replacement snapshot.
+
+### Browser routes and API scope
+
+`/` and `/index.html` require sign-in; `/login.html` handles login/setup. Static frontend/PWA assets are served separately. Other authenticated non-file GET paths fall back to the application HTML, so an unknown GET path should not be treated as a JSON endpoint.
+
+All analytics, list filtering, Task Flow, activity sessions, milestones, and the JSON snapshot download are computed/assembled in the browser from these read-only APIs. Stats has no task-writing, list-writing, milestone-consume, or ZIP-restore endpoint.
+
+## Home screen and PWA
 
 TaskList Stats keeps no offline copy of its pages, like NewsReview: without a connection the browser shows its own offline page, which makes a connection problem obvious instead of opening a stale app that cannot reach its data. It can still be added to a phone's home screen from the web manifest. `sw.js` only removes the service worker and cache that releases before v2.2.23 installed.
 
@@ -515,7 +540,14 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs the server 
 
 ## Release notes
 
-Current release: **v2.2.35**.
+Current release: **v2.2.36**.
+
+### v2.2.36
+
+- MANUAL.md uses the same section names and order as the other apps, with a contents list at the top and a **Current release** line under Release notes; no text was removed, only moved or retitled.
+- README.md has a **Sibling apps** section linking all four apps.
+- `.gitignore` has the same rules in every app.
+- Removed Python cache files that were committed by mistake.
 
 ### v2.2.35
 
