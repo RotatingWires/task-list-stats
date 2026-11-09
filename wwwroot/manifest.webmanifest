@@ -1,7 +1,10 @@
 {
+  "id": "/",
   "name": "TaskList Stats",
   "short_name": "TaskList Stats",
+  "description": "Statistics, history, and milestones for your TaskList tasks, read without changing them.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#c0c0c0",
   "theme_color": "#000080",
@@ -17,7 +20,7 @@
       "type": "image/png"
     },
     {
-      "src": "/icons/stats.svg",
+      "src": "/icons/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }

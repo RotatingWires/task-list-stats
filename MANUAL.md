@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.29
+# TaskList Stats v2.2.30
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -170,7 +170,7 @@ wwwroot/
   version.json            frontend release version regenerated from TaskListStats.csproj during build
   manifest.webmanifest    installable-PWA metadata
   sw.js                   removes the offline cache earlier releases installed
-  icons/stats.svg         app/favicon icon
+  icons/                  favicon.svg, favicon.ico, and touch-180/192/512.png, the same names in every app
 ```
 
 ## Version handling
@@ -515,7 +515,13 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs `node tests
 
 ## Release notes
 
-Current release: **v2.2.29**.
+Current release: **v2.2.30**.
+
+### v2.2.30
+
+- The login and main pages share one set of page tags, the same in every app: a description, the iPhone home-screen and status-bar settings, the manifest, and icons.
+- Icons live in `/icons/` with the same names in every app: `favicon.svg`, `favicon.ico`, and `touch-180/192/512.png`. The manifest has an app ID, scope, and description.
+- The main page gained the iPhone home-screen settings its login page already had; there is now a `favicon.ico`.
 
 ### v2.2.29
 
