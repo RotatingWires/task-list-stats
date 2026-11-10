@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.44
+# TaskList Stats v2.2.45
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -99,7 +99,7 @@ README.md                 setup, behavior, security, and release documentation
 
 data/                     runtime-created private Stats data (ignored by Git)
   auth.json               salted password hash after first-run setup
-  keys/                   sign-in cookie keys when there is no Windows profile key ring (Linux, Task Scheduler)
+  keys/                   sign-in cookie keys (machine-scope DPAPI on Windows)
 
 wwwroot/
   index.html              application shell, panels, controls, and dialogs
@@ -543,7 +543,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs the server 
 
 ## Release notes
 
-Current release: **v2.2.44**.
+Current release: **v2.2.45**.
+
+### v2.2.45
+
+- Restarting the server no longer signs you out on Windows: sign-in keys always live in `data/keys/` (protected with machine-scope DPAPI), not in the Windows profile's key ring, which a service account does not always have loaded when the app starts (then the keys only lived in memory). Everyone signs in once more after updating.
 
 ### v2.2.44
 
