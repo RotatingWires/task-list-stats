@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.45
+# TaskList Stats v2.3.0
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -92,6 +92,7 @@ src/
   Store.cs                read-only TaskList database reader: snapshot, event history pages, connections (like the other apps' Store.cs)
   SingleFileLogger.cs     capped single-file runtime log writer
   PasswordAuth.cs         setup token, password file, and sign-in cookie (the same file in all four apps)
+  SignInKeys.cs           where the sign-in keys live and how they are encrypted (the same file in all four apps)
 appsettings.json          database path, listen address, and log level
 deploy/taskliststats.service
                           example systemd unit
@@ -99,7 +100,7 @@ README.md                 setup, behavior, security, and release documentation
 
 data/                     runtime-created private Stats data (ignored by Git)
   auth.json               salted password hash after first-run setup
-  keys/                   sign-in cookie keys (machine-scope DPAPI on Windows)
+  keys/                   sign-in cookie keys, encrypted (DPAPI on Windows, a systemd credential on Linux)
 
 wwwroot/
   index.html              application shell, panels, controls, and dialogs
@@ -194,6 +195,15 @@ Stats keeps its own password and sign-in keys in `data/`. To keep them elsewhere
 ### Run as a Linux service
 
 `deploy/taskliststats.service` is a systemd template, not an installer, like NewsReview's: build with `dotnet publish -c Release -o /opt/taskliststats`, create the service account, `/var/lib/taskliststats` (the data folder) and `/opt/taskliststats/logs`, adjust `User`, `WorkingDirectory`, `ExecStart`, and `ReadWritePaths` to match, then install and enable it. It listens on loopback at port 8712; change its `--urls` for LAN access, and find the first-run setup token in the journal. It runs as TaskList's `tasklist` account so it can read `/var/lib/tasklist/tasklist.db`, which its `ExecStart` passes as `--TaskListStats:DatabasePath`.
+
+**Encrypted sign-in keys on Linux.** On Windows the sign-in keys in `data/keys/` are encrypted with machine-scope DPAPI. On Linux the template's `ImportCredential=taskliststats-sign-in-keys` hands TaskList Stats a secret that systemd encrypts with the machine's credential key (or its TPM), and the keys are encrypted with it (AES-256-GCM, `src/SignInKeys.cs`, the same in all four apps), so a copied data folder or backup holds no readable key. Create the secret once (systemd 254 or later), then restart the service:
+
+```sh
+sudo mkdir -p /etc/credstore.encrypted
+head -c 32 /dev/urandom | sudo systemd-creds encrypt --name=taskliststats-sign-in-keys - /etc/credstore.encrypted/taskliststats-sign-in-keys
+```
+
+Keys already in `data/keys/` are encrypted in place on that start, so nobody is signed out. The startup log says how the keys are kept (`Sign-in keys: ..., encrypted with the taskliststats-sign-in-keys systemd credential`). Without the credential (or when started from a terminal) the service still runs and the key files stay unencrypted but readable only by the service account, in an owner-only folder. Once keys are encrypted, starting the app without the credential cannot read them: everyone signs in again, or start it through the service.
 
 `appsettings.json` holds the default listen address (`Urls`) and log level, the same keys in every app. `--urls` and `ASPNETCORE_URLS` override it.
 
@@ -543,7 +553,12 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs the server 
 
 ## Release notes
 
-Current release: **v2.2.45**.
+Current release: **v2.3.0**.
+
+### v2.3.0
+
+- Sign-in keys are encrypted on Linux too, as on Windows: with the `taskliststats-sign-in-keys` systemd credential (AES-256-GCM, shared `src/SignInKeys.cs`), so a copied data folder or backup holds no readable key. The systemd template imports it; create it once with the command in the manual. Existing keys are encrypted in place, so nobody is signed out. Without the credential the keys stay unencrypted, as before, in a folder only the app's account can open.
+- Windows is unchanged: machine-scope DPAPI. The startup log now says how the keys are kept.
 
 ### v2.2.45
 
