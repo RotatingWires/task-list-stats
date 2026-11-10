@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.42
+# TaskList Stats v2.2.43
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -543,7 +543,12 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs the server 
 
 ## Release notes
 
-Current release: **v2.2.42**.
+Current release: **v2.2.43**.
+
+### v2.2.43
+
+- Dropdowns open scrolled to the top each time, instead of where the list was left after a choice or in an earlier dialog.
+- On a phone, a dropdown's search box inside a dialog works: when the keyboard opens and the dialog scrolls, the dropdown moves with its button instead of closing (which also put the keyboard away).
 
 ### v2.2.42
 
