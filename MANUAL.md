@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.2.43
+# TaskList Stats v2.2.44
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -543,7 +543,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs the server 
 
 ## Release notes
 
-Current release: **v2.2.43**.
+Current release: **v2.2.44**.
+
+### v2.2.44
+
+- Shared `dropdown.js` (same in every app): on touch screens a dropdown in a dialog opens in place under its button instead of floating, so a phone's keyboard no longer makes it jump; a dialog opens scrolled to its top.
 
 ### v2.2.43
 
