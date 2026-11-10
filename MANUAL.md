@@ -1,7 +1,7 @@
 > [!WARNING]
 > This project is fully vibecoded, probably inefficient, but it does what I wanted lol
 
-# TaskList Stats v2.3.0
+# TaskList Stats v2.3.1
 
 **TaskList Stats** is a separate statistics app with Task Flow for the self-hosted **TaskList** database.
 
@@ -553,7 +553,11 @@ GitHub Actions (`.github/workflows/tests.yml`) builds Stats and runs the server 
 
 ## Release notes
 
-Current release: **v2.3.0**.
+Current release: **v2.3.1**.
+
+### v2.3.1
+
+- Clicking outside a dialog closes it, as Escape does (shared `dropdown.js`, the same in every app). A dialog that refuses Escape while it is busy stays open, and a drag that starts inside a dialog (selecting text) and ends outside does not close it.
 
 ### v2.3.0
 
